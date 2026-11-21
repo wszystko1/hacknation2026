@@ -1,30 +1,39 @@
-"""Plants on the parcel from Sentinel-2: NDMI of the last clear scene vs the median of the same dekad."""
+"""Plants on the parcel from Sentinel-2, read against earlier seasons of the same rotation group.
+
+The satellite stands beside the verdict and never changes it.
+"""
 
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import date
 
 from app.context import ReportContext
 from app.geodata import SceneIndex
-from app.models import CropCondition, CropGroup
+from app.models import CropCondition
+
+from .compare import compare
+from .rotation import classify_season
+
+__all__ = ["assess_crop_condition", "classify_season", "compare"]
 
 
-def compare(
-    current: SceneIndex | None, history: list[SceneIndex], crop: CropGroup, day: date
-) -> CropCondition:
-    """NDMI of `current` vs the median NDMI of `history` (same dekads, earlier seasons), read with the crop phase.
-
-    The comparison is not built yet: the result states what is missing and why.
-    """
-    return CropCondition(
-        state="missing",
-        words="Brak: kondycja roślin ze zdjęć satelitarnych, bo porównania z poprzednimi sezonami jeszcze nie liczymy",
-        reason="porównanie z poprzednimi sezonami jeszcze nie działa",
-    )
+def _by_year(readings: list[SceneIndex], before: int) -> dict[int, list[SceneIndex]]:
+    years: dict[int, list[SceneIndex]] = defaultdict(list)
+    for r in readings:
+        year = date.fromisoformat(r.date).year
+        if year < before:
+            years[year].append(r)
+    return dict(years)
 
 
 def assess_crop_condition(ctx: ReportContext) -> CropCondition:
-    sat = ctx.data.satellite.data if ctx.data.satellite.usable else None
-    return compare(
-        sat.current if sat else None, sat.history if sat else [], ctx.request.crop, ctx.request.day
-    )
+    """History from the whole seasons of the satellite data; without them, the readings grouped by year."""
+    day, year = ctx.request.day, ctx.request.day.year
+    result = ctx.data.satellite
+    if not result.usable or result.data is None:
+        return compare([], {}, ctx.request.crop, day)
+    sat = result.data
+    current = sat.seasons.get(year) or ([sat.current] if sat.current else [])
+    history = {y: r for y, r in sat.seasons.items() if y < year} or _by_year(sat.history, year)
+    return compare(current, history, ctx.request.crop, day)
