@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:
 from demo.steps import (  # noqa: E402
     advisor_pdf,
     agreement,
+    map_pick,
     out_of_season,
     parcel_photo,
     plan,
@@ -25,6 +26,7 @@ from demo.steps import (  # noqa: E402
 )
 
 SCENES = [
+    ("Wskazanie działki na mapie", map_pick.scene),
     ("Działka z ewidencji na zdjęciu", parcel_photo.scene),
     ("Werdykt: bilans wobec progu z rozporządzenia", verdict.scene),
     ("Cały raport w skrócie", summary.scene),

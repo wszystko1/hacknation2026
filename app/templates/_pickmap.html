@@ -1,0 +1,15 @@
+{# The map for pointing at a parcel (start screen). app/static/pickmap.js fills .pm-tiles, .pm-shape and .pm-state.
+   Tiles come from our own server; the browser talks to no other host. #}
+<link rel="stylesheet" href="/static/pickmap.css">
+<div class="map pm-map" data-pickmap tabindex="0" role="group"
+     aria-label="Mapa do wskazania działki. Strzałki przesuwają mapę, plus i minus przybliżają, Enter wskazuje środek mapy.">
+  <div class="pm-tiles" aria-hidden="true"></div>
+  <svg class="pm-shape" aria-hidden="true" focusable="false"></svg>
+  <p class="map-attr">Podkład i ortofotomapa: GUGiK</p>
+  <div class="pm-zoom pm-ui">
+    <button type="button" class="btn--ghost" data-zoom="1" aria-label="Przybliż mapę">+</button>
+    <button type="button" class="btn--ghost" data-zoom="-1" aria-label="Oddal mapę">−</button>
+  </div>
+  <div class="pm-state pm-ui" aria-live="polite"><p class="pm-hint">Przybliż i kliknij pole albo wpisz numer</p></div>
+</div>
+<script src="/static/pickmap.js" defer></script>

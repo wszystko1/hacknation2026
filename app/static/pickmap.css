@@ -1,0 +1,35 @@
+/* Map for pointing at a parcel on the start screen. Colours only through the tokens in app.css. */
+.pm-map { cursor: grab; touch-action: none; user-select: none; }
+.pm-map.is-grabbing { cursor: grabbing; }
+.pm-map:focus-visible { outline-offset: -4px; }
+.pm-tiles { position: absolute; inset: 0; overflow: hidden; }
+.pm-tile { position: absolute; left: 0; top: 0; width: 256px; height: 256px; max-width: none; pointer-events: none; }
+.pm-shape { pointer-events: none; }
+.pickmap .map-attr { display: block; }
+
+/* the dark selection bar sits top-left, the examples top-right: the middle of the map, where the click goes, stays free */
+.pickmap .start { display: contents; }
+.pickmap .start .pick { position: absolute; left: var(--s4); top: var(--s4); width: min(640px, calc(100% - 2 * var(--s4))); }
+.pickmap .examples { position: absolute; right: var(--s4); top: 64px; width: 420px; }
+
+.pm-zoom { position: absolute; right: var(--s4); bottom: var(--s4); display: flex; flex-direction: column; gap: var(--s2); }
+.pm-zoom button { width: 48px; min-height: 48px; padding: 0; font-size: var(--fs-lg); line-height: 1; box-shadow: var(--shadow-map); }
+
+.pm-state { position: absolute; left: var(--s4); bottom: var(--s4); max-width: calc(100% - 2 * var(--s4) - 48px - var(--s3)); }
+.pm-hint, .pm-error { margin: 0; padding: var(--s2) var(--s3); border-radius: var(--radius-sm); font-size: var(--fs-sm); line-height: 1.4;
+  color: var(--on-dark); box-shadow: var(--shadow-map); }
+.pm-hint { background: var(--chrome); }
+.pm-error { background: var(--danger); }
+.pm-card { margin: 0; padding: var(--s3) var(--s4); background: var(--card-on-map); color: var(--text); border-radius: var(--radius);
+  box-shadow: var(--shadow-map); font-size: var(--fs-base); }
+.pm-title { display: block; font-weight: 650; }
+.pm-actions { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+
+@media (max-width: 1180px) {
+  .pickmap .start { display: flex; position: absolute; left: var(--s4); top: var(--s4); width: min(640px, calc(100% - 2 * var(--s4))); }
+  .pickmap .start .pick, .pickmap .examples { position: static; width: auto; }
+}
+@media (max-width: 860px) {
+  .pickmap .map { height: 420px; }
+  .pickmap .start { position: static; width: calc(100% - 2 * var(--s3)); }
+}

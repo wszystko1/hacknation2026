@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block main %}
-<main id="tresc" class="mapcol">
-  <div class="map" aria-hidden="true"></div>
+<main id="tresc" class="mapcol pickmap">
+  {% include "_pickmap.html" %}
   <div class="start">
     <h1 class="vh">Ocena działki</h1>
     {% include "report/_pick.html" %}
