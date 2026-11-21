@@ -16,14 +16,25 @@ CSV_PATH = Path(__file__).with_name("progi_dz_u_2019_739.csv")
 
 
 @cache
-def _table() -> dict[tuple[str, str, int], float | None]:
-    table: dict[tuple[str, str, int], float | None] = {}
+def _cells() -> dict[tuple[str, str, int], str]:
     with CSV_PATH.open(encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f):
-            value = row["threshold_mm"].strip()
-            number = float(value) if value not in {"-", "x", ""} else None
-            table[(row["crop"], row["soil_category"], int(row["period"]))] = number
-    return table
+        return {
+            (row["crop"], row["soil_category"], int(row["period"])): row["threshold_mm"].strip()
+            for row in csv.DictReader(f)
+        }
+
+
+@cache
+def _table() -> dict[tuple[str, str, int], float | None]:
+    return {k: (float(v) if v not in {"-", "x", ""} else None) for k, v in _cells().items()}
+
+
+def threshold_cell(crop: CropGroup, soil: SoilCategory, period: int) -> str:
+    """The cell as printed in the regulation: "-125", "x" (no yield loss in this period),
+    "-" (crop not recommended on this soil); "" for "Inna uprawa"."""
+    if crop == CropGroup.INNA:
+        return ""
+    return _cells().get((crop.value, soil, period), "")
 
 
 def threshold_mm(crop: CropGroup, soil: SoilCategory, period: int) -> float | None:

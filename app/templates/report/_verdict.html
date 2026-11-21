@@ -11,10 +11,10 @@
   {% if v.kbw_mm is not none %}
   <div class="big-number {{ 'big-number--dry' if v.state == 'below' else '' }}">
     <b>{{ v.kbw_mm | dec }}<small>mm</small></b>
-    <div class="cap">bilans wody w 60 dniach<br><strong>{{ v.period.start | day_month }}–{{ v.period.end | day }}</strong>{% if v.threshold_mm is not none %}, próg suszy <strong>{{ v.threshold_mm | mm }}</strong>{% endif %}{% if v.note %}<br>{{ v.note }}{% endif %}</div>
+    <div class="cap">bilans wody w 60 dniach<br><strong>{{ v.period.start | day }}–{{ v.period.end | day }}</strong>{% if v.threshold_mm is not none %}, próg suszy <strong>{{ v.threshold_mm | mm }}</strong>{% endif %}{% if v.note %}<br>{{ v.note }}{% endif %}</div>
   </div>
   {% endif %}
-  <p class="verdict-sentence {{ 'verdict-sentence--ok' if v.state == 'above' else '' }}">{{ v.sentence }}</p>
+  <p id="zdanie-werdyktu" class="verdict-sentence {{ 'verdict-sentence--ok' if v.state == 'above' else '' }}">{{ v.sentence }}</p>
   {{ hbar(v) | safe }}
   {% if v.how %}<p class="how">{{ v.how }}</p>{% endif %}
   <p class="disclaimer" id="zastrzezenie">{{ v.disclaimer }}.</p>

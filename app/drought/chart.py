@@ -34,7 +34,7 @@ def hbar_svg(v: Verdict) -> str:
     if thr is not None:
         parts.append(f'<rect class="hbar-thr" x="{x(thr) - 1.5:.1f}" y="26" width="3" height="28" rx="1.5"/>')
         parts.append(
-            f'<text class="lbl-thr" x="{x(thr):.1f}" y="22" text-anchor="middle">próg {dec(-thr)}</text>'
+            f'<text class="lbl-thr" x="{x(thr):.1f}" y="22" text-anchor="middle">próg {dec(-thr)} mm</text>'
         )
     parts.append(f'<text x="{x0}" y="78">0 mm</text>')
     parts.append(

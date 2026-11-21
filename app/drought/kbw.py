@@ -9,17 +9,41 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import date, timedelta
 
-from app.drought.thresholds import threshold_mm
+from app.drought.thresholds import threshold_cell, threshold_mm
+from app.fmt import day as ddmmyyyy
+from app.fmt import dec
 from app.models import (
     BADGE_ABOVE,
     BADGE_BELOW,
-    CROP_LABELS,
     LAW_THRESHOLDS,
+    SOIL_CATEGORIES,
     CropGroup,
     PeriodBalance,
     SoilCategory,
     Verdict,
 )
+
+# A period with more than this share of days without precipitation or ET0 does not enter the verdict.
+MAX_MISSING_SHARE = 0.10
+
+# Genitive of the crop group names, for "próg suszy dla zbóż jarych".
+CROP_GENITIVE: dict[CropGroup, str] = {
+    CropGroup.BURAK_CUKROWY: "buraka cukrowego",
+    CropGroup.CHMIEL: "chmielu",
+    CropGroup.DRZEWA_OWOCOWE: "drzew owocowych",
+    CropGroup.KRZEWY_OWOCOWE: "krzewów owocowych",
+    CropGroup.KUKURYDZA_KISZONKA: "kukurydzy na kiszonkę",
+    CropGroup.KUKURYDZA_ZIARNO: "kukurydzy na ziarno",
+    CropGroup.ROSLINY_STRACZKOWE: "roślin strączkowych",
+    CropGroup.RZEPAK: "rzepaku i rzepiku",
+    CropGroup.TRUSKAWKI: "truskawek",
+    CropGroup.TYTON: "tytoniu",
+    CropGroup.WARZYWA: "warzyw gruntowych",
+    CropGroup.ZBOZA_JARE: "zbóż jarych",
+    CropGroup.ZBOZA_OZIME: "zbóż ozimych",
+    CropGroup.ZIEMNIAK: "ziemniaka",
+    CropGroup.INNA: "innej uprawy",
+}
 
 # (period number, (start month, day), (end month, day)) as published by SMSR IUNG.
 PERIODS: list[tuple[int, tuple[int, int], tuple[int, int]]] = [
@@ -43,6 +67,11 @@ PERIODS: list[tuple[int, tuple[int, int], tuple[int, int]]] = [
 def period_dates(year: int, n: int) -> tuple[date, date]:
     _, (sm, sd), (em, ed) = PERIODS[n - 1]
     return date(year, sm, sd), date(year, em, ed)
+
+
+def period_length(year: int, n: int) -> int:
+    start, end = period_dates(year, n)
+    return (end - start).days + 1
 
 
 def season_of(day: date) -> tuple[int, bool]:
@@ -111,12 +140,102 @@ def season_balances(
     return out
 
 
-def _mm(x: float) -> str:
-    return f"{x:.0f}".replace("-", "−")
+def _span(p: PeriodBalance) -> str:
+    return f"{ddmmyyyy(p.start)}–{ddmmyyyy(p.end)}"
 
 
-def _dm(d: date) -> str:
-    return d.strftime("%d.%m")
+def _missing_days(p: PeriodBalance, until: date) -> tuple[int, int]:
+    """(days without precipitation or ET0, days in the window so far)."""
+    window = (min(p.end, until) - p.start).days + 1
+    return window - p.days, window
+
+
+def _usable(p: PeriodBalance, until: date) -> bool:
+    missing, window = _missing_days(p, until)
+    return missing <= MAX_MISSING_SHARE * window
+
+
+def _water(kbw: float) -> str:
+    """How rain and evaporation compare, in words."""
+    if round(kbw) < 0:
+        return f"wyparowało o {dec(-kbw)} mm więcej wody, niż spadło"
+    if round(kbw) > 0:
+        return f"spadło o {dec(kbw)} mm więcej wody, niż wyparowało"
+    return "spadło tyle wody, ile wyparowało"
+
+
+def _against_threshold(margin: float, crop: CropGroup) -> str:
+    target = f"progu suszy dla {CROP_GENITIVE[crop]} na tej glebie"
+    if round(margin) == 0:
+        return f"To bilans równy {target}."
+    side = "poniżej" if margin < 0 else "powyżej"
+    return f"To {dec(abs(margin))} mm {side} {target}."
+
+
+def _no_threshold_reason(crop: CropGroup, soil: SoilCategory | None, periods: list[PeriodBalance]) -> str:
+    """Why the regulation gives no threshold for the shown periods, as one sentence."""
+    if crop == CropGroup.INNA:
+        return f"Dla uprawy spoza 14 grup („Inna uprawa”) {LAW_THRESHOLDS} nie podaje progu suszy, więc pokazujemy sam bilans."
+    if soil is None:
+        return "Bez kategorii gleby nie wybierzemy progu suszy, więc pokazujemy sam bilans."
+    cells = {threshold_cell(crop, soil, p.n) for p in periods}
+    if cells == {"-"}:
+        return (
+            f"Na glebie kat. {soil} rozporządzenie nie zaleca uprawy {CROP_GENITIVE[crop]} "
+            f"(„-” w tabeli {LAW_THRESHOLDS}), więc nie ma progu suszy."
+        )
+    return (
+        f"W tych okresach susza nie obniża plonu {CROP_GENITIVE[crop]} („x” w tabeli {LAW_THRESHOLDS}), "
+        "więc nie ma progu suszy."
+    )
+
+
+def _soil_range(crop: CropGroup, p: PeriodBalance) -> str:
+    """Thresholds of the shown period for categories I..IV, when the parcel's soil category is unknown."""
+    values = [(c, threshold_mm(crop, c, p.n)) for c in SOIL_CATEGORIES]
+    known = [(c, t) for c, t in values if t is not None]
+    if not known:
+        return _no_threshold_reason(crop, "I", [p])
+    below = [c for c, t in known if p.kbw_mm < t]
+    (c1, t1), (c2, t2) = known[0], known[-1]
+    tail = (
+        f"bilans jest poniżej progu na glebie kat. {', '.join(below)}"
+        if below
+        else "bilans jest powyżej progu na każdej glebie"
+    )
+    return (
+        f"Bez kategorii gleby nie wybierzemy progu: dla {CROP_GENITIVE[crop]} w tym okresie to od "
+        f"{dec(t1)} mm (kat. {c1}) do {dec(t2)} mm (kat. {c2}); {tail}."
+    )
+
+
+def _neighbour_note(crop: CropGroup, neighbour: SoilCategory, periods: list[PeriodBalance]) -> str:
+    margins = [
+        (round(p.kbw_mm - t, 1), p) for p in periods if (t := threshold_mm(crop, neighbour, p.n)) is not None
+    ]
+    if not margins:
+        return f"Przy sąsiedniej kategorii gleby (kat. {neighbour}) rozporządzenie nie daje progu."
+    margin, p = min(margins, key=lambda m: m[0])
+    side = "poniżej" if margin < 0 else "powyżej"
+    return (
+        f"Przy sąsiedniej kategorii gleby (kat. {neighbour}): {dec(abs(margin))} mm {side} progu "
+        f"(okres {p.n}, {_span(p)})."
+    )
+
+
+def _no_data(sentence: str, periods: list[PeriodBalance] | None = None, note: str = "") -> Verdict:
+    return Verdict(
+        state="no_data",
+        badge="",
+        kbw_mm=None,
+        threshold_mm=None,
+        margin_mm=None,
+        period=None,
+        periods=periods or [],
+        sentence=sentence,
+        how="",
+        note=note,
+    )
 
 
 def assess(
@@ -126,44 +245,72 @@ def assess(
     day: date,
     crop: CropGroup,
     soil: SoilCategory | None,
+    *,
+    neighbour: SoilCategory | None = None,
 ) -> Verdict:
-    """The verdict for the analysis day. Skeleton: states and numbers are computed, texts are minimal."""
+    """The verdict for the analysis day by the definition of Dz.U. 2019 poz. 739.
+
+    Every finished period of the season is compared with the threshold for the crop group and soil category;
+    the period with the smallest margin (KBW - threshold) is shown. Periods with more than 10% of days
+    without weather data are left out and named in `note`.
+    """
     if not dates:
-        return Verdict(
-            state="no_data",
-            badge="",
-            kbw_mm=None,
-            threshold_mm=None,
-            margin_mm=None,
-            period=None,
-            sentence="Brak danych o pogodzie dla tej działki; bez bilansu nie dajemy zaleceń.",
-            how="",
+        return _no_data(
+            "Brak: bilansu wody, bo nie ma danych o pogodzie dla tej działki; "
+            "spróbuj za minutę albo wybierz inną datę."
         )
     year, in_season = season_of(day)
     until = day if in_season else date(year, 9, 30)
-    periods = season_balances(dates, precip, et0, year, until, crop, soil)
+    raw = season_balances(dates, precip, et0, year, until, crop, soil)
+    # Only periods that can enter the verdict are checked: finished ones, or the running first period.
+    gaps = [p for p in raw if (p.complete or p.n == 1) and not _usable(p, until)]
+    periods = [p.model_copy(update={"margin_mm": None}) if p in gaps else p for p in raw]
+    gap_note = " ".join(
+        f"Okres {p.n} pominięty: brak opadu albo parowania w {m} z {w} dni."
+        for p in gaps
+        for m, w in [_missing_days(p, until)]
+    )
+
     complete = [p for p in periods if p.complete]
     if not complete:
         running = periods[0] if periods else None
+        if running is None:  # unreachable inside the monitoring period; kept for type safety
+            return _no_data("Brak: bilansu wody, bo okres monitoringu jeszcze się nie zaczął.")
+        elapsed = (until - running.start).days + 1
         return Verdict(
             state="running",
             badge="",
-            kbw_mm=running.kbw_mm if running else None,
+            kbw_mm=running.kbw_mm,
             threshold_mm=None,
             margin_mm=None,
             period=running,
             periods=periods,
-            sentence="Pierwszy okres 60 dni jeszcze trwa; wynik wobec progu pojawi się po 20.05.",
-            how="",
-            note=f"okres jeszcze trwa: {running.days} z 61 dni" if running else "",
+            sentence=(
+                f"Od {ddmmyyyy(running.start)} {_water(running.kbw_mm)}. Pierwszy okres 60 dni jeszcze trwa; "
+                f"wynik wobec progu suszy podamy po {ddmmyyyy(running.end)}."
+            ),
+            how=(
+                f"opad {dec(running.precip_mm)} − parowanie {dec(running.et0_mm)} = {dec(running.kbw_mm)} mm "
+                f"({ddmmyyyy(running.start)}–{ddmmyyyy(until)}) · definicja z {LAW_THRESHOLDS}"
+            ),
+            note=" ".join(
+                x
+                for x in [f"okres jeszcze trwa: {elapsed} z {period_length(year, running.n)} dni", gap_note]
+                if x
+            ),
         )
-    with_thr = [p for p in complete if p.margin_mm is not None]
-    top = min(with_thr, key=lambda p: p.margin_mm) if with_thr else min(complete, key=lambda p: p.kbw_mm)
-    how = (
-        f"opad {_mm(top.precip_mm)} − parowanie {_mm(top.et0_mm)} = {_mm(top.kbw_mm)} mm "
-        f"(okres {top.n}, {_dm(top.start)}–{_dm(top.end)}.{top.start.year}) · próg z {LAW_THRESHOLDS}"
-    )
-    crop_label = CROP_LABELS[crop].lower()
+
+    usable = [p for p in complete if _usable(p, until)]
+    if not usable:
+        return _no_data(
+            "Brak: wyniku wobec progu, bo w każdym zakończonym okresie brakuje ponad 10% dni "
+            "z opadem albo parowaniem.",
+            periods,
+            gap_note,
+        )
+    with_thr = [p for p in usable if p.margin_mm is not None]
+    top = min(with_thr, key=lambda p: p.margin_mm) if with_thr else min(usable, key=lambda p: p.kbw_mm)
+
     if not in_season:
         state, badge = "out_of_season", f"Sezon {year}"
     elif top.margin_mm is None:
@@ -172,21 +319,24 @@ def assess(
         state, badge = "below", BADGE_BELOW
     else:
         state, badge = "above", BADGE_ABOVE
-    if top.margin_mm is None:
-        sentence = (
-            f"W tych 60 dniach bilans wody wyniósł {_mm(top.kbw_mm)} mm. "
-            f"Tu pojawi się porównanie z progiem z {LAW_THRESHOLDS} dla upraw: {crop_label}."
-        )
-    elif top.margin_mm < 0:
-        sentence = (
-            f"W tych 60 dniach wyparowało o {_mm(-top.kbw_mm)} mm więcej wody, niż spadło. "
-            f"To {_mm(-top.margin_mm)} mm poniżej progu suszy dla upraw: {crop_label} na tej glebie."
-        )
+
+    lead = "W tych 60 dniach" if in_season else f"W sezonie {year}, w dniach {_span(top)},"
+    sentence = f"{lead} {_water(top.kbw_mm)}. "
+    if top.margin_mm is not None:
+        sentence += _against_threshold(top.margin_mm, crop)
+    elif soil is None and crop != CropGroup.INNA:
+        sentence += _soil_range(crop, top)
     else:
-        sentence = (
-            f"W tych 60 dniach bilans wody wyniósł {_mm(top.kbw_mm)} mm. "
-            f"To {_mm(top.margin_mm)} mm powyżej progu suszy dla upraw: {crop_label} na tej glebie."
-        )
+        sentence += _no_threshold_reason(crop, soil, usable)
+
+    how = (
+        f"opad {dec(top.precip_mm)} − parowanie {dec(top.et0_mm)} = {dec(top.kbw_mm)} mm "
+        f"(okres {top.n}, {_span(top)}) · "
+        + (f"próg z {LAW_THRESHOLDS}" if top.threshold_mm is not None else f"definicja z {LAW_THRESHOLDS}")
+    )
+    notes = [gap_note]
+    if neighbour and neighbour != soil and crop != CropGroup.INNA:
+        notes.append(_neighbour_note(crop, neighbour, usable))
     return Verdict(
         state=state,
         badge=badge,
@@ -198,4 +348,5 @@ def assess(
         sentence=sentence,
         how=how,
         season_year=year if not in_season else None,
+        note=" ".join(n for n in notes if n),
     )
