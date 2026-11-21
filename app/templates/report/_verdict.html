@@ -1,4 +1,4 @@
-{# Section 0: the verdict, stated once (hero), then the SMSR row, plants from satellite and action no. 1. #}
+{# Section 0: the verdict, stated once (hero), then three answers (SMSR row, plants, vulnerability), the reading and action no. 1. #}
 {% set v = report.verdict %}
 <section class="verdict" id="werdykt" aria-label="Wynik">
   {% if v.state == 'out_of_season' %}
@@ -17,11 +17,15 @@
   <p id="zdanie-werdyktu" class="verdict-sentence {{ 'verdict-sentence--ok' if v.state == 'above' else '' }}">{{ v.sentence }}</p>
   {{ hbar(v) | safe }}
   {% if v.how %}<p class="how">{{ v.how }}</p>{% endif %}
+  {% if report.verdict_dg %}<div class="advisor">{% include "report/_verdict_dg.html" %}</div>{% endif %}
   <p class="disclaimer" id="zastrzezenie">{{ v.disclaimer }}.</p>
+  {% if v.state == 'out_of_season' %}{% include "report/_off_season.html" %}{% endif %}
   <dl class="facts">
     <div id="wiersz-smsr"><dt>Ocena SMSR dla gminy {{ report.smsr.commune }} w tym okresie</dt>
       <dd>{% if report.smsr.state == 'ok' %}<b>{{ report.smsr.words }}</b>{% if report.smsr.soil_category %} (gleba kat. {{ report.smsr.soil_category }}){% endif %}{% else %}{{ report.smsr.reason }}{% endif %}</dd></div>
     <div id="wiersz-satelita"><dt>Stan roślin na działce</dt><dd>{{ report.crop_condition.words }}</dd></div>
+    {% if report.reading %}<div id="wiersz-odczyt"><dt>Werdykt i rośliny razem</dt><dd>{{ report.reading }}</dd></div>{% endif %}
+    <div id="wiersz-podatnosc"><dt>Podatność działki</dt><dd>{{ report.vulnerability.sentence or report.vulnerability.reason }}</dd></div>
     <div id="dzialanie-1"><dt>Działanie nr 1</dt>
       <dd>{% if report.action_1 %}<span class="nb">{{ report.action_1.n }}</span> <b>{{ report.action_1.title }}</b>{% if report.action_1.place %}: {{ report.action_1.place.description }}{% else %}: {{ report.action_1.no_place_reason }}{% endif %}{% if report.action_1.legal %} · <span class="muted">{{ report.action_1.legal.formality }}</span>{% endif %}{% else %}{{ report.action_1_reason }}{% endif %}</dd></div>
   </dl>

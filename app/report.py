@@ -14,7 +14,9 @@ from app.advice.retention import retention_actions
 from app.advice.rules import field_actions
 from app.context import ReportContext
 from app.crop_condition import assess_crop_condition
+from app.crop_condition.reading import read_together
 from app.drought.kbw import assess
+from app.drought.variants import verdict_dg
 from app.forecast.exceedance import forecast_exceedance
 from app.geodata import FetchResult
 from app.mapview import map_view
@@ -32,13 +34,16 @@ from app.models import (
     SoilInfo,
     SourceRow,
     Verdict,
+    Vulnerability,
 )
+from app.off_season import not_applicable, off_season_summary
 from app.sections import gmina as gmina_section
 from app.sections import historia, nawadnianie, placeholder, plan, przyczyny, retencja, uprawa, zrodla
 from app.smsr import smsr_row
 from app.soil import assess_soil
 from app.sources_table import source_rows
 from app.validation.agreement import agreement_frame
+from app.vulnerability import assess_vulnerability
 
 log = logging.getLogger(__name__)
 T = TypeVar("T")
@@ -127,10 +132,23 @@ def build_report(req: ReportRequest) -> Report:
         Verdict(state="no_data", badge="", kbw_mm=None, threshold_mm=None, margin_mm=None, period=None,
                 sentence="Nie udało się policzyć bilansu.", how=""),
     )  # fmt: skip
+    ctx.verdict_dg = _safe("verdict_dg", lambda: verdict_dg(ctx), None)
     ctx.smsr = _safe("smsr", lambda: smsr_row(ctx), SmsrRow(state="missing", commune=ctx.parcel.commune))
-    ctx.crop_condition = _safe(
-        "crop_condition", lambda: assess_crop_condition(ctx), CropCondition(state="missing", words="brak")
+    if ctx.verdict.state == "out_of_season":
+        ctx.crop_condition = not_applicable()
+    else:
+        ctx.crop_condition = _safe(
+            "crop_condition",
+            lambda: assess_crop_condition(ctx),
+            CropCondition(state="missing", words="Brak: stanu roślin, bo obliczenie nie powiodło się"),
+        )
+    ctx.reading = _safe("reading", lambda: read_together(ctx.verdict.state, ctx.crop_condition), "")
+    ctx.vulnerability = _safe(
+        "vulnerability",
+        lambda: assess_vulnerability(ctx),
+        Vulnerability(reason="Brak: podatności działki, bo obliczenie nie powiodło się"),
     )
+    ctx.off_season = _safe("off_season", lambda: off_season_summary(ctx), None)
     ctx.diagnosis = _safe("diagnosis", lambda: diagnose(ctx), Diagnosis())
     actions = _safe("retention", lambda: retention_actions(ctx), []) + _safe(
         "rules", lambda: field_actions(ctx), []
@@ -158,8 +176,12 @@ def build_report(req: ReportRequest) -> Report:
         map=_safe("map", lambda: map_view(ctx), None),
         soil=ctx.soil,
         verdict=ctx.verdict,
+        verdict_dg=ctx.verdict_dg,
         smsr=ctx.smsr,
         crop_condition=ctx.crop_condition,
+        reading=ctx.reading,
+        vulnerability=ctx.vulnerability,
+        off_season=ctx.off_season,
         diagnosis=ctx.diagnosis,
         action_1=retention[0] if retention else None,
         action_1_reason="" if retention else "brak działań retencyjnych, bo nie ma oceny bilansu",

@@ -85,6 +85,8 @@ class Weather:
     et0_station: str = ""
     et0_station_km: float | None = None
     grid: str = ""  # grid size of the gridded provider(s) used
+    tmean_c: list[float | None] = field(default_factory=list)  # daily mean temperature, aligned with `dates`
+    sunshine_h: list[float | None] = field(default_factory=list)  # daily sunshine hours, aligned with `dates`
 
 
 @dataclass
@@ -124,6 +126,7 @@ class SceneIndex:
     ndmi: float | None
     valid_fraction: float  # share of parcel pixels left after the SCL mask
     pixels: int
+    ndvi_spread: float | None = None  # spread (p90 - p10) of NDVI between the clear pixels of the parcel
 
 
 @dataclass
@@ -132,6 +135,9 @@ class Satellite:
     current: SceneIndex | None  # nearest usable scene to the target date
     history: list[SceneIndex] = field(default_factory=list)  # same time of year in earlier years
     candidates: int = 0  # scenes found in the search window
+    seasons: dict[int, list[SceneIndex]] = field(
+        default_factory=dict
+    )  # year -> readings of that whole season
 
 
 @dataclass
@@ -275,5 +281,15 @@ def from_dict(cls: type, data: Any) -> Any:
             (inner,) = typing.get_args(hint)
             if dataclasses.is_dataclass(inner):
                 value = [from_dict(inner, v) for v in value]
+        elif typing.get_origin(hint) is dict and isinstance(value, dict):
+            key_type, item = typing.get_args(hint)
+            inner = typing.get_args(item)[0] if typing.get_origin(item) is list else item
+            if key_type is int:  # JSON object keys are strings
+                value = {int(k): v for k, v in value.items()}
+            if dataclasses.is_dataclass(inner):
+                value = {
+                    k: [from_dict(inner, x) for x in v] if isinstance(v, list) else from_dict(inner, v)
+                    for k, v in value.items()
+                }
         kwargs[f.name] = value
     return cls(**kwargs)

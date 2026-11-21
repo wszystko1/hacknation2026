@@ -56,6 +56,25 @@ CROP_LABELS: dict[CropGroup, str] = {
     CropGroup.INNA: "Inna uprawa",
 }
 
+# Past-tense form for "gdyby <crop> tu rosły / rosła / rósł" in the vulnerability sentence.
+CROP_VERB: dict[CropGroup, str] = {
+    CropGroup.BURAK_CUKROWY: "rósł",
+    CropGroup.CHMIEL: "rósł",
+    CropGroup.DRZEWA_OWOCOWE: "rosły",
+    CropGroup.KRZEWY_OWOCOWE: "rosły",
+    CropGroup.KUKURYDZA_KISZONKA: "rosła",
+    CropGroup.KUKURYDZA_ZIARNO: "rosła",
+    CropGroup.ROSLINY_STRACZKOWE: "rosły",
+    CropGroup.RZEPAK: "rósł",
+    CropGroup.TRUSKAWKI: "rosły",
+    CropGroup.TYTON: "rósł",
+    CropGroup.WARZYWA: "rosły",
+    CropGroup.ZBOZA_JARE: "rosły",
+    CropGroup.ZBOZA_OZIME: "rosły",
+    CropGroup.ZIEMNIAK: "rósł",
+    CropGroup.INNA: "rosła",
+}
+
 # Order of the crop list in the form: alphabetical (Polish), "Inna uprawa" last.
 CROP_CHOICES: list[CropGroup] = list(CROP_LABELS)
 
@@ -195,6 +214,7 @@ class Verdict(BaseModel):
     disclaimer: str = DISCLAIMER
     season_year: int | None = None  # out_of_season: the season shown
     note: str = ""  # "okres jeszcze trwa: 34 z 60 dni"
+    et_method: Literal["fao56", "dg"] = "fao56"  # evaporation formula behind `kbw_mm`; the verdict uses fao56
 
 
 class SmsrRow(BaseModel):
@@ -213,17 +233,64 @@ class SmsrRow(BaseModel):
     reason: str = ""
 
 
-class CropCondition(BaseModel):
-    """Plants on the parcel from Sentinel-2 (NDMI vs the median of the same dekad in earlier seasons)."""
+SeasonGroup = Literal["ozime", "jare", "pozne", "tuz", "gola_gleba"]
 
-    state: Literal["ok", "missing", "waiting"]
-    words: str  # farmer view: "rośliny suchsze niż zwykle w tej dekadzie"
+
+class CropCondition(BaseModel):
+    """Plants on the parcel from Sentinel-2, read against earlier seasons of the same group on this parcel.
+
+    Never feeds the verdict: the satellite answer stands beside it.
+    """
+
+    state: Literal["ok", "missing", "waiting", "not_applicable"]
+    words: str  # farmer view: "rośliny słabsze niż w 4 porównywalnych latach"
+    signal: Literal["weaker", "normal"] | None = None  # None: no reading (missing, waiting, harvest, ...)
+    season_group: SeasonGroup | None = None  # group of the current season's NDVI curve
+    harvest: bool = False  # the picture follows a harvest or mowing: "nie ocenia stresu"
     scene_date: date | None = None
     ndvi: float | None = None
     ndmi: float | None = None
     ndmi_median: float | None = None
-    n_seasons: int = 0
+    ndvi_spread: float | None = None  # spread of NDVI inside the parcel on the scene date
+    clear_share: float | None = None  # share of clear pixels of the shrunken outline on that scene, 0..1
+    phase_days: int | None = None  # days since the start of vegetation (the phase the comparison is made at)
+    n_seasons: int = 0  # comparable seasons of the same group
     reason: str = ""
+
+
+class MonthVulnerability(BaseModel):
+    """One month of the crop's critical period: in how many of the n seasons the balance fell below the threshold."""
+
+    month: int = Field(ge=1, le=12)
+    below: int = Field(ge=0)
+    n: int = Field(ge=0)
+    mean_deficit_mm: float | None = (
+        None  # mean of (threshold - balance) over the seasons below; None when below == 0
+    )
+
+
+class Vulnerability(BaseModel):
+    """How often the balance fell under the crop's threshold in the last seasons, for the crop chosen today."""
+
+    sentence: str = ""  # "gdyby rosły tu zboża jare, w 4 z 10 sezonów bilans spadłby poniżej progu"
+    k: int | None = None  # seasons below the threshold
+    n: int | None = None  # seasons assessed
+    months: list[MonthVulnerability] = Field(default_factory=list)
+    slope_pct: float | None = None  # slope of the parcel
+    ndvi_dry_years: str | None = None  # how the parcel's plants reacted in the dry years, in words
+    ndvi_dry_years_reason: str = ""  # why there is no such sentence
+    reason: str = ""  # "Brak: …, bo …" when there is no sentence
+
+
+class OffSeason(BaseModel):
+    """From 1 October to 20 March: the last season and the rain since 1 October against the norm."""
+
+    season_year: int
+    rain_mm: float | None = None  # rain from 1 October to the analysis date
+    norm_mm: float | None = None  # median of the same days in earlier years
+    n_years: int = 0  # years behind the norm
+    sentence: str = ""  # "Od 1.X spadło 82 mm; mediana z 10 lat dla tych dni to 95 mm"
+    last_season: str = ""  # the worst period of the season just ended, against the threshold and SMSR
 
 
 # ---------------------------------------------------------------- recommendations
@@ -353,6 +420,9 @@ class ExceedanceForecast(BaseModel):
     sentence: str = ""  # "w 4 z 10 wcześniejszych lat dalsza pogoda doprowadziła do przekroczenia progu"
     skill_sentence: str = ""  # one sentence on accuracy, from metrics.json
     what_happened: str = ""  # past dates: what the archive shows
+    years_used: list[int] = Field(
+        default_factory=list
+    )  # earlier years behind k and n; never the analysis year
 
 
 # ---------------------------------------------------------------- sections of the report
@@ -362,7 +432,7 @@ SectionId = Literal["historia", "gmina", "przyczyny", "retencja", "uprawa", "pla
 
 # Order and numbers of sections 1-8 (the verdict is section 0).
 SECTION_ORDER: list[tuple[SectionId, int, str]] = [
-    ("historia", 1, "10 sezonów"),
+    ("historia", 1, "Podatność: 10 sezonów"),
     ("gmina", 2, "Gmina i trafność"),
     ("przyczyny", 3, "Przyczyny"),
     ("retencja", 4, "Zatrzymanie wody"),
@@ -411,8 +481,14 @@ class Report(BaseModel):
     map: MapView | None = None
     soil: SoilInfo
     verdict: Verdict
+    verdict_dg: Verdict | None = None  # second variant, evaporation by Doroszewski-Górski (advisor view)
     smsr: SmsrRow
     crop_condition: CropCondition
+    reading: str = ""  # one sentence reading the verdict and the plants together; "" without a badge
+    vulnerability: Vulnerability = Field(
+        default_factory=lambda: Vulnerability(reason="Brak: podatności działki, bo nie została policzona")
+    )
+    off_season: OffSeason | None = None  # filled from 1 October to 20 March
     diagnosis: Diagnosis = Field(default_factory=Diagnosis)
     action_1: Action | None = None
     action_1_reason: str = ""  # "brak miejsca na działce, bo …" when there is no action 1

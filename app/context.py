@@ -14,12 +14,14 @@ from app.models import (
     CropCondition,
     Diagnosis,
     ExceedanceForecast,
+    OffSeason,
     ParcelInfo,
     ReportRequest,
     SmsrRow,
     SoilInfo,
     SourceRow,
     Verdict,
+    Vulnerability,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,8 +58,12 @@ class ReportContext:
     metrics: dict[str, Any] = field(default_factory=load_metrics)
     soil: SoilInfo | None = None
     verdict: Verdict | None = None
+    verdict_dg: Verdict | None = None  # the same verdict with evaporation by Doroszewski-Górski
     smsr: SmsrRow | None = None
     crop_condition: CropCondition | None = None
+    reading: str = ""  # verdict and plants read together
+    vulnerability: Vulnerability | None = None
+    off_season: OffSeason | None = None
     diagnosis: Diagnosis | None = None
     actions: list[Action] = field(default_factory=list)  # numbered 1..M, plan state applied
     forecast: ExceedanceForecast | None = None

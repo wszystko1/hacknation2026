@@ -24,6 +24,7 @@
   ]
  },
  "data_copy": "kopia danych z 21.11.2026",
+ "data_copy_took_s": 14.5,
  "map": {
   "image_url": "/raport/zdjecie?dzialka=040303_2.0002.189%2F13&data=2023-07-20",
   "width": 379,
@@ -162,8 +163,8 @@
   "markers": [
    {
     "n": 1,
-    "x": 88.9,
-    "y": 174.0,
+    "x": 88.2,
+    "y": 170.3,
     "kind": "punkt wypływu"
    }
   ],
@@ -171,30 +172,30 @@
   "attribution": "ortofotomapa i obrys: GUGiK"
  },
  "soil": {
-  "category": null,
-  "source": "brak",
-  "words": "Tu pojawi się kategoria gleby z mapy IUNG albo z uziarnienia SoilGrids",
+  "category": "II",
+  "source": "iung",
+  "words": "gleba podatna na suszę (kat. II)",
   "neighbour_category": null,
   "sand_pct": 68.5,
   "silt_pct": 21.2,
   "clay_pct": 10.2,
-  "note": ""
+  "note": "odczyt mapy IUNG w 8 z 9 punktów działki"
  },
  "verdict": {
-  "state": "no_threshold",
-  "badge": "",
-  "kbw_mm": -203.0,
-  "threshold_mm": null,
-  "margin_mm": null,
+  "state": "below",
+  "badge": "Bilans poniżej progu suszy (szacunek dla działki)",
+  "kbw_mm": -200.7,
+  "threshold_mm": -154.0,
+  "margin_mm": -46.7,
   "period": {
-   "n": 7,
-   "start": "2023-05-21",
-   "end": "2023-07-20",
-   "precip_mm": 69.1,
-   "et0_mm": 272.1,
-   "kbw_mm": -203.0,
-   "threshold_mm": null,
-   "margin_mm": null,
+   "n": 4,
+   "start": "2023-04-21",
+   "end": "2023-06-20",
+   "precip_mm": 32.7,
+   "et0_mm": 233.4,
+   "kbw_mm": -200.7,
+   "threshold_mm": -154.0,
+   "margin_mm": -46.7,
    "complete": true,
    "days": 61
   },
@@ -206,8 +207,8 @@
     "precip_mm": 62.4,
     "et0_mm": 142.2,
     "kbw_mm": -79.8,
-    "threshold_mm": null,
-    "margin_mm": null,
+    "threshold_mm": -144.0,
+    "margin_mm": 64.2,
     "complete": true,
     "days": 61
    },
@@ -218,8 +219,8 @@
     "precip_mm": 46.5,
     "et0_mm": 175.3,
     "kbw_mm": -128.8,
-    "threshold_mm": null,
-    "margin_mm": null,
+    "threshold_mm": -146.0,
+    "margin_mm": 17.2,
     "complete": true,
     "days": 61
    },
@@ -230,8 +231,8 @@
     "precip_mm": 36.8,
     "et0_mm": 211.9,
     "kbw_mm": -175.1,
-    "threshold_mm": null,
-    "margin_mm": null,
+    "threshold_mm": -149.0,
+    "margin_mm": -26.1,
     "complete": true,
     "days": 61
    },
@@ -242,8 +243,8 @@
     "precip_mm": 32.7,
     "et0_mm": 233.4,
     "kbw_mm": -200.7,
-    "threshold_mm": null,
-    "margin_mm": null,
+    "threshold_mm": -154.0,
+    "margin_mm": -46.7,
     "complete": true,
     "days": 61
    },
@@ -254,8 +255,8 @@
     "precip_mm": 62.2,
     "et0_mm": 247.2,
     "kbw_mm": -185.0,
-    "threshold_mm": null,
-    "margin_mm": null,
+    "threshold_mm": -161.0,
+    "margin_mm": -24.0,
     "complete": true,
     "days": 61
    },
@@ -266,8 +267,8 @@
     "precip_mm": 72.7,
     "et0_mm": 264.0,
     "kbw_mm": -191.3,
-    "threshold_mm": null,
-    "margin_mm": null,
+    "threshold_mm": -172.0,
+    "margin_mm": -19.3,
     "complete": true,
     "days": 61
    },
@@ -278,8 +279,8 @@
     "precip_mm": 69.1,
     "et0_mm": 272.1,
     "kbw_mm": -203.0,
-    "threshold_mm": null,
-    "margin_mm": null,
+    "threshold_mm": -188.0,
+    "margin_mm": -15.0,
     "complete": true,
     "days": 61
    },
@@ -290,8 +291,8 @@
     "precip_mm": 68.0,
     "et0_mm": 224.5,
     "kbw_mm": -156.5,
-    "threshold_mm": null,
-    "margin_mm": null,
+    "threshold_mm": -205.0,
+    "margin_mm": 48.5,
     "complete": false,
     "days": 50
    },
@@ -302,8 +303,8 @@
     "precip_mm": 67.4,
     "et0_mm": 174.0,
     "kbw_mm": -106.6,
-    "threshold_mm": null,
-    "margin_mm": null,
+    "threshold_mm": -226.0,
+    "margin_mm": 119.4,
     "complete": false,
     "days": 40
    },
@@ -344,53 +345,90 @@
     "days": 10
    }
   ],
-  "sentence": "W tych 60 dniach bilans wody wyniósł −203 mm. Tu pojawi się porównanie z progiem z Dz.U. 2019 poz. 739 dla upraw: zboża jare.",
-  "how": "opad 69 − parowanie 272 = −203 mm (okres 7, 21.05–20.07.2023) · próg z Dz.U. 2019 poz. 739",
+  "sentence": "W tych 60 dniach wyparowało o 201 mm więcej wody, niż spadło. To 47 mm poniżej progu suszy dla zbóż jarych na tej glebie.",
+  "how": "opad 33 − parowanie 233 = −201 mm (okres 4, 21.04.2023–20.06.2023) · próg z Dz.U. 2019 poz. 739",
   "disclaimer": "To nie jest urzędowe stwierdzenie suszy; we wniosku liczy się ocena SMSR IUNG dla gminy",
   "season_year": null,
-  "note": ""
+  "note": "",
+  "et_method": "fao56"
  },
+ "verdict_dg": null,
  "smsr": {
-  "state": "missing",
+  "state": "ok",
   "commune": "Dobrcz",
   "year": 2023,
-  "period_n": null,
-  "crop_label": "",
-  "soil_category": null,
-  "symbol": null,
-  "words": "",
-  "area_share_pct": null,
-  "url": "",
-  "reason": "Tu pojawi się ocena SMSR IUNG dla gminy Dobrcz w tym okresie"
+  "period_n": 4,
+  "crop_label": "Zboża jare",
+  "soil_category": "II",
+  "symbol": "+",
+  "words": "susza, zagrożone 100% powierzchni gminy",
+  "area_share_pct": 99.99,
+  "url": "https://susza.iung.pulawy.pl/wykazy/2023,0403032/",
+  "reason": ""
  },
  "crop_condition": {
   "state": "missing",
-  "words": "Tu pojawi się kondycja roślin ze zdjęć satelitarnych wobec zwykłej dla tej dekady",
+  "words": "Brak: kondycja roślin ze zdjęć satelitarnych, bo porównania z poprzednimi sezonami jeszcze nie liczymy",
+  "signal": null,
+  "season_group": null,
+  "harvest": false,
   "scene_date": null,
   "ndvi": null,
   "ndmi": null,
   "ndmi_median": null,
+  "ndvi_spread": null,
+  "clear_share": null,
+  "phase_days": null,
   "n_seasons": 0,
   "reason": "porównanie z poprzednimi sezonami jeszcze nie działa"
  },
+ "reading": "",
+ "vulnerability": {
+  "sentence": "",
+  "k": null,
+  "n": null,
+  "months": [],
+  "slope_pct": null,
+  "ndvi_dry_years": null,
+  "ndvi_dry_years_reason": "",
+  "reason": "Brak: podatności działki w 10 sezonach, bo rachunek po sezonach nie jest jeszcze włączony"
+ },
+ "off_season": null,
  "diagnosis": {
   "causes": [
    {
     "code": "malo_opadu",
-    "words": "spadło 69 mm, parowanie zabrało 272 mm",
-    "strength_mm": -203.0
+    "words": "spadło 33 mm, o 74 mm mniej niż zwykle (106 mm)",
+    "strength_mm": 73.6
+   },
+   {
+    "code": "duze_parowanie",
+    "words": "wyparowało 233 mm, o 24 mm więcej niż zwykle (209 mm)",
+    "strength_mm": 24.3
+   },
+   {
+    "code": "gleba_lekka",
+    "words": "gleba podatna na suszę (kat. II); piasku 68% w warstwie 0–30 cm",
+    "strength_mm": null
+   },
+   {
+    "code": "faza_wrazliwa",
+    "words": "w okresie 4 (−154 mm progu) susza obniża plon tej uprawy",
+    "strength_mm": null
    }
   ],
-  "usual_kbw_mm": null
+  "usual_kbw_mm": -102.8
  },
  "action_1": {
   "id": "niecka-przy-wyplywie",
   "n": 1,
   "group": "retencja",
   "title": "Niecka lub oczko przy punkcie wypływu",
-  "sentence": "Tu pojawi się zdanie z liczbami tej działki: miejsce, odległość, termin.",
-  "cause": "spadło 69 mm, parowanie zabrało 272 mm",
-  "when": "Tu pojawi się termin",
+  "sentence": "Brak: opis działania z liczbami tej działki, bo katalog działań jeszcze nie jest wczytany.",
+  "cause": "spadło 33 mm, o 74 mm mniej niż zwykle (106 mm)",
+  "causes": [],
+  "effect": "",
+  "when": "Brak: termin, bo terminów działań jeszcze nie wyliczamy",
   "due": null,
   "source": "katalog NWRM N01 · CDR 2025",
   "legal": {
@@ -404,12 +442,15 @@
   },
   "place": {
    "kind": "punkt wypływu",
-   "x_2180": 442139.33,
-   "y_2180": 601105.22,
-   "lon": 18.1320964113814,
-   "lat": 53.27196817844314,
+   "x_2180": 442134.8,
+   "y_2180": 601110.2,
+   "lon": 18.132027563497942,
+   "lat": 53.272012457524355,
    "px": null,
-   "description": "najniższy punkt obrysu"
+   "description": "najniższy punkt granicy, w północno-zachodnim narożniku",
+   "catchment_ha": null,
+   "length_m": null,
+   "direction_deg": null
   },
   "no_place_reason": "",
   "in_plan": true
@@ -417,7 +458,7 @@
  "action_1_reason": "",
  "agreement": {
   "available": false,
-  "sentence": "Tu pojawi się zgodność metody z oceną SMSR, zmierzona na gminach testowych.",
+  "sentence": "Brak: zgodność metody z oceną SMSR, bo jeszcze jej nie zmierzyliśmy na gminach testowych.",
   "k_per_100": null,
   "distance_bucket": "",
   "csi": null,
@@ -429,7 +470,12 @@
   "n_gmina_years": 84,
   "n_symbols": null,
   "table": null,
-  "baselines": {}
+  "baselines": {},
+  "accuracy": null,
+  "balanced_accuracy": null,
+  "recall": null,
+  "precision": null,
+  "accuracy_majority": null
  },
  "forecast": {
   "state": "missing",
@@ -437,32 +483,60 @@
   "k": null,
   "n": null,
   "probability": null,
-  "sentence": "Tu pojawi się szansa przekroczenia progu do końca okresu krytycznego, z jej trafnością.",
+  "sentence": "Brak: szansa przekroczenia progu do końca okresu krytycznego, bo prognozy z poprzednich sezonów jeszcze nie liczymy.",
   "skill_sentence": "",
-  "what_happened": ""
+  "what_happened": "",
+  "years_used": []
  },
  "sections": [
   {
    "id": "historia",
    "n": 1,
-   "title": "10 sezonów",
+   "title": "Podatność: 10 sezonów",
    "heading": "Ostatnie 10 sezonów na tej działce",
-   "state": "missing",
+   "state": "ready",
    "summary": [
     {
-     "text": "Tu pojawi się najgorszy bilans każdego z 10 sezonów wobec progu i liczba sezonów pod progiem.",
+     "text": "poniżej progu w ",
+     "bold": false,
+     "warn": false
+    },
+    {
+     "text": "4 z 10",
+     "bold": true,
+     "warn": false
+    },
+    {
+     "text": " sezonów (2014–2023)",
      "bold": false,
      "warn": false
     }
    ],
    "chip": "",
-   "chart_svg": "",
-   "sentences": [],
-   "how": "",
-   "advisor": [],
+   "chart_svg": "<svg class=\"ch\" viewBox=\"0 0 600 370\" role=\"img\" aria-label=\"Najgorszy okres 60 dni w 10 sezonach 2014–2023: 4 z 10 poniżej progu suszy\"><title>Najgorszy okres 60 dni w 10 sezonach 2014–2023: 4 z 10 poniżej progu suszy</title><desc>Najgorszy okres 60 dni w 10 sezonach 2014–2023: 4 z 10 poniżej progu suszy</desc><text class=\"lbl\" x=\"0.0\" y=\"22.0\" text-anchor=\"start\">Niedobór wody w najgorszym okresie sezonu, mm</text><line class=\"ax-zero\" x1=\"74.0\" y1=\"244.0\" x2=\"590.0\" y2=\"244.0\"/><rect class=\"s-warn\" x=\"83.8\" y=\"58.8\" width=\"32.0\" height=\"185.2\"/><line class=\"s-thr\" x1=\"76.6\" y1=\"56.7\" x2=\"123.0\" y2=\"56.7\"/><text class=\"lbl\" x=\"99.8\" y=\"48.7\" text-anchor=\"middle\">−186</text><text x=\"99.8\" y=\"266.0\" text-anchor=\"middle\">2014</text><rect class=\"s-dry\" x=\"135.4\" y=\"87.2\" width=\"32.0\" height=\"156.8\"/><line class=\"s-thr\" x1=\"128.2\" y1=\"95.5\" x2=\"174.6\" y2=\"95.5\"/><text class=\"lbl-dry\" x=\"151.4\" y=\"79.2\" text-anchor=\"middle\">−157</text><text x=\"151.4\" y=\"266.0\" text-anchor=\"middle\">2015</text><rect class=\"s-neu\" x=\"187.0\" y=\"134.9\" width=\"32.0\" height=\"109.1\"/><line class=\"s-thr\" x1=\"179.8\" y1=\"95.5\" x2=\"226.2\" y2=\"95.5\"/><text class=\"lbl\" x=\"203.0\" y=\"87.5\" text-anchor=\"middle\">−110</text><text x=\"203.0\" y=\"266.0\" text-anchor=\"middle\">2016</text><rect class=\"s-neu\" x=\"238.6\" y=\"126.0\" width=\"32.0\" height=\"118.0\"/><line class=\"s-thr\" x1=\"231.4\" y1=\"72.6\" x2=\"277.8\" y2=\"72.6\"/><text class=\"lbl\" x=\"254.6\" y=\"64.6\" text-anchor=\"middle\">−118</text><text x=\"254.6\" y=\"266.0\" text-anchor=\"middle\">2017</text><rect class=\"s-dry\" x=\"290.2\" y=\"60.3\" width=\"32.0\" height=\"183.7\"/><line class=\"s-thr\" x1=\"283.0\" y1=\"90.5\" x2=\"329.4\" y2=\"90.5\"/><text class=\"lbl-dry\" x=\"306.2\" y=\"52.3\" text-anchor=\"middle\">−184</text><text x=\"306.2\" y=\"266.0\" text-anchor=\"middle\">2018</text><rect class=\"s-dry\" x=\"341.8\" y=\"52.3\" width=\"32.0\" height=\"191.7\"/><line class=\"s-thr\" x1=\"334.6\" y1=\"56.7\" x2=\"381.0\" y2=\"56.7\"/><text class=\"lbl-dry\" x=\"357.8\" y=\"44.3\" text-anchor=\"middle\">−192</text><text x=\"357.8\" y=\"266.0\" text-anchor=\"middle\">2019</text><rect class=\"s-warn\" x=\"393.4\" y=\"114.6\" width=\"32.0\" height=\"129.4\"/><line class=\"s-thr\" x1=\"386.2\" y1=\"100.5\" x2=\"432.6\" y2=\"100.5\"/><text class=\"lbl\" x=\"409.4\" y=\"92.5\" text-anchor=\"middle\">−130</text><text x=\"409.4\" y=\"266.0\" text-anchor=\"middle\">2020</text><rect class=\"s-neu\" x=\"445.0\" y=\"130.1\" width=\"32.0\" height=\"113.9\"/><line class=\"s-thr\" x1=\"437.8\" y1=\"90.5\" x2=\"484.2\" y2=\"90.5\"/><text class=\"lbl\" x=\"461.0\" y=\"82.5\" text-anchor=\"middle\">−114</text><text x=\"461.0\" y=\"266.0\" text-anchor=\"middle\">2021</text><rect class=\"s-neu\" x=\"496.6\" y=\"120.9\" width=\"32.0\" height=\"123.1\"/><line class=\"s-thr\" x1=\"489.4\" y1=\"100.5\" x2=\"535.8\" y2=\"100.5\"/><text class=\"lbl\" x=\"512.6\" y=\"92.5\" text-anchor=\"middle\">−124</text><text x=\"512.6\" y=\"266.0\" text-anchor=\"middle\">2022</text><rect class=\"s-dry\" x=\"548.2\" y=\"44.0\" width=\"32.0\" height=\"200.0\"/><line class=\"s-thr\" x1=\"541.0\" y1=\"90.5\" x2=\"587.4\" y2=\"90.5\"/><text class=\"lbl-dry\" x=\"564.2\" y=\"36.0\" text-anchor=\"middle\">−201</text><text x=\"564.2\" y=\"266.0\" text-anchor=\"middle\">2023</text><text class=\"lbl-dry\" x=\"564.2\" y=\"290.0\" text-anchor=\"middle\">susza</text><text class=\"lbl-acc\" x=\"0.0\" y=\"290.0\" text-anchor=\"start\">SMSR</text><text x=\"0.0\" y=\"266.0\" text-anchor=\"start\">sezon</text><rect class=\"s-dry\" x=\"74.0\" y=\"307.0\" width=\"14.0\" height=\"14.0\"/><text x=\"96.0\" y=\"320.0\" text-anchor=\"start\">poniżej progu</text><rect class=\"s-warn\" x=\"224.0\" y=\"307.0\" width=\"14.0\" height=\"14.0\"/><text x=\"246.0\" y=\"320.0\" text-anchor=\"start\">do 15 mm nad progiem</text><rect class=\"s-neu\" x=\"434.0\" y=\"307.0\" width=\"14.0\" height=\"14.0\"/><text x=\"456.0\" y=\"320.0\" text-anchor=\"start\">dalej od progu</text><line class=\"s-thr\" x1=\"74.0\" y1=\"358.0\" x2=\"110.0\" y2=\"358.0\"/><text x=\"118.0\" y=\"364.0\" text-anchor=\"start\">próg suszy z rozporządzenia</text></svg>",
+   "sentences": [
+    "Poniżej progu suszy był najgorszy okres w 4 z 10 sezonów z lat 2014–2023.",
+    "Ten sezon jest 1. najgorszy z 10: bilans −201 mm w okresie 4.",
+    "SMSR dla gminy Dobrcz: susza w 1 z 1 ocenionych sezonów od 2020 r. (2023)."
+   ],
+   "how": "Dla każdego sezonu bierzemy okres 60 dni z najmniejszym zapasem do progu (bilans − próg), do 20.07 w danym roku, z tych samych danych o pogodzie i tą samą funkcją co werdykt. Słupek to niedobór w tym okresie (opad − parowanie), kreska to próg z Dz.U. 2019 poz. 739; kolor mówi, czy słupek sięga progu, a liczba nad słupkiem jest jego wartością. Pod rokiem: ocena SMSR dla gminy (susza albo brak suszy).",
+   "advisor": [
+    {
+     "key": "Sezony na wykresie",
+     "value": "2014–2023 (10 z 10 możliwych)"
+    },
+    {
+     "key": "Okres najgorszy w sezonie",
+     "value": "2014: okres 7, margines 2 mm, 2015: okres 3, margines −8 mm, 2016: okres 3, margines 40 mm, 2017: okres 6, margines 54 mm, 2018: okres 4, margines −30 mm, 2019: okres 7, margines −4 mm, 2020: okres 1, margines 14 mm, 2021: okres 4, margines 40 mm, 2022: okres 1, margines 20 mm, 2023: okres 4, margines −47 mm"
+    },
+    {
+     "key": "Znaczniki SMSR",
+     "value": "2023: +"
+    }
+   ],
    "actions": [],
    "waiting_for": "",
-   "reason": "Tu pojawi się najgorszy bilans każdego z 10 sezonów wobec progu i liczba sezonów pod progiem."
+   "reason": ""
   },
   {
    "id": "gmina",
@@ -472,7 +546,7 @@
    "state": "missing",
    "summary": [
     {
-     "text": "Tu pojawi się wynik SMSR dla gminy obok wyniku działki i tabela zgodności metody z SMSR.",
+     "text": "Brak: wynik SMSR dla gminy Dobrcz i tabela zgodności metody z SMSR, bo tabel SMSR jeszcze nie wczytujemy.",
      "bold": false,
      "warn": false
     }
@@ -484,29 +558,73 @@
    "advisor": [],
    "actions": [],
    "waiting_for": "",
-   "reason": "Tu pojawi się wynik SMSR dla gminy obok wyniku działki i tabela zgodności metody z SMSR."
+   "reason": "Brak: wynik SMSR dla gminy Dobrcz i tabela zgodności metody z SMSR, bo tabel SMSR jeszcze nie wczytujemy."
   },
   {
    "id": "przyczyny",
    "n": 3,
    "title": "Przyczyny",
    "heading": "Skąd ten bilans",
-   "state": "missing",
+   "state": "ready",
    "summary": [
     {
-     "text": "Tu pojawi się rozkład niedoboru: zwykły bilans, mniej opadu, więcej parowania, gleba i spadek terenu.",
+     "text": "bilans ",
+     "bold": false,
+     "warn": false
+    },
+    {
+     "text": "−201 mm",
+     "bold": true,
+     "warn": false
+    },
+    {
+     "text": ", zwykle −103 mm",
+     "bold": false,
+     "warn": false
+    },
+    {
+     "text": "; rozpoznane przyczyny: 4",
      "bold": false,
      "warn": false
     }
    ],
    "chip": "",
-   "chart_svg": "",
-   "sentences": [],
-   "how": "",
-   "advisor": [],
+   "chart_svg": "<svg class=\"ch\" viewBox=\"0 0 600 340\" role=\"img\" aria-label=\"Bilans −201 mm: zwykle −103 mm, −74 mm z opadu, −24 mm z parowania\"><title>Bilans −201 mm: zwykle −103 mm, −74 mm z opadu, −24 mm z parowania</title><desc>Bilans −201 mm: zwykle −103 mm, −74 mm z opadu, −24 mm z parowania</desc><text class=\"lbl\" x=\"20.0\" y=\"22.0\" text-anchor=\"start\">Bilans okresu, mm (0 u góry; w dół = niedobór)</text><line class=\"ax-zero\" x1=\"20.0\" y1=\"52.0\" x2=\"590.0\" y2=\"52.0\"/><rect class=\"s-neu\" x=\"51.3\" y=\"52.0\" width=\"79.8\" height=\"94.2\"/><line class=\"ax-line\" x1=\"131.2\" y1=\"146.2\" x2=\"193.8\" y2=\"146.2\"/><text class=\"lbl\" x=\"91.2\" y=\"44.0\" text-anchor=\"middle\">−103</text><text x=\"91.2\" y=\"288.0\" text-anchor=\"middle\">zwykły</text><text x=\"91.2\" y=\"310.0\" text-anchor=\"middle\">bilans</text><rect class=\"s-rain\" x=\"193.8\" y=\"146.2\" width=\"79.8\" height=\"67.5\"/><line class=\"ax-line\" x1=\"273.6\" y1=\"213.7\" x2=\"336.4\" y2=\"213.7\"/><text class=\"lbl\" x=\"233.8\" y=\"138.2\" text-anchor=\"middle\">−74</text><text x=\"233.8\" y=\"288.0\" text-anchor=\"middle\">mniej</text><text x=\"233.8\" y=\"310.0\" text-anchor=\"middle\">opadu</text><rect class=\"s-et\" x=\"336.4\" y=\"213.7\" width=\"79.8\" height=\"22.3\"/><line class=\"ax-line\" x1=\"416.1\" y1=\"236.0\" x2=\"478.9\" y2=\"236.0\"/><text class=\"lbl\" x=\"376.2\" y=\"258.0\" text-anchor=\"middle\">−24</text><text x=\"376.2\" y=\"288.0\" text-anchor=\"middle\">więcej</text><text x=\"376.2\" y=\"310.0\" text-anchor=\"middle\">parowania</text><rect class=\"s-dry\" x=\"478.9\" y=\"52.0\" width=\"79.8\" height=\"184.0\"/><text class=\"lbl-dry\" x=\"518.8\" y=\"44.0\" text-anchor=\"middle\">−201</text><text x=\"518.8\" y=\"288.0\" text-anchor=\"middle\">bilans</text><text x=\"518.8\" y=\"310.0\" text-anchor=\"middle\">w tym okresie</text><line class=\"s-thr\" x1=\"20.0\" y1=\"193.2\" x2=\"590.0\" y2=\"193.2\"/><text class=\"lbl\" x=\"20.0\" y=\"187.2\" text-anchor=\"start\">próg −154 mm</text></svg>",
+   "sentences": [
+    "W okresie 4 (21.04–20.06) bilans wynosi −201 mm, zwykle −103 mm; różnica to −98 mm.",
+    "Opad 33 mm (zwykle 106 mm) daje −74 mm tej różnicy, parowanie 233 mm (zwykle 209 mm) daje −24 mm.",
+    "Gleba podatna na suszę (kat. II); spadek terenu 1,4% (NMT), najbliższy rów 381 m od działki."
+   ],
+   "how": "Zwykły sezon to wiersz z mediany bilansu okresu 4 w 9 wcześniejszych sezonach (2014–2022); jego opad i parowanie dają ten bilans co do 0,1 mm. Składowe: opad − zwykły opad, minus (parowanie − zwykłe parowanie); razem z bilansem zwykłym dają bilans okresu.",
+   "advisor": [
+    {
+     "key": "Reguła: za mało opadu (spełniona)",
+     "value": "opad w okresie co najwyżej 85% opadu zwykłego sezonu · pewność: propozycja zespołu"
+    },
+    {
+     "key": "Reguła: duże parowanie (spełniona)",
+     "value": "parowanie w okresie co najmniej 110% parowania zwykłego sezonu · pewność: propozycja zespołu"
+    },
+    {
+     "key": "Reguła: gleba słabo trzyma wodę (spełniona)",
+     "value": "kategoria gleby I albo II (gleba bardzo podatna albo podatna na suszę) · pewność: przepis · podział na kategorie gleb: Dz.U. 2019 poz. 739"
+    },
+    {
+     "key": "Reguła: woda spływa z pola",
+     "value": "średni spadek terenu z NMT powyżej 2,0% · pewność: propozycja zespołu"
+    },
+    {
+     "key": "Reguła: uprawa w wrażliwej fazie (spełniona)",
+     "value": "rozporządzenie podaje dla tej uprawy próg w tym okresie (w okresach z „x” susza nie obniża plonu) · pewność: przepis · tabela progów: Dz.U. 2019 poz. 739"
+    },
+    {
+     "key": "Zwykły sezon",
+     "value": "mediana bilansu −103 mm z lat 2014–2022 (9 sezonów)"
+    }
+   ],
    "actions": [],
    "waiting_for": "",
-   "reason": "Tu pojawi się rozkład niedoboru: zwykły bilans, mniej opadu, więcej parowania, gleba i spadek terenu."
+   "reason": ""
   },
   {
    "id": "retencja",
@@ -526,7 +644,7 @@
      "warn": false
     },
     {
-     "text": " (najniższy punkt obrysu).",
+     "text": " (najniższy punkt granicy, w północno-zachodnim narożniku).",
      "bold": false,
      "warn": false
     }
@@ -542,9 +660,11 @@
      "n": 1,
      "group": "retencja",
      "title": "Niecka lub oczko przy punkcie wypływu",
-     "sentence": "Tu pojawi się zdanie z liczbami tej działki: miejsce, odległość, termin.",
-     "cause": "spadło 69 mm, parowanie zabrało 272 mm",
-     "when": "Tu pojawi się termin",
+     "sentence": "Brak: opis działania z liczbami tej działki, bo katalog działań jeszcze nie jest wczytany.",
+     "cause": "spadło 33 mm, o 74 mm mniej niż zwykle (106 mm)",
+     "causes": [],
+     "effect": "",
+     "when": "Brak: termin, bo terminów działań jeszcze nie wyliczamy",
      "due": null,
      "source": "katalog NWRM N01 · CDR 2025",
      "legal": {
@@ -558,19 +678,22 @@
      },
      "place": {
       "kind": "punkt wypływu",
-      "x_2180": 442139.33,
-      "y_2180": 601105.22,
-      "lon": 18.1320964113814,
-      "lat": 53.27196817844314,
+      "x_2180": 442134.8,
+      "y_2180": 601110.2,
+      "lon": 18.132027563497942,
+      "lat": 53.272012457524355,
       "px": null,
-      "description": "najniższy punkt obrysu"
+      "description": "najniższy punkt granicy, w północno-zachodnim narożniku",
+      "catchment_ha": null,
+      "length_m": null,
+      "direction_deg": null
      },
      "no_place_reason": "",
      "in_plan": true
     }
    ],
    "waiting_for": "",
-   "reason": "Tu pojawi się zbliżenie działki z miejscami działań, profil terenu i formalność z Prawa wodnego."
+   "reason": "Brak: miejsca działań na zbliżeniu działki i profil terenu, bo tych widoków jeszcze nie rysujemy."
   },
   {
    "id": "uprawa",
@@ -580,7 +703,7 @@
    "state": "missing",
    "summary": [
     {
-     "text": "Tu pojawią się zabiegi w uprawie z terminem do następnego okna suszy.",
+     "text": "Brak: zabiegi w uprawie z terminem, bo katalog działań w uprawie jeszcze nie jest wczytany.",
      "bold": false,
      "warn": false
     }
@@ -590,25 +713,9 @@
    "sentences": [],
    "how": "",
    "advisor": [],
-   "actions": [
-    {
-     "id": "uprawa-placeholder",
-     "n": 2,
-     "group": "uprawa",
-     "title": "Zabieg w uprawie",
-     "sentence": "Tu pojawi się zabieg w uprawie z terminem, dobrany do gleby i przyczyny.",
-     "cause": "spadło 69 mm, parowanie zabrało 272 mm",
-     "when": "Tu pojawi się termin",
-     "due": null,
-     "source": "Tu pojawi się źródło",
-     "legal": null,
-     "place": null,
-     "no_place_reason": "",
-     "in_plan": false
-    }
-   ],
+   "actions": [],
    "waiting_for": "",
-   "reason": "Tu pojawią się zabiegi w uprawie z terminem do następnego okna suszy."
+   "reason": "Brak: zabiegi w uprawie z terminem, bo katalog działań w uprawie jeszcze nie jest wczytany."
   },
   {
    "id": "plan",
@@ -618,7 +725,7 @@
    "state": "missing",
    "summary": [
     {
-     "text": "1 z 3",
+     "text": "1 z 1",
      "bold": true,
      "warn": false
     },
@@ -635,7 +742,7 @@
    "advisor": [],
    "actions": [],
    "waiting_for": "",
-   "reason": "Tu pojawi się oś czasu do następnego okna suszy z działaniami z sekcji 4, 5 i 7."
+   "reason": "Brak: oś czasu do następnego okna suszy, bo terminów działań jeszcze nie wyliczamy."
   },
   {
    "id": "nawadnianie",
@@ -645,7 +752,7 @@
    "state": "missing",
    "summary": [
     {
-     "text": "Tu pojawi się decyzja o nawadnianiu z dawką w mm i m³ na działkę.",
+     "text": "Brak: decyzja o nawadnianiu z dawką w mm i m³, bo reguł nawadniania jeszcze nie wczytujemy.",
      "bold": false,
      "warn": false
     }
@@ -655,25 +762,9 @@
    "sentences": [],
    "how": "",
    "advisor": [],
-   "actions": [
-    {
-     "id": "nawadnianie-placeholder",
-     "n": 3,
-     "group": "nawadnianie",
-     "title": "Decyzja o nawadnianiu",
-     "sentence": "Tu pojawi się decyzja „teraz tak / nie” z dawką w mm i m³ na działkę.",
-     "cause": "spadło 69 mm, parowanie zabrało 272 mm",
-     "when": "Tu pojawi się termin",
-     "due": null,
-     "source": "Tu pojawi się źródło",
-     "legal": null,
-     "place": null,
-     "no_place_reason": "",
-     "in_plan": false
-    }
-   ],
+   "actions": [],
    "waiting_for": "",
-   "reason": "Tu pojawi się decyzja o nawadnianiu z dawką w mm i m³ na działkę."
+   "reason": "Brak: decyzja o nawadnianiu z dawką w mm i m³, bo reguł nawadniania jeszcze nie wczytujemy."
   },
   {
    "id": "zrodla",
@@ -683,7 +774,7 @@
    "state": "ready",
    "summary": [
     {
-     "text": "8 z 8",
+     "text": "10 z 10",
      "bold": true,
      "warn": false
     },
@@ -698,7 +789,7 @@
      "warn": false
     }
    ],
-   "chip": "razem 17,6 s",
+   "chip": "razem 14,8 s",
    "chart_svg": "",
    "sentences": [
     "Raport nie uwzględnia drenowania, wód gruntowych ani faktycznej daty siewu."
@@ -729,8 +820,8 @@
    "provider": "ortofotomapa GUGiK",
    "gave": "",
    "status": "copy",
-   "elapsed_s": 0.7,
-   "retrieved_at": "2026-11-21T13:40:56+00:00",
+   "elapsed_s": 0.5,
+   "retrieved_at": "2026-11-21T18:58:01+00:00",
    "resolution": "GUGiK orthophoto, source pixel 0.25 m or better, resampled to the requested pixel size",
    "reason": "",
    "url": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=Raster&STYLES=&FORMAT=image%2Fjpeg&SRS=EPSG%3A2180&BBOX=441954.70%2C600403.34%2C442741.73%2C601466.56&WIDTH=379&HEIGHT=512"
@@ -741,9 +832,9 @@
    "provider": "Open-Meteo / IMGW",
    "gave": "",
    "status": "copy",
-   "elapsed_s": 2.4,
-   "retrieved_at": "2026-11-21T13:40:58+00:00",
-   "resolution": "IMGW-PIB station measurements (rain gauge / synoptic station), daily; NASA POWER: MERRA-2 0.5 x 0.625 deg (~50 km) meteorology, CERES 1 deg radiation, daily",
+   "elapsed_s": 2.7,
+   "retrieved_at": "2026-11-21T18:58:04+00:00",
+   "resolution": "IMGW-PIB station measurements (rain gauge / synoptic station), daily",
    "reason": "",
    "url": "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/"
   },
@@ -753,8 +844,8 @@
    "provider": "SoilGrids",
    "gave": "",
    "status": "copy",
-   "elapsed_s": 2.0,
-   "retrieved_at": "2026-11-21T13:40:57+00:00",
+   "elapsed_s": 2.3,
+   "retrieved_at": "2026-11-21T18:58:03+00:00",
    "resolution": "SoilGrids 2.0, 250 m grid, global model (not the Polish soil-agricultural map)",
    "reason": "",
    "url": "https://rest.isric.org/soilgrids/v2.0/properties/query?lon=18.13503&lat=53.27051&value=mean&property=sand&property=silt&property=clay&depth=0-5cm&depth=5-15cm&depth=15-30cm"
@@ -777,8 +868,8 @@
    "provider": "BDOT10k",
    "gave": "",
    "status": "copy",
-   "elapsed_s": 1.1,
-   "retrieved_at": "2026-11-21T13:40:56+00:00",
+   "elapsed_s": 0.6,
+   "retrieved_at": "2026-11-21T18:58:01+00:00",
    "resolution": "BDOT10k (1:10 000 topographic database) rendered by the GUGiK map service, read at 2 m pixels",
    "reason": "",
    "url": "https://mapy.geoportal.gov.pl/wss/service/pub/guest/kompozycja_BDOT10k_WMS/MapServer/WMSServer"
@@ -789,8 +880,8 @@
    "provider": "Sentinel-2",
    "gave": "",
    "status": "copy",
-   "elapsed_s": 7.7,
-   "retrieved_at": "2026-11-21T13:41:03+00:00",
+   "elapsed_s": 4.8,
+   "retrieved_at": "2026-11-21T18:58:06+00:00",
    "resolution": "Sentinel-2 L2A: 10 m (NDVI), 20 m (NDMI, cloud mask); revisit 2-5 days, clouds permitting",
    "reason": "",
    "url": "https://planetarycomputer.microsoft.com/api/stac/v1/search"
@@ -801,12 +892,36 @@
    "provider": "Open-Meteo",
    "gave": "",
    "status": "copy",
-   "elapsed_s": 0.3,
-   "retrieved_at": "2026-11-21T13:40:56+00:00",
+   "elapsed_s": 0.2,
+   "retrieved_at": "2026-11-21T18:58:01+00:00",
    "resolution": "Open-Meteo best-match weather models, grid 2-25 km, daily; skill drops after about 7 days",
    "reason": "",
    "url": "https://api.open-meteo.com/v1/forecast?latitude=53.27&longitude=18.14&forecast_days=16&daily=precipitation_sum%2Cet0_fao_evapotranspiration&timezone=Europe%2FWarsaw"
+  },
+  {
+   "key": "soil_category",
+   "label": "Kategoria gleby",
+   "provider": "IUNG-PIB, mapa podatności gleb na suszę",
+   "gave": "kat. II (8 z 9 punktów działki)",
+   "status": "copy",
+   "elapsed_s": null,
+   "retrieved_at": "2026-11-21T18:47:42+00:00",
+   "resolution": "",
+   "reason": "",
+   "url": "https://sgeo.iung.pl/geoserver/ows?layers=Susza:katgl_landuse2024"
+  },
+  {
+   "key": "smsr",
+   "label": "Ocena suszy w gminie (SMSR)",
+   "provider": "IUNG-PIB, SMSR",
+   "gave": "gmina Dobrcz, okres 4 z 2023 r.",
+   "status": "copy",
+   "elapsed_s": 0.3,
+   "retrieved_at": "2026-11-21T20:00:19+00:00",
+   "resolution": "gmina",
+   "reason": "",
+   "url": "https://susza.iung.pulawy.pl/wykazy/2023,0403032/"
   }
  ],
- "total_s": 0.0
+ "total_s": 14.8
 }

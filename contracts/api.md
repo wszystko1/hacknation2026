@@ -24,6 +24,24 @@ Wszystkie trasy GET. Parametry raportu (te same we wszystkich trasach raportu):
 | `GET /api/dzialka?lon=…&lat=…` | działka ewidencyjna zawierająca punkt WGS84 (ULDK GetParcelByXY): `{"dzialka": "040303_2.0002.189/13", "numer": "189/13", "obreb": "Dobrcz", "gmina": "Dobrcz", "pow_ha": 21.53, "obrys_4326": [[[lon, lat], …]]}` |
 | `GET /mapa/kafel/{warstwa}/{z}/{x}/{y}.jpg` | kafel 256×256 px w siatce Web Mercator (XYZ) pobrany przez serwer z WMS/WMTS GUGiK; `warstwa` = `podklad` (mapa podkładowa) albo `orto` (ortofotomapa); pamięć podręczna na dysku; bez sieci i bez kafla w kopii: 200 i jednolity kafel zastępczy (nie 404, żeby przeglądarka nie zapisała błędu w konsoli) |
 
+Nowe pola `Report` (JSON, `app/models.py`; każde jest zawsze w odpowiedzi, brak to `null`, `""` albo jawny powód „Brak: …, bo …”):
+
+| Pole | Typ | Znaczenie |
+|---|---|---|
+| `verdict_dg` | `Verdict` albo `null` | drugi wariant werdyktu, parowanie wzorem Doroszewskiego–Górskiego (`et_method: "dg"`); widok doradcy. `verdict.et_method` to `"fao56"` (domyślnie) |
+| `crop_condition.state` | `ok`, `missing`, `waiting`, `not_applicable` | `not_applicable` poza sezonem (1.X–20.III), słowa „Stan roślin: nie dotyczy poza sezonem (1.X–20.III)” |
+| `crop_condition.signal` | `weaker`, `normal` albo `null` | odczyt satelity wobec porównywalnych sezonów; `null`, gdy brak odczytu |
+| `crop_condition.season_group` | `ozime`, `jare`, `pozne`, `tuz`, `gola_gleba` albo `null` | grupa krzywej NDVI bieżącego sezonu |
+| `crop_condition.harvest` | bool | zdjęcie po zbiorze lub pokosie: „nie ocenia stresu” |
+| `crop_condition.ndvi_spread`, `clear_share`, `phase_days` | liczba albo `null` | zróżnicowanie NDVI w obrysie, udział czystych pikseli (0–1), dni od ruszenia wegetacji |
+| `reading` | tekst | jedno zdanie odczytu werdyktu i roślin naraz; `""` bez plakietki |
+| `vulnerability` | `Vulnerability` | `sentence`, `k`, `n`, `months` (`month`, `below`, `n`, `mean_deficit_mm`), `slope_pct`, `ndvi_dry_years` (zdanie albo `null`), `ndvi_dry_years_reason`, `reason` |
+| `off_season` | `OffSeason` albo `null` | poza sezonem: `season_year`, `rain_mm`, `norm_mm`, `n_years`, `sentence`, `last_season` |
+| `forecast.years_used` | lista lat | poprzednie lata, z których liczą się `k` i `n` prognozy; nigdy rok oceny |
+
+Żadne pole nie łączy trzech odpowiedzi w jedną liczbę: w odpowiedzi nie ma kluczy `score`, `risk`, `risk_index`, `ryzyko`.
+Tytuł sekcji 1 w `SECTION_ORDER` to „Podatność: 10 sezonów”.
+
 Błędy wejścia w `/api/raport`: 422 i `{"bledy": [{"field": "dzialka", "message": "Numer ma postać 040303_2.0002.189/13"}]}`.
 Pola: `dzialka`, `data`, `uprawa`, `gleba`. Działka nieznana w ULDK albo niedostępna: 422 z błędem pola `dzialka`.
 

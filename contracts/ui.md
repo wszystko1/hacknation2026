@@ -10,7 +10,7 @@ Te identyfikatory i atrybuty zostają przy każdej zmianie wyglądu (sceny w `de
 | `.ledger .sources li` | karta „Skąd są dane” | wiersz na źródło; `is-done` / `is-fallback` / `is-missing` / `is-waiting` |
 | `#werdykt`, `#plakietka`, `.big-number`, `.verdict-sentence`, `#zastrzezenie` | sekcja 0 | werdykt, liczba w mm, zdanie, stałe zastrzeżenie |
 | `#poza-sezonem` | sekcja 0 | baner „Poza okresem monitoringu suszy (21.III–30.IX)” |
-| `#wiersz-smsr`, `#wiersz-satelita`, `#dzialanie-1` | `dl.facts` pod werdyktem | ocena SMSR gminy, stan roślin, działanie nr 1 |
+| `#wiersz-smsr`, `#wiersz-satelita`, `#wiersz-odczyt`, `#wiersz-podatnosc`, `#dzialanie-1` | `dl.facts` pod werdyktem | ocena SMSR gminy, stan roślin, zdanie odczytu (wiersz tylko, gdy `report.reading` niepusty), podatność (zdanie albo powód braku), działanie nr 1 |
 | `#skrot`, `#zgodnosc-ramka`, `#skrot li a` | „Cały raport w skrócie” | ramka zgodności i 8 wierszy z linkiem `#<id sekcji>` |
 | `#historia` … `#zrodla` | sekcje 1–8 | `section` z `id` równym `SectionId` |
 | `[data-plan-switch]` | przełącznik „W planie” przy działaniu | `input type=checkbox`, `value` = numer działania |

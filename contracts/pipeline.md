@@ -13,6 +13,11 @@ Wyjątek w kroku nie przerywa raportu: jego część dostaje stan braku z powode
 | 6 | `diagnose(ctx)` | `app/advice/diagnosis.py` | `verdict`, `soil`, `data.weather`, `data.terrain` | `Diagnosis` (pusta, gdy nie ma oceny) |
 | 7 | `retention_actions(ctx)` | `app/advice/retention.py` | `diagnosis`, `runoff(...)`, `find_places(...)`, `legal_note(...)` | `list[Action]` grupy `retencja` (najwyżej 3); ustawia `ctx.flow_2180`, `ctx.outlet_2180`, `ctx.outlet_catchment_ha`, `ctx.runoff_reason` |
 | 8 | `field_actions(ctx)` | `app/advice/rules.py` | `diagnosis`, `verdict`, `soil`, `data` | `list[Action]` grup `uprawa`, `nawadnianie` (najwyżej 3 na grupę) |
+| — | `verdict_dg(ctx)` | `app/drought/variants.py` | `data.weather`, `verdict` | `Verdict` z `et_method="dg"` albo `None` (po kroku 3) |
+| — | `not_applicable()` | `app/off_season/__init__.py` | — | `CropCondition(state="not_applicable")`; `app/report.py` wstawia go za krok 5, gdy `verdict.state == "out_of_season"` |
+| — | `read_together(verdict_state, crop_condition)` | `app/crop_condition/reading.py` | `verdict.state`, `crop_condition` | zdanie odczytu albo `""` |
+| — | `assess_vulnerability(ctx)` | `app/vulnerability/__init__.py` | `request`, `data.weather`, `soil`, `slope_pct`, `data.satellite` | `Vulnerability` (z `reason`, gdy brak zdania) |
+| — | `off_season_summary(ctx)` | `app/off_season/__init__.py` | `verdict`, `data.weather`, `smsr` | `OffSeason` albo `None` poza tym okresem |
 | — | `number_actions(...)` | `app/report.py` | — | numery 1..M (retencja pierwsza, w grupie kolejność z `rank_actions`), `in_plan` z `request.plan` |
 | 9 | `forecast_exceedance(ctx)` | `app/forecast/exceedance.py` | `verdict`, `data.weather`, `data.forecast`, pliki modeli | `ExceedanceForecast` |
 | 10 | `agreement_frame(metrics, margin_mm)` | `app/validation/agreement.py` | `metrics` (z `metrics.json`) | `Agreement` |
