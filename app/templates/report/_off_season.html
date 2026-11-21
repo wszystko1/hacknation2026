@@ -1,1 +1,10 @@
 {# Out of season (1.X–20.III): the season just ended and the rain since 1 October. Filled from `report.off_season`. #}
+<div class="off-season" id="poza-sezonem-podsumowanie">
+  <dl class="facts">
+    <div id="wiersz-werdyktu-dzis"><dt>Werdykt na dziś</dt><dd>nie dotyczy poza sezonem (1.X–20.III)</dd></div>
+    {% if report.off_season %}
+    <div id="miniony-sezon"><dt>Miniony sezon {{ report.off_season.season_year }}</dt><dd>{{ report.off_season.last_season }}</dd></div>
+    {% endif %}
+  </dl>
+  {% if report.off_season %}<p class="verdict-sentence" id="opad-od-1x">{{ report.off_season.sentence }}</p>{% endif %}
+</div>

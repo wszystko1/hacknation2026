@@ -25,5 +25,12 @@ def scene(page, base_url: str) -> None:
         "kopia danych z 21.11.2026; pobranie trwało" in page.locator(".report-head .demo-data").inner_text()
     )
 
-    page.locator("#werdykt").scroll_into_view_if_needed()
+    # The summary of the season just ended and the rain since 1 October against the norm.
+    off = page.request.get(f"{base_url}/api/raport?{urlencode(PARCEL_2)}").json()["off_season"]
+    assert off["season_year"] == 2026 and off["norm_mm"] and off["n_years"] >= 5
+    assert page.locator("#wiersz-werdyktu-dzis").inner_text().count("nie dotyczy") == 1
+    sentence = page.locator("#opad-od-1x")
+    assert f"{round(off['rain_mm'])} mm" in sentence.inner_text()
+    assert f"{round(off['norm_mm'])} mm" in sentence.inner_text()
+    sentence.scroll_into_view_if_needed()
     page.wait_for_timeout(PAUSE)
