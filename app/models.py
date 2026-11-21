@@ -270,7 +270,9 @@ class LegalNote(BaseModel):
 class Place(BaseModel):
     """Where on the parcel an action goes, computed from its geometry."""
 
-    kind: str  # "punkt wypływu", "rów zadarniony", "pas konturowy", "pas trawy", "zastawka", "niecka", "rów", "zbiornik"
+    kind: (
+        str  # "punkt wypływu", "pas trawy", "uprawa w poprzek stoku", "zastawka", "niecka", "rów", "zbiornik"
+    )
     x_2180: float
     y_2180: float
     lon: float
@@ -278,6 +280,10 @@ class Place(BaseModel):
     px: tuple[float, float] | None = None  # position on the orthophoto
     description: str = ""  # "narożnik płd.-zach., przy granicy"
     catchment_ha: float | None = None  # catchment intercepted here, from the runoff analysis (margin ~300 m)
+    length_m: float | None = None  # grass strip: length of the lower boundary segment
+    direction_deg: float | None = (
+        None  # tillage across the slope: azimuth of ploughing and sowing in [0, 180)
+    )
 
 
 ActionGroup = Literal["retencja", "uprawa", "nawadnianie"]

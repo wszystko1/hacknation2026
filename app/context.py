@@ -63,9 +63,18 @@ class ReportContext:
     forecast: ExceedanceForecast | None = None
     agreement: Agreement | None = None
     extra_sources: list[SourceRow] = field(default_factory=list)  # sources fetched outside app.geodata (SMSR)
+    slope_pct: float | None = None  # slope of the plane fitted to the parcel's heights
+    downhill_deg: float | None = (
+        None  # azimuth of the fall (0 north, 90 east), for the map arrow; None when too flat
+    )
+    lower_edge_2180: list[list[float]] = field(
+        default_factory=list
+    )  # lower boundary segment, [x, y] in EPSG:2180
     flow_2180: list[list[tuple[float, float]]] = field(
         default_factory=list
-    )  # concentrated flow lines from the runoff analysis, for the map (EPSG:2180)
-    outlet_2180: tuple[float, float] | None = None  # main outlet on the boundary (runoff or lowest point)
-    outlet_catchment_ha: float | None = None  # catchment draining through that outlet
-    runoff_reason: str = ""  # "spadek 0,3% jest za mały, by wskazać linię spływu" instead of arrows
+    )  # concentrated flow lines (variant "d8" only), for the map (EPSG:2180)
+    outlet_2180: tuple[float, float] | None = (
+        None  # main outlet on the boundary (lowest point or the winning variant)
+    )
+    outlet_catchment_ha: float | None = None  # catchment draining through that outlet (variant "d8" only)
+    runoff_reason: str = ""  # "spadek 0,3% jest za mały, by wskazać dolny odcinek granicy" instead of arrows
