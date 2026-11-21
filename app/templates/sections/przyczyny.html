@@ -1,1 +1,16 @@
-{% include "sections/_section.html" %}
+{# Section 3: the generic section plus the full list of recognised causes, each with the parcel's number. #}
+{% extends "sections/_section.html" %}
+{% set labels = {
+  "malo_opadu": "Za mało opadu",
+  "duze_parowanie": "Duże parowanie",
+  "gleba_lekka": "Gleba słabo trzyma wodę",
+  "splyw": "Woda spływa z pola",
+  "faza_wrazliwa": "Uprawa w wrażliwej fazie",
+} %}
+{% block extra %}
+{% if report.diagnosis.causes %}
+<dl class="facts" id="przyczyny-lista">
+  {% for c in report.diagnosis.causes %}<div><dt>{{ labels[c.code] }}</dt><dd>{{ c.words }}</dd></div>{% endfor %}
+</dl>
+{% endif %}
+{% endblock %}
