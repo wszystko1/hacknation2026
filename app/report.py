@@ -5,7 +5,6 @@ report empty with a reason instead of breaking the whole report."""
 from __future__ import annotations
 
 import logging
-import time
 from collections.abc import Callable
 from typing import TypeVar
 
@@ -31,6 +30,7 @@ from app.models import (
     Section,
     SmsrRow,
     SoilInfo,
+    SourceRow,
     Verdict,
 )
 from app.sections import gmina as gmina_section
@@ -103,8 +103,12 @@ def build_context(req: ReportRequest) -> ReportContext:
     return ReportContext(request=req, data=data, parcel=parcel_info(data), data_copy=copy)
 
 
+def total_time_s(sources: list[SourceRow]) -> float:
+    """The one total of the report: the sum of the source rows, the same number on the map card and in section 8."""
+    return round(sum(row.elapsed_s or 0 for row in sources), 1)
+
+
 def build_report(req: ReportRequest) -> Report:
-    started = time.monotonic()
     ctx = build_context(req)
     ctx.soil = _safe(
         "soil", lambda: assess_soil(ctx), SoilInfo(category=None, source="brak", words="brak danych o glebie")
@@ -145,6 +149,7 @@ def build_report(req: ReportRequest) -> Report:
         for sid, builder in SECTION_BUILDERS
     ]
     retention = [a for a in ctx.actions if a.group == "retencja"]
+    sources = _safe("sources", lambda: source_rows(ctx), [])
     return Report(
         request=req,
         parcel=ctx.parcel,
@@ -161,6 +166,6 @@ def build_report(req: ReportRequest) -> Report:
         agreement=ctx.agreement,
         forecast=ctx.forecast,
         sections=sections,
-        sources=_safe("sources", lambda: source_rows(ctx), []),
-        total_s=round(time.monotonic() - started + ctx.data.total_ms / 1000, 1),
+        sources=sources,
+        total_s=total_time_s(sources),
     )
