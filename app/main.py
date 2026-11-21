@@ -22,10 +22,12 @@ from app.models import (
     FieldError,
     ReportRequest,
 )
+from app.picker import router as picker_router
 from app.report import ParcelUnavailable, build_report
 
 BASE = Path(__file__).parent
 app = FastAPI(title="Bilans działki")
+app.include_router(picker_router)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
 templates.env.filters.update(
