@@ -12,6 +12,7 @@ from app.context import ReportContext
 from app.geodata import SceneIndex
 from app.models import CropCondition
 
+from . import background
 from .compare import compare
 from .reading import read_together
 from .rotation import classify_season
@@ -28,13 +29,27 @@ def _by_year(readings: list[SceneIndex], before: int) -> dict[int, list[SceneInd
     return dict(years)
 
 
+def _gap(reason: str, ctx: ReportContext) -> CropCondition:
+    return compare([], {}, ctx.request.crop, ctx.request.day).model_copy(
+        update={"reason": reason, "words": f"Brak: stanu roślin ze zdjęć satelitarnych, bo {reason}"}
+    )
+
+
 def assess_crop_condition(ctx: ReportContext) -> CropCondition:
-    """History from the whole seasons of the satellite data; without them, the readings grouped by year."""
+    """Seasons from the satellite data, the frozen copy or the cache; otherwise they are computed in the
+    background and the report says "ocena roślin w toku". Without any of them: the readings grouped by year."""
     day, year = ctx.request.day, ctx.request.day.year
     result = ctx.data.satellite
-    if not result.usable or result.data is None:
+    sat = result.data if result.usable else None
+    seasons = sat.seasons if sat is not None else {}
+    if not seasons and ctx.data.parcel.usable:
+        status, seasons, reason = background.seasons_for(ctx.data.parcel.data, day)
+        if status == "waiting":
+            return CropCondition(state="waiting", words="ocena roślin w toku")
+        if status == "missing" and sat is None:
+            return _gap(reason, ctx)
+    if sat is None and not seasons:
         return compare([], {}, ctx.request.crop, day)
-    sat = result.data
-    current = sat.seasons.get(year) or ([sat.current] if sat.current else [])
-    history = {y: r for y, r in sat.seasons.items() if y < year} or _by_year(sat.history, year)
+    current = seasons.get(year) or ([sat.current] if sat is not None and sat.current else [])
+    history = {y: r for y, r in seasons.items() if y < year} or (_by_year(sat.history, year) if sat else {})
     return compare(current, history, ctx.request.crop, day)

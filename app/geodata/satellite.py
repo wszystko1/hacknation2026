@@ -22,6 +22,16 @@ RESOLUTION = "Sentinel-2 L2A: 10 m (NDVI), 20 m (NDMI, cloud mask); revisit 2-5 
 ARCHIVE_START = date(2016, 11, 2)  # first L2A scene over Poland in Earth Search
 VALID_SCL = (4, 5, 6, 7)  # vegetation, bare soil, water, unclassified
 MAX_TILE_CLOUD = 70.0
+INNER_BUFFER_M = (
+    10  # the outline is shrunk by this much before pixels are counted: edge pixels mix in the neighbours
+)
+MIN_CLEAR_SHARE = (
+    0.5  # a scene with a smaller share of clear SCL pixels inside the outline is dropped, with the reason
+)
+BASELINE_WITH_OFFSET = (
+    "04.00"  # from this processing baseline (25.01.2022) ESA adds 1000 to every digital number
+)
+SEASON_STEP_DAYS = 10  # one reading per this many days, March to September
 GDAL_ENV = {
     "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
     "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
@@ -36,7 +46,7 @@ GDAL_ENV = {
 
 
 def search_scenes(
-    lon: float, lat: float, center: date, window_days: int, deadline: float | None = None
+    lon: float, lat: float, center: date, window_days: int, deadline: float | None = None, limit: int = 50
 ) -> list[dict]:
     """STAC items within +-window_days of `center`, nearest date first (then lower cloud cover)."""
     start, end = center - timedelta(days=window_days), center + timedelta(days=window_days)
@@ -45,7 +55,7 @@ def search_scenes(
         "intersects": {"type": "Point", "coordinates": [lon, lat]},
         "datetime": f"{start.isoformat()}T00:00:00Z/{end.isoformat()}T23:59:59Z",
         "query": {"eo:cloud_cover": {"lt": MAX_TILE_CLOUD}},
-        "limit": 50,
+        "limit": limit,
     }
     resp = http.request(
         "POST", config.stac_search_url(), json=body, timeout=8.0, retries=1, deadline=deadline
@@ -100,7 +110,7 @@ def simplify_item(feature: dict, token: str = "") -> dict | None:
     baseline = str(props.get("s2:processing_baseline", "0"))
     # From baseline 04.00 ESA adds 1000 to every digital number. Earth Search marks scenes whose COGs
     # already had it removed; for the others it has to be subtracted here.
-    needs_offset = baseline >= "04.00" and not props.get("earthsearch:boa_offset_applied", False)
+    needs_offset = baseline >= BASELINE_WITH_OFFSET and not props.get("earthsearch:boa_offset_applied", False)
     return {
         "id": feature.get("id"), "date": props["datetime"][:10], "cloud": props.get("eo:cloud_cover"),
         "epsg": int(epsg) if epsg else None, "dn_offset": -1000.0 if needs_offset else 0.0,
@@ -129,7 +139,7 @@ def scene_index(
     item: dict, parcel: Parcel, target: date, pool: ThreadPoolExecutor | None = None
 ) -> SceneIndex:
     """Parcel-mean NDVI and NDMI of one scene (cached forever per parcel and scene)."""
-    key = f"{parcel.id}_{item['id']}"
+    key = f"{parcel.id}_{item['id']}_b{INNER_BUFFER_M}"
     hit = cache.get_json("satellite_scene", key)
     if hit is not None:
         return SceneIndex(**(hit | {"days_from_target": (date.fromisoformat(hit["date"]) - target).days}))
@@ -169,7 +179,10 @@ def scene_index(
         if 0 in shape:
             return np.zeros(shape, dtype=bool)
         mask = geometry_mask([geometry], out_shape=shape, transform=transform, invert=True)
-        if mask.sum() < 4:  # tiny parcel: count every touched pixel
+        inner = mask & (_edge_distance(ring, shape, transform) >= INNER_BUFFER_M)
+        if inner.sum() >= 4:
+            return inner
+        if mask.sum() < 4:  # tiny parcel (or one narrower than the buffer): count every touched pixel
             mask = geometry_mask(
                 [geometry], out_shape=shape, transform=transform, invert=True, all_touched=True
             )
@@ -188,22 +201,46 @@ def scene_index(
     nir = nir[: red.shape[0], : red.shape[1]]
     clear10 = in10 & np.isin(scl10, VALID_SCL) & (red > 0) & (nir > 0)
 
-    def mean_index(a: np.ndarray, b: np.ndarray, mask: np.ndarray) -> float | None:
+    def pixel_index(a: np.ndarray, b: np.ndarray, mask: np.ndarray) -> np.ndarray:
         if not mask.any():
-            return None
+            return np.empty(0, dtype="float32")
         a, b = reflectance(a)[mask], reflectance(b)[mask]
         total = a + b
         ok = total > 0
-        return round(float(np.mean((a[ok] - b[ok]) / total[ok])), 4) if ok.any() else None
+        return (a[ok] - b[ok]) / total[ok]
+
+    def mean_index(a: np.ndarray, b: np.ndarray, mask: np.ndarray) -> float | None:
+        values = pixel_index(a, b, mask)
+        return round(float(np.mean(values)), 4) if values.size else None
+
+    ndvi_pixels = pixel_index(nir, red, clear10)
+    spread = None
+    if ndvi_pixels.size >= 4:
+        p10, p90 = np.percentile(ndvi_pixels, [10, 90])
+        spread = round(float(p90 - p10), 4)
 
     index = SceneIndex(
         scene_id=item["id"], date=item["date"], days_from_target=(date.fromisoformat(item["date"]) - target).days,
         cloud_cover_pct=None if item["cloud"] is None else round(float(item["cloud"]), 1),
-        ndvi=mean_index(nir, red, clear10), ndmi=mean_index(nir08, swir, clear20),
+        ndvi=mean_index(nir, red, clear10), ndvi_spread=spread, ndmi=mean_index(nir08, swir, clear20),
         valid_fraction=round(float(clear20.sum()) / max(int(in20.sum()), 1), 3), pixels=int(in10.sum()),
     )  # fmt: skip
     cache.put_json("satellite_scene", key, asdict(index))
     return index
+
+
+def _edge_distance(ring: list[tuple[float, float]], shape: tuple[int, int], transform) -> np.ndarray:
+    """Distance in metres from each pixel centre to the nearest edge of the outline (scene CRS, metric)."""
+    rows, cols = np.indices(shape)
+    px = transform.c + (cols + 0.5) * transform.a + (rows + 0.5) * transform.b
+    py = transform.f + (cols + 0.5) * transform.d + (rows + 0.5) * transform.e
+    best = np.full(shape, np.inf)
+    for (x0, y0), (x1, y1) in zip(ring, ring[1:], strict=False):
+        dx, dy = x1 - x0, y1 - y0
+        length2 = dx * dx + dy * dy
+        t = np.clip(((px - x0) * dx + (py - y0) * dy) / length2, 0.0, 1.0) if length2 else 0.0
+        best = np.minimum(best, np.hypot(px - (x0 + t * dx), py - (y0 + t * dy)))
+    return best
 
 
 def _best_scene(
@@ -214,7 +251,7 @@ def _best_scene(
     deadline: float | None,
     tries: int = 4,
 ) -> SceneIndex | None:
-    """First of the nearest scenes in which at least half of the parcel is cloud-free."""
+    """First of the nearest scenes with at least MIN_CLEAR_SHARE of the shrunken outline cloud-free."""
     best: SceneIndex | None = None
     for item in items[:tries]:
         if deadline is not None and time.monotonic() > deadline:
@@ -225,7 +262,7 @@ def _best_scene(
             raise
         except Exception:  # noqa: BLE001 - a broken scene must not hide the next candidate
             continue
-        if index.ndvi is not None and index.valid_fraction >= 0.5:
+        if index.ndvi is not None and index.valid_fraction >= MIN_CLEAR_SHARE:
             return index
         if index.ndvi is not None and (best is None or index.valid_fraction > best.valid_fraction):
             best = index
@@ -260,7 +297,7 @@ def fetch_satellite(
             "satellite", "skipped", None, source_url=config.stac_search_url(), retrieved_at=now_iso(),
             resolution=RESOLUTION, notes=[f"no Sentinel-2 L2A scenes before {ARCHIVE_START.isoformat()}"],
         )  # fmt: skip
-    key = f"{parcel.id}_{target.isoformat()}_w{window_days}_h{history_years}_{history_window_days}"
+    key = f"{parcel.id}_{target.isoformat()}_w{window_days}_h{history_years}_{history_window_days}_b{INNER_BUFFER_M}"
     settled = target + timedelta(days=window_days + 5) < today
     hit = cache.get_json("satellite", key, None if settled else config.TTL_SATELLITE_RECENT)
     if hit is not None:
@@ -313,15 +350,27 @@ def fetch_satellite(
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
         band_pool.shutdown(wait=False, cancel_futures=True)
+    dropped = None
+    if current is not None and current.valid_fraction < MIN_CLEAR_SHARE:
+        dropped, current = current, None  # the scene stays out of the data and the notes say why
     if current is None and not history:
-        if current_future.done() and candidates == 0:
+        if dropped is not None:
+            notes.append(
+                f"dropped: only {dropped.valid_fraction:.0%} of the parcel is cloud-free in the nearest scene "
+                f"(at least {MIN_CLEAR_SHARE:.0%} needed)"
+            )
+        elif current_future.done() and candidates == 0:
             notes.append(f"no scene with tile cloud cover < {MAX_TILE_CLOUD:.0f}% within {window_days} days")
         else:
             notes.append("no cloud-free view of the parcel in the nearest scenes")
     elif current is None:
-        notes.append(f"no usable scene within {window_days} days of the requested date")
-    elif current.valid_fraction < 0.5:
-        notes.append(f"only {current.valid_fraction:.0%} of the parcel is cloud-free in the nearest scene")
+        if dropped is not None:
+            notes.append(
+                f"dropped: only {dropped.valid_fraction:.0%} of the parcel is cloud-free in the nearest scene "
+                f"(at least {MIN_CLEAR_SHARE:.0%} needed)"
+            )
+        else:
+            notes.append(f"no usable scene within {window_days} days of the requested date")
     if current is not None:
         notes.append(f"nearest scene is {abs(current.days_from_target)} day(s) from the requested date")
     data = Satellite(target_date=target.isoformat(), current=current, history=history, candidates=candidates)
@@ -338,3 +387,51 @@ def fetch_satellite(
         "satellite", status, data, source_url=config.stac_search_url(), retrieved_at=retrieved, resolution=RESOLUTION,
         notes=notes,
     )  # fmt: skip
+
+
+def fetch_season(
+    parcel: Parcel, year: int, until: date | None = None, deadline: float | None = None
+) -> list[SceneIndex]:
+    """Readings of one season (March-September, one per SEASON_STEP_DAYS days), cut at `until`.
+
+    The catalogue is searched in three two-month windows; in each ten-day bin the scene with the least
+    cloud on the tile is read first and the next ones only when it is not clear enough. Bins that fail are
+    left out: the season is as complete as the sky allowed.
+    """
+    lon, lat = parcel.centroid_4326
+    first, last = date(year, 3, 1), min(until or date(year, 9, 30), date(year, 9, 30))
+    items: list[dict] = []
+    for start in (date(year, 3, 1), date(year, 5, 1), date(year, 7, 1), date(year, 9, 1)):
+        end = min(start + timedelta(days=60), date(year, 9, 30))
+        if start > last:
+            break
+        middle = start + (end - start) / 2
+        items += search_scenes(lon, lat, middle, (end - start).days // 2 + 1, deadline, limit=100)
+    items = [i for i in _one_per_acquisition(items) if first <= date.fromisoformat(i["date"]) <= last]
+    bins: dict[int, list[dict]] = {}
+    for item in items:
+        offset = (date.fromisoformat(item["date"]) - first).days // SEASON_STEP_DAYS
+        bins.setdefault(offset, []).append(item)
+    for group in bins.values():
+        group.sort(key=lambda i: i["cloud"] or 0.0)
+    readings: list[SceneIndex] = []
+    band_pool = ThreadPoolExecutor(max_workers=16, thread_name_prefix="geodata-s2-band")
+    try:
+        with ThreadPoolExecutor(max_workers=6, thread_name_prefix="geodata-s2-season") as pool:
+            futures = [
+                pool.submit(_best_scene, group, parcel, first, band_pool, deadline, 2)
+                for group in bins.values()
+            ]
+            for future in futures:
+                try:
+                    reading = future.result()
+                except GeodataError:
+                    raise
+                except Exception:  # noqa: BLE001 - one broken bin must not lose the season
+                    continue
+                if reading is not None:
+                    readings.append(reading)
+    finally:
+        band_pool.shutdown(wait=False, cancel_futures=True)
+    readings.sort(key=lambda r: r.date)
+    return readings
