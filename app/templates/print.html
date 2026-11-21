@@ -1,10 +1,30 @@
 {% extends "base.html" %}
 {% block body_class %}view-doradca print-view{% endblock %}
+{% block head %}
+<style>
+  .print-photo .ledger, .print-photo .pick, .print-photo .nb-card { display: none; }
+  .print-photo .map-ui { position: static; margin-top: var(--s2); }
+  .print-photo .mapcol { position: relative; top: 0; height: auto; overflow: visible; }
+  .print-photo .map { position: relative; height: 80mm; border-radius: var(--radius-sm); overflow: hidden; }
+  .print-view .kv { grid-template-columns: minmax(0, 36%) minmax(0, 1fr); }
+  .print-view .kv dt { overflow-wrap: anywhere; padding-right: var(--s3); }
+  @media print {
+    .print-view .scroll table { display: table; width: 100%; }
+    .print-view .scroll thead { display: table-header-group; position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+    .print-view .scroll tbody { display: table-row-group; width: auto; }
+    .print-view .scroll tr { display: table-row; width: auto; padding: 0; }
+    .print-view .scroll th, .print-view .scroll td { display: table-cell; width: auto; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); }
+    .print-view .mlegend { display: block; }
+    .print-view .report .verdict { break-inside: auto; }
+  }
+</style>
+{% endblock %}
 {% block main %}
 <main id="tresc" class="page">
   <p class="banner banner--info no-print" id="druk-info"><i aria-hidden="true">i</i>Widok do druku: ten sam raport w jednej kolumnie. <button type="button" class="btn btn--ghost" id="drukuj">Drukuj lub zapisz PDF</button></p>
   <div class="report">
     {% include "report/_head.html" %}
+    <div class="print-photo" id="zdjecie-druk">{% include "report/_map.html" %}</div>
     {% include "report/_verdict.html" %}
     {% include "report/_toc.html" %}
     {% for s in report.sections %}{% include "sections/" ~ s.id ~ ".html" %}{% endfor %}
