@@ -46,11 +46,35 @@ def test_sentence_and_its_accuracy_stand_in_the_plan_section() -> None:
 
 @pytest.mark.xfail(reason="not built yet", strict=False)
 def test_date_after_the_critical_period_says_so() -> None:
-    f = report(GSM_TODAY).forecast
+    # Spring cereals: the last period with a threshold ends 10.08; 15.09 is still inside the monitoring season.
+    f = report(DOBRCZ, data="2023-09-15").forecast
     assert f.state == "period_over"
     assert f.probability is None
     assert f.sentence
     assert PLACEHOLDER not in f.sentence
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_out_of_season_chance_for_the_next_season_is_called_climatology() -> None:
+    f = report(GSM_TODAY).forecast
+    assert f.state == "ok"
+    assert f.method == "historical"
+    assert f.k is not None and f.n is not None and f.n >= 5
+    assert "klimatologi" in f.sentence.lower()
+    assert f"{f.k} z {f.n}" in f.sentence
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_past_date_leaves_the_analysis_year_out_and_shows_what_happened() -> None:
+    f = report(DOBRCZ).forecast
+    assert f.years_used
+    assert max(f.years_used) < 2023
+    assert f.what_happened
+    page = html(DOBRCZ)
+    plan = page[page.index('<section id="plan"') :]
+    plan = plan[: plan.index("</section>")]
+    assert "prognoza a co się stało" in plan.lower()
+    assert str(escape(f.what_happened)) in plan
 
 
 @pytest.mark.xfail(reason="not built yet", strict=False)

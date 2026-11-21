@@ -1,0 +1,69 @@
+{# The report of a parcel that is not in the committed copies took longer than 10 s: the photo with the outline
+   and the verdict come first, each section shows its heading and what it waits for, and replaces itself with
+   the finished section (/raport/sekcja/<id>). When all is ready, /raport/wynik replaces the header, verdict,
+   summary and map column in one answer. #}
+{% extends "base.html" %}
+{% block header %}{% endblock %}
+{% block main %}
+{% set m = first.map if first else none %}
+{% set v = first.verdict if first else none %}
+<div class="app">
+  <nav class="rail" aria-label="Menu">
+    <a class="rail-mark" href="/" aria-hidden="true" tabindex="-1"><svg viewBox="0 0 24 24"><path d="M12 2.5C9 7 6 10.4 6 14a6 6 0 0 0 12 0c0-3.6-3-7-6-11.5z"/></svg></a>
+    <a class="rail-link" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14 M5 12h14"/></svg><span class="vh">Nowa ocena</span></a>
+  </nav>
+  <div class="mapcol" id="mapa">
+    <div class="map">
+      {% if m %}
+      <img src="{{ m.image_url }}" width="{{ m.width }}" height="{{ m.height }}" alt="Ortofotomapa działki {{ first.parcel.number }}">
+      <svg viewBox="0 0 {{ m.width }} {{ m.height }}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Obrys działki {{ first.parcel.number }}">
+        {% set ring = m.outline_px[0] %}
+        {% set pts = ring | map('join', ',') | join(' ') %}
+        <path class="mo-scrim" d="M0 0H{{ m.width }}V{{ m.height }}H0Z M{{ ring | map('join', ' ') | join(' L') }}Z"/>
+        <polygon class="mo-casing" points="{{ pts }}"/>
+        <polygon class="mo-outline" points="{{ pts }}"/>
+      </svg>
+      {% else %}
+      <p class="loading">Liczę… czekam na: <b>zdjęcie działki z ortofotomapy GUGiK</b></p>
+      {% endif %}
+    </div>
+  </div>
+  <main id="tresc" class="report" aria-busy="true">
+    <header class="report-head" id="naglowek">
+      {% if first %}
+      <div class="crumb">gm. {{ first.parcel.commune }} › obręb {{ first.parcel.precinct }}</div>
+      <div class="hrow"><h1>Działka {{ first.parcel.number }}</h1></div>
+      <div class="sub">{{ first.parcel.area_ha | ha }} · {{ first.soil.words }} · {{ req.crop.value | crop_label }} · ocena na {{ req.day | day }}</div>
+      {% else %}
+      <div class="hrow"><h1>Działka {{ req.parcel_id }}</h1></div>
+      <div class="sub">{{ req.crop.value | crop_label }} · ocena na {{ req.day | day }}</div>
+      {% endif %}
+    </header>
+    <section class="verdict" id="werdykt" aria-label="Wynik">
+      {% if v and v.kbw_mm is not none %}
+      <div class="vrow">
+        {% if v.badge %}<span class="badge {{ {'below': 'badge--dry', 'above': 'badge--ok'}.get(v.state, 'badge--neutral') }}" id="plakietka">{{ v.badge }}</span>{% endif %}
+        <span class="law">definicja i próg: rozporządzenie MRiRW, Dz.U. 2019 poz. 739</span>
+      </div>
+      <div class="big-number {{ 'big-number--dry' if v.state == 'below' else '' }}">
+        <b>{{ v.kbw_mm | dec }}<small>mm</small></b>
+        <div class="cap">bilans wody w 60 dniach<br><strong>{{ v.period.start | day }}–{{ v.period.end | day }}</strong>{% if v.threshold_mm is not none %}, próg suszy <strong>{{ v.threshold_mm | mm }}</strong>{% endif %}{% if v.note %}<br>{{ v.note }}{% endif %}</div>
+      </div>
+      {% endif %}
+      {% if v %}<p id="zdanie-werdyktu" class="verdict-sentence {{ 'verdict-sentence--ok' if v.state == 'above' else '' }}">{{ v.sentence }}</p>
+      <p class="disclaimer" id="zastrzezenie">{{ v.disclaimer }}.</p>
+      {% else %}
+      <p class="loading">Liczę… czekam na: <b>pogoda i kategoria gleby dla bilansu wody</b></p>
+      {% endif %}
+      <p class="loading">Liczę… czekam na: <b>ocena SMSR dla gminy, stan roślin z satelity i działanie nr 1</b></p>
+    </section>
+    <nav class="toc" id="skrot" aria-label="Cały raport w skrócie">
+      <h2>Cały raport w skrócie</h2>
+      <p class="loading">Liczę… czekam na: <b>wyniki wszystkich ośmiu części</b></p>
+    </nav>
+    {% for p in placeholders %}{{ p }}{% endfor %}
+    <div id="wynik-trigger" hx-get="/raport/wynik?{{ query }}" hx-trigger="load" hx-swap="outerHTML"></div>
+  </main>
+</div>
+<script src="/static/plan.js" defer></script>
+{% endblock %}
