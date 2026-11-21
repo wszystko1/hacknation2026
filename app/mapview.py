@@ -51,7 +51,9 @@ class MapOverlay(MapView):
     legend: list[LegendRow] = []
     # What a click on the photo needs to turn a pixel into a point on the earth (app/static/neighbour.js):
     origin_2180: Point = (0.0, 0.0)  # EPSG:2180 (x, y) of pixel (0, 0), the top-left corner
-    corners_4326: list[Point] = []  # (lon, lat) of the top-left, top-right and bottom-left corner of the photo
+    corners_4326: list[
+        Point
+    ] = []  # (lon, lat) of the top-left, top-right and bottom-left corner of the photo
 
 
 _TO_4326 = Transformer.from_crs(2180, 4326, always_xy=True)

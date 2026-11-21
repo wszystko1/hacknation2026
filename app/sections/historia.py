@@ -1,4 +1,4 @@
-"""Section 1 "Ostatnie 10 sezonów na tej działce": the worst period of each season against the threshold."""
+"""Section 1 "Podatność: 10 sezonów": the crop chosen today on ten seasons of the parcel's weather, by month."""
 
 from __future__ import annotations
 
@@ -6,13 +6,14 @@ from app.advice.diagnosis import SEASONS, SeasonWorst, season_history, season_ye
 from app.charts.history import history_svg
 from app.context import ReportContext
 from app.fmt import day_month, dec
-from app.models import CROP_LABELS, KeyValue, Section, TextPart
+from app.models import CROP_LABELS, KeyValue, Section, TextPart, Vulnerability
 from app.sections import placeholder
 from app.smsr import FIRST_YEAR
 from app.smsr.pages import ARCHIVE_DIR, CACHE_DIR, DEMO_DIR, load_page
 from app.smsr.parser import SmsrPageError, parse_commune_page
 
-TITLE = "Ostatnie 10 sezonów na tej działce"
+TITLE = "Podatność: 10 sezonów"
+MONTHS = {3: "marzec", 4: "kwiecień", 5: "maj", 6: "czerwiec", 7: "lipiec", 8: "sierpień", 9: "wrzesień"}
 
 
 def smsr_marks(ctx: ReportContext, seasons: list[SeasonWorst]) -> dict[int, str]:
@@ -43,6 +44,15 @@ def _span(seasons: list[SeasonWorst]) -> str:
     return f"{seasons[0].year}–{seasons[-1].year}"
 
 
+def month_sentence(vuln: Vulnerability) -> str:
+    """The split by the month in which a period with a threshold ends, one clause per month."""
+    parts = []
+    for m in vuln.months:
+        deficit = f", średnio o {dec(m.mean_deficit_mm, 1)} mm" if m.mean_deficit_mm is not None else ""
+        parts.append(f"{MONTHS[m.month]}: {m.below} z {m.n}{deficit}")
+    return "Według miesięcy, w których kończą się okresy z progiem: " + "; ".join(parts) + "."
+
+
 def build(ctx: ReportContext) -> Section:
     seasons = season_history(ctx)
     if len(seasons) < 2:
@@ -67,24 +77,29 @@ def build(ctx: ReportContext) -> Section:
     section = placeholder("historia", TITLE, "")
     section.state, section.reason = "ready", ""
     section.chart_svg = history_svg(seasons, marks, label)
-    if judged:
+    vuln = ctx.vulnerability
+    told = vuln is not None and bool(vuln.sentence)
+    if told:
+        assert vuln is not None
+        section.summary = [TextPart(text=vuln.sentence)]
+    elif judged:
         section.summary = [
             TextPart(text="poniżej progu w "),
             TextPart(text=f"{len(below)} z {len(judged)}", bold=True, warn=False),
             TextPart(text=f" sezonów ({_span(seasons)})"),
         ]
+    else:
+        section.summary = [TextPart(text=f"bez progu suszy w {n} z {n} sezonów ({_span(seasons)})")]
+    if judged:
         sentences = [
             f"Poniżej progu suszy był najgorszy okres w {len(below)} z {len(judged)} sezonów z lat {_span(seasons)}."
         ]
     else:
-        section.summary = [
-            TextPart(text="bez progu suszy w "),
-            TextPart(text=f"{n} z {n}", bold=True),
-            TextPart(text=f" sezonów ({_span(seasons)})"),
-        ]
         sentences = [
             f"Dla tej uprawy rozporządzenie nie podaje progu, więc pokazujemy sam bilans {n} sezonów."
         ]
+    if vuln is not None and vuln.months:
+        sentences = [month_sentence(vuln)]
     ranked = sorted(
         seasons, key=lambda s: s.period.margin_mm if s.period.margin_mm is not None else s.period.kbw_mm
     )
