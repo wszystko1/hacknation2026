@@ -12,6 +12,7 @@
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <a class="skip" href="#tresc">Przejdź do treści</a>
+  {% block header %}
   <header class="top">
     <a class="brand" href="/">
       <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.5C9 7 6 10.4 6 14a6 6 0 0 0 12 0c0-3.6-3-7-6-11.5z"/></svg></span>
@@ -20,6 +21,7 @@
     {% block top_extra %}{% endblock %}
     <nav class="top-nav" aria-label="Menu">{% block top_nav %}<a href="/">Nowa ocena</a>{% endblock %}</nav>
   </header>
+  {% endblock %}
   {% block main %}<main class="page" id="tresc">{% block content %}{% endblock %}</main>{% endblock %}
 </body>
 </html>

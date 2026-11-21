@@ -1,5 +1,5 @@
 /* Bilans działki: "Mapa i odpowiedź". Tokens live only in :root; components take a role, never a value.
-   Layout: a sticky map column on the left (orthophoto + SVG overlay), the white report on the right.
+   Layout of the report screen: a 56 px icon rail, a sticky 560 px map column (orthophoto + SVG overlay), the report in the rest.
    Type: Inter for everything, Geist Mono for formulas, codes and times. Nothing below 16 px. */
 :root {
   /* neutrals */
@@ -29,7 +29,10 @@
   /* spacing scale and radius */
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
   --space: 16px; --radius: 12px; --radius-sm: 8px; --pill: 999px;
-  --top-h: 56px; --report-w: clamp(560px, 52vw, 820px);
+  --top-h: 56px;
+  /* report screen: icon rail, map column, the report takes the rest */
+  --rail-w: 56px; --map-w: 560px; --map-w-narrow: 44%; --report-max: 760px;
+  --rail-bg: var(--chrome); --rail-hover: rgba(255, 255, 255, .12);
 }
 
 /* ---------- base ---------- */
@@ -152,8 +155,24 @@ tr.is-key td { background: var(--accent-hover); font-weight: 600; }
 .error strong { color: var(--danger); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ---------- report screen: map left, report right ---------- */
-.split { display: grid; grid-template-columns: minmax(0, 1fr) var(--report-w); min-height: calc(100vh - var(--top-h)); }
+/* ---------- report screen: icon rail | map | report ---------- */
+.app { display: grid; grid-template-columns: var(--rail-w) var(--map-w) minmax(0, 1fr); min-height: 100vh; }
+.rail { position: sticky; top: 0; height: 100vh; z-index: 5; display: flex; flex-direction: column; align-items: center;
+  gap: var(--s2); padding: var(--s3) 0; background: var(--rail-bg); color: var(--on-dark); }
+.rail-mark { width: 40px; height: 40px; display: grid; place-items: center; margin-bottom: var(--s3); }
+.rail-mark svg { width: 24px; height: 24px; fill: var(--on-dark); }
+.rail-link { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--radius-sm); color: var(--on-dark); }
+.rail-link:hover { background: var(--rail-hover); }
+.rail-link svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rail-link:focus-visible { outline-color: var(--on-dark); }
+.app .mapcol { top: 0; height: 100vh; }
+.app .ledger > header b { white-space: nowrap; }
+.app .ledger > header span:not(.t) { flex: 1 1 0; min-width: 0; }
+.app .sources { grid-template-columns: minmax(0, 1fr); }
+.app .report-head { top: 0; }
+.app .report { background: var(--surface); }
+.app .report > * { max-width: var(--report-max); }
+.app .report > .report-head { max-width: none; padding-right: max(var(--s6), calc(100% - var(--report-max) + var(--s6))); }
 .mapcol { position: sticky; top: var(--top-h); height: calc(100vh - var(--top-h)); overflow: hidden; background: var(--map-bg); }
 .map { position: absolute; inset: 0; }
 .map > img, .map > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
@@ -423,13 +442,15 @@ details.calc pre, details.calc code { font-family: var(--font-mono); font-size: 
 .examples a b { font-weight: 650; }
 
 /* ---------- smaller screens ---------- */
-@media (max-width: 1180px) { :root { --report-w: 560px; } }
+@media (max-width: 1180px) { .app { grid-template-columns: var(--rail-w) var(--map-w-narrow) minmax(0, 1fr); } }
 @media (max-width: 860px) {
   .top { position: static; padding: 0 var(--s4); }
-  .split { display: block; }
+  .app { display: block; min-height: 0; }
+  .rail { display: none; }
+  .app .mapcol { height: auto; }
+  .app .report-head { padding-right: 18px; }
   .mapcol { position: relative; top: 0; height: auto; overflow: visible; background: var(--bg); }
-  .map { position: relative; display: flex; flex-direction: column; height: auto; overflow: hidden; background: var(--map-bg); }
-  .map > img, .map > svg { position: relative; inset: auto; height: 360px; }
+  .map { position: relative; height: 360px; overflow: hidden; background: var(--map-bg); }
   .map-ui { position: relative; order: -1; left: 0; right: 0; top: 0; padding: 10px; }
   .ledger > header { flex-wrap: wrap; row-gap: 0; }
   .ledger > header .t { margin-left: 0; }
@@ -470,7 +491,9 @@ details.calc pre, details.calc code { font-family: var(--font-mono); font-size: 
   @page { size: A4 portrait; margin: 14mm; }
   body { background: var(--surface); font-size: 12pt; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .top, .skip, .seg, .btn, button, .pick, .mlegend, .no-print, .sw input { display: none !important; }
-  .split { display: block; min-height: 0; }
+  .app { display: block; min-height: 0; }
+  .rail { display: none; }
+  .app .report > * { max-width: none; }
   .mapcol { position: relative; top: 0; height: auto; overflow: visible; background: var(--surface); }
   .map { position: relative; height: 110mm; border-radius: var(--radius-sm); overflow: hidden; }
   .ledger { position: static; box-shadow: none; border: 1px solid var(--line); margin-top: var(--s2); }

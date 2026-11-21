@@ -1,15 +1,29 @@
 {% extends "base.html" %}
 {% block body_class %}{% if report.request.view == "doradca" %}view-doradca{% endif %}{% endblock %}
+{% block header %}{% endblock %}
 {% block main %}
-<main id="tresc" class="split">
+{% set pdf_q = 'dzialka=' ~ (report.request.parcel_id | urlencode) ~ '&data=' ~ report.request.day.isoformat() ~ '&uprawa=' ~ report.request.crop.value ~ ('&plan=' ~ (report.request.plan | join(',')) if report.request.plan else '') %}
+<div class="app">
+  <nav class="rail" aria-label="Menu">
+    <a class="rail-mark" href="/" aria-hidden="true" tabindex="-1"><svg viewBox="0 0 24 24"><path d="M12 2.5C9 7 6 10.4 6 14a6 6 0 0 0 12 0c0-3.6-3-7-6-11.5z"/></svg></a>
+    <a class="rail-link" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14 M5 12h14"/></svg><span class="vh">Nowa ocena</span></a>
+    <a class="rail-link" id="pdf-rail" href="/raport/druk?{{ pdf_q }}" data-base="/raport/druk?{{ pdf_q }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z M14 3v4h4 M9.5 13h5 M9.5 17h5"/></svg><span class="vh">Raport PDF</span></a>
+    <a class="rail-link" href="#gmina"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="vh">Zgodność z SMSR</span></a>
+  </nav>
   {% include "report/_map.html" %}
-  <div class="report">
+  <main id="tresc" class="report">
     {% include "report/_head.html" %}
     {% include "report/_verdict.html" %}
     {% include "report/_toc.html" %}
     {% for s in report.sections %}{% include "sections/" ~ s.id ~ ".html" %}{% endfor %}
     <footer class="foot">Bilans działki · dane: ULDK, GUGiK, IMGW, Open-Meteo, IUNG-PIB, Copernicus · {{ report.verdict.disclaimer }}.</footer>
-  </div>
-</main>
+  </main>
+</div>
 <script src="/static/plan.js" defer></script>
+<script>
+  (function () {
+    var rail = document.getElementById("pdf-rail"), head = document.getElementById("pdf");
+    if (rail && head) rail.addEventListener("click", function () { rail.setAttribute("href", head.getAttribute("href")); });
+  })();
+</script>
 {% endblock %}
