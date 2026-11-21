@@ -87,7 +87,7 @@ def test_running_period_counts_days_and_has_no_badge() -> None:
     d, p, e = weather(date(2023, 3, 1), date(2023, 5, 1), rain=0.0, et0=4.0)
     v = assess(d, p, e, date(2023, 5, 1), CropGroup.ZBOZA_JARE, "I")
     assert v.state == "running" and v.badge == ""
-    assert v.note == "okres jeszcze trwa: 42 z 61 dni"
+    assert v.note == "okres jeszcze trwa: 41 z 61 dni"
     assert "20.05.2023" in v.sentence
 
 

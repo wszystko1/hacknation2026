@@ -6,8 +6,10 @@ The verdict compares the KBW of each finished period with the threshold for the 
 
 from __future__ import annotations
 
+import calendar
 from collections.abc import Sequence
 from datetime import date, timedelta
+from typing import Literal
 
 from app.drought.thresholds import threshold_cell, threshold_mm
 from app.fmt import day as ddmmyyyy
@@ -72,6 +74,19 @@ def period_dates(year: int, n: int) -> tuple[date, date]:
 def period_length(year: int, n: int) -> int:
     start, end = period_dates(year, n)
     return (end - start).days + 1
+
+
+def last_full_dekad_end(day: date) -> date:
+    """End of the last dekad (1-10, 11-20, 21-end of month) that is complete on `day`, `day` included."""
+    last = calendar.monthrange(day.year, day.month)[1]
+    if day.day >= last:
+        return date(day.year, day.month, last)
+    if day.day >= 20:
+        return date(day.year, day.month, 20)
+    if day.day >= 10:
+        return date(day.year, day.month, 10)
+    prev = day.replace(day=1) - timedelta(days=1)
+    return prev
 
 
 def season_of(day: date) -> tuple[int, bool]:
@@ -247,20 +262,40 @@ def assess(
     soil: SoilCategory | None,
     *,
     neighbour: SoilCategory | None = None,
+    et_method: Literal["fao56", "dg"] = "fao56",
 ) -> Verdict:
     """The verdict for the analysis day by the definition of Dz.U. 2019 poz. 739.
+
+    `et0` is the series of the evaporation formula named by `et_method` (the caller computes it). The running
+    window ends on the last full dekad, as SMSR IUNG counts it: on 15.V it is 21.III-10.V (51 days).
 
     Every finished period of the season is compared with the threshold for the crop group and soil category;
     the period with the smallest margin (KBW - threshold) is shown. Periods with more than 10% of days
     without weather data are left out and named in `note`.
     """
+    verdict = _assess(dates, precip, et0, day, crop, soil, neighbour)
+    if et_method == "dg":
+        how = f"{verdict.how} · parowanie wzorem Doroszewskiego–Górskiego" if verdict.how else ""
+        return verdict.model_copy(update={"et_method": "dg", "how": how})
+    return verdict
+
+
+def _assess(
+    dates: Sequence[str],
+    precip: Sequence[float | None],
+    et0: Sequence[float | None],
+    day: date,
+    crop: CropGroup,
+    soil: SoilCategory | None,
+    neighbour: SoilCategory | None,
+) -> Verdict:
     if not dates:
         return _no_data(
             "Brak: bilansu wody, bo nie ma danych o pogodzie dla tej działki; "
             "spróbuj za minutę albo wybierz inną datę."
         )
     year, in_season = season_of(day)
-    until = day if in_season else date(year, 9, 30)
+    until = last_full_dekad_end(day) if in_season else date(year, 9, 30)
     raw = season_balances(dates, precip, et0, year, until, crop, soil)
     # Only periods that can enter the verdict are checked: finished ones, or the running first period.
     gaps = [p for p in raw if (p.complete or p.n == 1) and not _usable(p, until)]
@@ -274,8 +309,10 @@ def assess(
     complete = [p for p in periods if p.complete]
     if not complete:
         running = periods[0] if periods else None
-        if running is None:  # unreachable inside the monitoring period; kept for type safety
-            return _no_data("Brak: bilansu wody, bo okres monitoringu jeszcze się nie zaczął.")
+        if running is None:  # 21-30 March: the first dekad of the season is not complete yet
+            return _no_data(
+                "Brak: bilansu wody, bo pierwsza dekada okresu monitoringu (21–31 marca) jeszcze się nie zakończyła."
+            )
         elapsed = (until - running.start).days + 1
         return Verdict(
             state="running",

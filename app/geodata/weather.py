@@ -168,6 +168,17 @@ def _fill_recent(series: dict, lat: float, lon: float, deadline: float | None) -
     return ""
 
 
+def _attach_temperature_and_sunshine(series: dict, lat: float, lon: float, start: date, today: date) -> None:
+    """Daily mean temperature and sunshine from the nearest IMGW synoptic stations, for the second ET variant.
+
+    Read from the local station index (no request); empty lists when the index has none or no station is near.
+    """
+    tmean = imgw.lookup("tmean", lat, lon, start, today, max_km=MAX_SYNOP_KM, max_stations=2)
+    sun = imgw.lookup("sun", lat, lon, start, today, max_km=MAX_SYNOP_KM, max_stations=2)
+    if tmean and sun and tmean["stations"] and sun["stations"]:
+        series["tmean_c"], series["sunshine_h"] = tmean["values"], sun["values"]
+
+
 def _download(lat: float, lon: float, start: date, today: date, deadline: float | None) -> dict:
     notes: list[str] = []
     days = _iso_range(start, today)
@@ -245,6 +256,7 @@ def _download(lat: float, lon: float, start: date, today: date, deadline: float 
             notes.append(f"NASA POWER not used: {power_error}")
             if not urls:
                 raise UpstreamError("; ".join(notes)) from power_error
+    _attach_temperature_and_sunshine(series, lat, lon, start, today)
     note = _fill_recent(series, lat, lon, deadline)
     if note:
         notes.append(note)
@@ -314,6 +326,7 @@ def _build(
         recent_filled_from=filled if filled and filled <= target.isoformat() else "", missing_days=missing,
         missing_share=round(missing / max(len(prec), 1), 4), precipitation_provider=p_main, et0_provider=e_main,
         precipitation_sources=p_sources, et0_sources=e_sources, precipitation_station=p_station,
+        tmean_c=s.get("tmean_c", [])[lo:hi], sunshine_h=s.get("sunshine_h", [])[lo:hi],
         precipitation_station_km=p_km, et0_station=e_station, et0_station_km=e_km, grid="; ".join(grids),
     )  # fmt: skip
     notes = list(entry["notes"]) + extra

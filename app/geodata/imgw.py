@@ -148,6 +148,7 @@ def build_index(start_year: int = DEFAULT_START_YEAR, end_year: int | None = Non
             code = row[0].strip()
             column(code, "tmax")[i] = _number(row[5], row[6])
             column(code, "tmin")[i] = _number(row[7], row[8])
+            column(code, "tmean")[i] = _number(row[9], row[10])
             column(code, "synop_precip")[i] = _number(row[13], row[14])
             column(code, "sun")[i] = _number(row[20], row[21])
         for row in _rows(path, "s_d_t_"):
@@ -161,6 +162,7 @@ def build_index(start_year: int = DEFAULT_START_YEAR, end_year: int | None = Non
 
     doy = np.array([(day0 + timedelta(days=i)).timetuple().tm_yday for i in range(n_days)], dtype="float64")
     p_codes, p_rows, e_codes, e_rows = [], [], [], []
+    t_rows, s_rows = [], []  # daily mean temperature and sunshine, one row per station of `e_codes`
     without_coords = 0
     for code, cols in sorted(series.items()):
         if code not in stations:
@@ -192,6 +194,8 @@ def build_index(start_year: int = DEFAULT_START_YEAR, end_year: int | None = Non
             if np.isfinite(et0).any():
                 e_codes.append(code)
                 e_rows.append(et0.astype("float32"))
+                t_rows.append(cols.get("tmean", np.full(n_days, np.nan, dtype="float32")))
+                s_rows.append(cols["sun"])
     if not p_rows:
         raise RuntimeError(f"no IMGW files found in {imgw_dir()}; run the imgw-sync command first")
     meta = {
@@ -203,7 +207,9 @@ def build_index(start_year: int = DEFAULT_START_YEAR, end_year: int | None = Non
     imgw_dir().mkdir(parents=True, exist_ok=True)
     tmp = index_path().with_suffix(".tmp.npz")
     np.savez(
-        tmp, precip=np.vstack(p_rows), et0=np.vstack(e_rows) if e_rows else np.zeros((0, n_days), "float32")
+        tmp, precip=np.vstack(p_rows), et0=np.vstack(e_rows) if e_rows else np.zeros((0, n_days), "float32"),
+        tmean=np.vstack(t_rows) if t_rows else np.zeros((0, n_days), "float32"),
+        sun=np.vstack(s_rows) if s_rows else np.zeros((0, n_days), "float32"),
     )
     tmp.replace(index_path())
     index_path().with_suffix(".json").write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
@@ -238,6 +244,8 @@ def load_index() -> dict | None:
             _loaded.update(
                 stamp=stamp, meta=meta, day0=date.fromisoformat(meta["day0"]),
                 precip=arrays["precip"], et0=arrays["et0"],
+                tmean=arrays["tmean"] if "tmean" in arrays else None,
+                sun=arrays["sun"] if "sun" in arrays else None,
             )  # fmt: skip
         return _loaded
 
@@ -258,15 +266,15 @@ def lookup(
 ) -> dict | None:
     """Daily values for the point: each day from the nearest station that has it.
 
-    kind: "precip" (rain gauges and synoptic stations) or "et0" (synoptic stations only).
+    kind: "precip" (rain gauges and synoptic stations) or "et0", "tmean", "sun" (synoptic stations only).
     Returns {"values": [float | None], "stations": [{"name", "code", "km", "days"}]} or None when the
     index is missing or no station lies within max_km.
     """
     index = load_index()
     if index is None:
         return None
-    listed = index["meta"][kind]
-    if not listed:
+    listed = index["meta"]["et0" if kind in ("tmean", "sun") else kind]
+    if not listed or index.get(kind) is None:
         return None
     lats, lons = np.array([s[3] for s in listed]), np.array([s[2] for s in listed])
     km = _distance_km(lat, lon, lats, lons)

@@ -1,1 +1,11 @@
 {# Advisor view: the second variant of the verdict (evaporation by Doroszewski-Górski), from `report.verdict_dg`. #}
+{% set d = report.verdict_dg %}
+{% if report.request.view == 'doradca' or request.url.path == '/raport/druk' %}
+<h4>Werdykt z parowaniem wg Doroszewskiego–Górskiego</h4>
+{% if d.badge %}<span class="badge {{ {'below': 'badge--dry', 'above': 'badge--ok'}.get(d.state, 'badge--neutral') }}" id="plakietka-dg">{{ d.badge }}</span>{% endif %}
+{% if d.kbw_mm is not none %}
+<p class="how" id="bilans-dg">Bilans {{ d.kbw_mm | dec }} mm{% if d.period %} ({{ d.period.start | day }}–{{ d.period.end | day }}){% endif %}{% if d.threshold_mm is not none %}, próg suszy {{ d.threshold_mm | mm }}{% endif %}.</p>
+{% endif %}
+<p class="how">{{ d.sentence }}</p>
+<p class="how">Źródło wzoru: Doroszewski, Górski; system SMSR opisują Doroszewski i in. 2012, „Podstawy Systemu Monitoringu Suszy Rolniczej”, IUNG-PIB. Postać wzoru: Żyłowska, Kozyra 2023, s. 67.</p>
+{% endif %}
