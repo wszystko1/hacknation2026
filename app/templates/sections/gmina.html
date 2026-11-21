@@ -1,17 +1,28 @@
-{# Section 2: SMSR for the commune next to the parcel's result; the 2x2 agreement table from metrics.json. #}
+{# Section 2: SMSR for the commune beside the parcel's result; the 2x2 table and the measures beside the trivial answer. #}
 {% set a = report.agreement %}
 <section id="gmina" aria-labelledby="h-gmina">
   <h2 class="sec-h" id="h-gmina"><span class="n">{{ s.n }}</span>{{ s.heading }}{% if s.chip %}<span class="chip">{{ s.chip }}</span>{% endif %}</h2>
-  {% if s.state != 'ready' %}<p class="empty">{{ s.reason }}</p>{% endif %}
+  {% if s.state != 'ready' %}
+  <p class="empty">{{ s.reason }}</p>
+  {% else %}
+  {% for sentence in s.sentences %}<p>{{ sentence }}</p>{% endfor %}
   <div class="cm" id="tabela-2x2" aria-label="Tabela zgodności z SMSR">
     <div class="h"></div><div class="h">SMSR: susza</div><div class="h">SMSR: brak suszy</div>
-    <div class="h">metoda: pod progiem</div><div class="v hit"><b>{{ a.table.hits if a.table else '–' }}</b><span>trafienia</span></div><div class="v bad"><b>{{ a.table.false_alarms if a.table else '–' }}</b><span>fałszywe alarmy</span></div>
-    <div class="h">metoda: nad progiem</div><div class="v bad"><b>{{ a.table.misses if a.table else '–' }}</b><span>pominięte</span></div><div class="v"><b>{{ a.table.correct_negatives if a.table else '–' }}</b><span>zgodne „brak”</span></div>
+    <div class="h">metoda: pod progiem</div><div class="v hit"><b>{{ a.table.hits | dec }}</b><span>trafienia</span></div><div class="v bad"><b>{{ a.table.false_alarms | dec }}</b><span>fałszywe alarmy</span></div>
+    <div class="h">metoda: nad progiem</div><div class="v bad"><b>{{ a.table.misses | dec }}</b><span>pominięte</span></div><div class="v"><b>{{ a.table.correct_negatives | dec }}</b><span>zgodne „brak”</span></div>
   </div>
-  <div class="nums">
-    <div><b>{{ a.csi | dec(2) if a.csi is not none else '–' }}</b><span>CSI</span></div>
-    <div><b>{{ a.pod | dec(2) if a.pod is not none else '–' }}</b><span>POD</span></div>
-    <div><b>{{ a.far | dec(2) if a.far is not none else '–' }}</b><span>FAR</span></div>
-    <div><b>{{ a.n_gmina_years if a.n_gmina_years is not none else '–' }}</b><span>gmino-lat testowych</span></div>
-  </div>
+  <table id="miary" aria-label="Miary zgodności dla suszy">
+    <thead><tr><th scope="col">Miara dla suszy</th><th scope="col">metoda</th><th scope="col">zawsze częstsza odpowiedź</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">trafność</th><td>{{ a.accuracy | pct(1) }}</td><td>{{ a.accuracy_majority | pct(1) }}</td></tr>
+      <tr><th scope="row">trafność zrównoważona</th><td>{{ a.balanced_accuracy | pct(1) }}</td><td>50,0%</td></tr>
+      <tr><th scope="row">czułość</th><td>{{ a.recall | pct(1) }}</td><td>0,0%</td></tr>
+      <tr><th scope="row">precyzja</th><td>{{ a.precision | pct(1) }}</td><td>nie do policzenia: nie wskazuje suszy</td></tr>
+    </tbody>
+  </table>
+  <p>Zmierzone na {{ a.n_gmina_years | dec }} gmino-latach testowych; susza w SMSR wystąpiła w {{ a.base_rate | pct(1) }} przypadków.</p>
+  {% if s.advisor %}
+  <div class="advisor"><b>Widok doradcy: miary zgodności wobec „zawsze susza” i klimatologii gminy</b><dl class="kv">{% set own = {'CSI': a.csi, 'POD': a.pod, 'FAR': a.far, 'Peirce': a.peirce} %}{% for kv in s.advisor %}<dt><b>{{ own[kv.key] | dec(2) }}</b><span>{{ kv.key }}</span></dt><dd>{{ kv.value }}</dd>{% endfor %}</dl></div>
+  {% endif %}
+  {% endif %}
 </section>

@@ -6,5 +6,9 @@ from demo.steps.common import PAUSE
 def scene(page, base_url: str) -> None:
     page.locator("#skrot").scroll_into_view_if_needed()
     assert page.locator("#skrot li").count() == 8
-    assert page.locator("#zgodnosc-ramka").is_visible()
+    frame = page.locator("#zgodnosc-ramka")
+    assert frame.is_visible()
+    import re
+
+    assert re.search(r"w \d+ na 100 przypadków", frame.inner_text())
     page.wait_for_timeout(PAUSE)
