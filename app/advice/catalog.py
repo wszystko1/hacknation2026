@@ -5,9 +5,10 @@ crop management, irrigation). Thresholds live in `cond_*` columns, metric units 
 not from code. A number reaches the report only through `effect_text`, which needs a document, a page, a quote and an
 address in the same row.
 
-Units of the placement thresholds: `*_m` metres, `*_pct` percent of slope, `drained` "tak"/"nie". `spi_min` is the
-number of standard deviations above the mean stream power index (SPI = ln(SCA · tan β)) of the analysed grid: the
-ACPF manual leaves the SPI value to the user and allows 2 to 5 standard deviations.
+Units of the placement thresholds: `*_m` metres, `*_pct` percent of slope, `drained` "tak"/"nie". A threshold stands
+either in the quote of a Polish source (CDR 2025, with its page) or the row says "propozycja zespołu" in `confidence`:
+the number is ours and is to be checked with an adviser. "Lower boundary segment" in a title or sentence is the part of
+the parcel outline where the fitted slope plane leaves the parcel.
 
 Sentence templates use `str.format` fields filled from the parcel: `{area_ha}`, `{slope_pct}`, `{catchment_ha}`,
 `{length_m}`, `{distance_m}`, `{n_weirs}`, `{deficit_mm}`, `{dose_mm}`, `{dose_m3}`, `{soil}`, `{place}`, `{term}`.
@@ -131,7 +132,7 @@ def _plain(value: float) -> str:
 
 
 def effect_text(row: CatalogRow) -> str:
-    """"od–do jednostka (literatura)" when the row has a full source and an effect range, else "".
+    """ "od–do jednostka (literatura)" when the row has a full source and an effect range, else "".
 
     A single value (both ends equal) reads "wartość jednostka (literatura)"; the unit says whether it is a ceiling.
     """

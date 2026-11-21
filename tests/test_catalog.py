@@ -57,29 +57,62 @@ def test_ids_are_unique_and_include_those_with_a_water_law_formality() -> None:
 def test_no_imperial_units_in_any_column() -> None:
     for name in ("catalog_retencja.csv", "catalog.csv"):
         header = next(csv.reader((ADVICE / name).open(encoding="utf-8")))
-        assert not [h for h in header if re.search(r"(^|_)(ft|feet|ac|acre|acres|in|inch|inches)(_|$)", h)], name
+        assert not [h for h in header if re.search(r"(^|_)(ft|feet|ac|acre|acres|in|inch|inches)(_|$)", h)], (
+            name
+        )
 
 
 def test_placement_thresholds_read_through_the_catalogue() -> None:
     catalog = load_catalog()
-    ditch = catalog["row-zadarniony"]
-    assert ditch.cond("length_min_m") == 50
-    assert ditch.cond("spi_min") is not None
-    contour = catalog["pas-konturowy"]
-    assert (contour.cond("slope_min_pct"), contour.cond("slope_max_pct")) == (4, 15)
+    strip = catalog["pas-trawy-przy-wyplywie"]
+    assert (strip.cond("slope_min_pct"), strip.cond("ditch_max_m")) == (0.5, 30)
+    for action_id in ("zastawka-istniejaca", "zastawka-nowa"):
+        assert catalog[action_id].cond("ditch_max_m") == 30, action_id
+    tillage = catalog["uprawa-w-poprzek-stoku"]
+    assert (tillage.cond("slope_min_pct"), tillage.cond("slope_max_pct")) == (4, 15)
+    assert catalog["niecka-przy-wyplywie"].cond("depression_min_m") == 0.2
     assert catalog["dreny-regulowany-odplyw"].cond("slope_max_pct") == 1
     assert catalog["dreny-regulowany-odplyw"].cond("nothing") is None
     assert catalog["gleboszowanie"].cond_set("soil") == ("III", "IV")
     assert catalog["mulczowanie"].cond_set("soil") == ()
 
 
-def test_acpf_rows_have_a_manual_page_and_no_copied_text() -> None:
-    for action_id in ("row-zadarniony", "pas-konturowy", "dreny-regulowany-odplyw"):
-        row = load_catalog()[action_id]
-        assert "ACPF" in row.source_doc
-        assert row.source_page.isdigit(), action_id
-        assert row.source_quote == "", action_id
-        assert effect_text(row) == ""
+def test_the_two_actions_that_replaced_the_rows_of_a_foreign_method_are_sourced_from_cdr() -> None:
+    catalog = load_catalog()
+    assert "row-zadarniony" not in catalog and "pas-konturowy" not in catalog
+    for action_id in ("pas-buforowy-wzdluz-rowu", "miedza-w-poprzek-stoku"):
+        row = catalog[action_id]
+        assert row.group == "retencja"
+        assert "CDR" in row.source_doc and row.has_full_source(), action_id
+
+
+def test_no_row_names_acpf_in_any_column() -> None:
+    for name in ("catalog_retencja.csv", "catalog.csv"):
+        assert "acpf" not in (ADVICE / name).read_text(encoding="utf-8").lower(), name
+    assert "acpf" not in (ADVICE / "catalog.py").read_text(encoding="utf-8").lower()
+
+
+def test_a_threshold_is_in_its_quote_or_the_row_is_a_team_proposal() -> None:
+    """The row's confidence is the confidence of its numbers: a number the quote does not state is ours."""
+    for row in load_catalog().values():
+        numbers = {n.replace(",", ".") for n in re.findall(r"\d+(?:[.,]\d+)?", row.source_quote)}
+        numeric = {
+            k: v for k, v in row.conditions.items() if re.fullmatch(r"-?\d+(?:[.,]\d+)?", v.replace(",", "."))
+        }
+        if not numeric or row.confidence == "propozycja zespołu":
+            continue
+        for name, value in numeric.items():
+            assert f"{float(value.replace(',', '.')):g}" in {f"{float(n):g}" for n in numbers}, (
+                row.action_id,
+                name,
+            )
+        assert row.source_page.isdigit(), row.action_id
+
+
+def test_drained_outflow_row_states_the_one_percent_slope_in_its_quote() -> None:
+    row = load_catalog()["dreny-regulowany-odplyw"]
+    assert row.source_page == "120" and "1%" in row.source_quote
+    assert row.confidence != "propozycja zespołu"
 
 
 def test_effects_only_with_a_full_source() -> None:
@@ -128,7 +161,9 @@ def _action(action_id: str, group: str, causes: int, due: date | None = None) ->
 
 
 def test_rank_puts_more_causes_first() -> None:
-    ranked = rank_actions([_action("pas-konturowy", "retencja", 1), _action("zastawka-nowa", "retencja", 3)], DAY)
+    ranked = rank_actions(
+        [_action("pas-konturowy", "retencja", 1), _action("zastawka-nowa", "retencja", 3)], DAY
+    )
     assert [a.id for a in ranked] == ["zastawka-nowa", "pas-konturowy"]
 
 
@@ -148,7 +183,10 @@ def test_rank_on_equal_causes_puts_doable_before_overdue_then_farmer_alone() -> 
 
 def test_rank_keeps_three_per_group_and_orders_groups() -> None:
     actions = [_action(f"x{i}", "uprawa", 1) for i in range(5)]
-    actions += [_action("nawadnianie-uzupelniajace", "nawadnianie", 1), _action("zastawka-nowa", "retencja", 1)]
+    actions += [
+        _action("nawadnianie-uzupelniajace", "nawadnianie", 1),
+        _action("zastawka-nowa", "retencja", 1),
+    ]
     ranked = rank_actions(actions, DAY)
     assert [a.group for a in ranked] == ["retencja", "uprawa", "uprawa", "uprawa", "nawadnianie"]
 

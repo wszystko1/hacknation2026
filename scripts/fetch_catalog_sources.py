@@ -6,9 +6,6 @@
 when the file is missing. Page numbers in the catalogue are PDF page numbers (the first page of the file is 1),
 not the numbers printed in the page footer.
 
-The ACPF manual (ArcGIS Toolbox User's Manual v7.0, Porter et al. 2025) is downloaded too. We cite its pages
-and thresholds in metric units and copy none of its text, so ACPF rows carry no quote; the test only checks that the
-stated page names the practice.
 """
 
 from __future__ import annotations
@@ -25,11 +22,7 @@ SOURCE_PDFS = {
     "https://woda.cdr.gov.pl/images/publikacje/Publikacje/Melioracje_retencja_wodna_e-poradnik_2025.pdf": (
         "cdr_melioracje_2025.pdf"
     ),
-    "https://acpf4watersheds.org/files/inline-files/Agricultural-Conservation-Planning-Toolbox-UsersManual_v7_wLinks.pdf": (
-        "acpf_manual_v7.pdf"
-    ),
 }
-ACPF_PDF = RAW_DIR / "acpf_manual_v7.pdf"
 
 
 def page_text(pdf: Path, page: int) -> str:

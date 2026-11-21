@@ -191,9 +191,29 @@ def test_runoff_is_deterministic(method: str) -> None:
 # ---------------------------------------------------------------- thresholds come from the catalogue
 
 
+# The catalogue has no grassed-waterway or contour-strip row; the placement code still honours such a row when a
+# catalogue holds one. These thresholds stand in for that row so the reading of each column stays tested.
+ROWS_NOT_IN_THE_CATALOGUE = {
+    "row-zadarniony": {"spi_min": "2", "length_min_m": "50"},
+    "pas-konturowy": {"slope_min_pct": "4", "slope_max_pct": "15"},
+}
+
+
+def catalogue_with_extra_rows() -> dict[str, catalog.CatalogRow]:
+    """The catalogue plus the rows above, built from an existing retention row with only id and thresholds changed."""
+    rows = catalog.load_catalog()
+    base = rows["uprawa-w-poprzek-stoku"]
+    extra = {
+        action_id: base.model_copy(update={"action_id": action_id, "conditions": {**base.conditions, **cond}})
+        for action_id, cond in ROWS_NOT_IN_THE_CATALOGUE.items()
+        if action_id not in rows
+    }
+    return {**rows, **extra}
+
+
 def with_condition(monkeypatch, action_id: str, **conditions: str) -> None:
     """Replace the condition columns of one catalogue row, as a changed CSV would."""
-    rows = catalog.load_catalog()
+    rows = catalogue_with_extra_rows()
     changed = rows[action_id].model_copy(update={"conditions": {**rows[action_id].conditions, **conditions}})
     monkeypatch.setattr(catalog, "load_catalog", lambda: {**rows, action_id: changed})
 
@@ -204,6 +224,8 @@ def kinds(inp: PlacementInput) -> set[str]:
 
 def test_grassed_waterway_follows_the_spi_and_length_thresholds_of_the_catalogue(monkeypatch) -> None:
     inp = make_input(make_grid(valley=True))
+    assert "rów zadarniony" not in kinds(inp)  # the catalogue has no such row
+    with_condition(monkeypatch, "row-zadarniony")
     assert "rów zadarniony" in kinds(inp)
     with_condition(monkeypatch, "row-zadarniony", spi_min="50")
     assert "rów zadarniony" not in kinds(inp)
@@ -217,6 +239,9 @@ def test_grassed_waterway_follows_the_spi_and_length_thresholds_of_the_catalogue
 
 def test_contour_strip_follows_the_slope_band_of_the_catalogue(monkeypatch) -> None:
     inp = make_input(make_grid(slope_pct=8.0), slope=8.0)
+    found = kinds(inp)
+    assert "pas konturowy" not in found and "uprawa w poprzek stoku" in found  # the catalogue has no strip row
+    with_condition(monkeypatch, "pas-konturowy")
     assert "pas konturowy" in kinds(inp) and "uprawa w poprzek stoku" in kinds(inp)
     with_condition(monkeypatch, "pas-konturowy", slope_min_pct="9", slope_max_pct="20")
     found = kinds(inp)
@@ -228,7 +253,9 @@ def test_contour_strip_follows_the_slope_band_of_the_catalogue(monkeypatch) -> N
 
 
 def test_a_replaced_reader_in_the_module_is_honoured_too(monkeypatch) -> None:
-    rows = catalog.load_catalog()
+    rows = catalogue_with_extra_rows()
+    monkeypatch.setattr(placement, "load_catalog", lambda: rows)
+    assert "pas konturowy" in kinds(make_input(make_grid(slope_pct=8.0), slope=8.0))
     changed = rows["pas-konturowy"].model_copy(
         update={"conditions": {**rows["pas-konturowy"].conditions, "slope_min_pct": "9"}}
     )
@@ -246,7 +273,8 @@ def test_weir_distance_to_the_ditch_comes_from_the_catalogue(monkeypatch) -> Non
 # ---------------------------------------------------------------- places
 
 
-def test_contour_strip_is_across_the_slope_and_carries_its_bearing() -> None:
+def test_contour_strip_is_across_the_slope_and_carries_its_bearing(monkeypatch) -> None:
+    with_condition(monkeypatch, "pas-konturowy")
     candidates = find_places(make_input(make_grid(slope_pct=8.0), slope=8.0))
     strip = next(c for c in candidates if c.kind == "pas konturowy")
     assert strip.bearing_deg == pytest.approx(
@@ -256,8 +284,10 @@ def test_contour_strip_is_across_the_slope_and_carries_its_bearing() -> None:
     assert strip.slope_pct == 8.0
 
 
-def test_waterway_reaches_are_at_least_the_catalogue_length() -> None:
+def test_waterway_reaches_are_at_least_the_catalogue_length(monkeypatch) -> None:
+    with_condition(monkeypatch, "row-zadarniony")
     min_m = catalog.load_catalog()["row-zadarniony"].cond("length_min_m")
+    assert min_m == 50.0
     ways = [c for c in find_places(make_input(make_grid(valley=True))) if c.kind == "rów zadarniony"]
     assert ways and all(c.length_m >= min_m for c in ways)
 
