@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from app.advice.legal import legal_note
 from app.advice.placement import PlacementInput, find_places
 from app.context import ReportContext
@@ -30,6 +32,10 @@ def retention_actions(ctx: ReportContext) -> list[Action]:
     inp = placement_input(ctx)
     candidates = find_places(inp) if inp else []
     outlet = next((c for c in candidates if c.kind == "punkt wypływu"), None)
+    day = ctx.request.day
+    in_season = bool(ctx.verdict and ctx.verdict.state != "out_of_season")
+    # Earthworks are done in the dormant season: out of season the deadline is the day before 21.III.
+    due = None if in_season else date(day.year + 1 if day.month >= 10 else day.year, 3, 20)
     return [
         Action(
             id="niecka-przy-wyplywie",
@@ -41,6 +47,7 @@ def retention_actions(ctx: ReportContext) -> list[Action]:
             when="Brak: termin, bo terminów działań jeszcze nie wyliczamy",
             source="katalog NWRM N01 · CDR 2025",
             legal=legal_note("niecka-przy-wyplywie"),
+            due=due,
             place=outlet.place if outlet else None,
             no_place_reason=""
             if outlet and outlet.place

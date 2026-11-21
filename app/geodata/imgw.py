@@ -207,7 +207,9 @@ def build_index(start_year: int = DEFAULT_START_YEAR, end_year: int | None = Non
     imgw_dir().mkdir(parents=True, exist_ok=True)
     tmp = index_path().with_suffix(".tmp.npz")
     np.savez(
-        tmp, precip=np.vstack(p_rows), et0=np.vstack(e_rows) if e_rows else np.zeros((0, n_days), "float32"),
+        tmp,
+        precip=np.vstack(p_rows),
+        et0=np.vstack(e_rows) if e_rows else np.zeros((0, n_days), "float32"),
         tmean=np.vstack(t_rows) if t_rows else np.zeros((0, n_days), "float32"),
         sun=np.vstack(s_rows) if s_rows else np.zeros((0, n_days), "float32"),
     )

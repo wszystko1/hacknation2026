@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from datetime import date
 from typing import TypeVar
 
 from app import datasource
@@ -15,7 +16,7 @@ from app.advice.rules import field_actions
 from app.context import ReportContext
 from app.crop_condition import assess_crop_condition
 from app.crop_condition.reading import read_together
-from app.drought.kbw import assess
+from app.drought.kbw import assess, season_of
 from app.drought.variants import verdict_dg
 from app.forecast.exceedance import forecast_exceedance
 from app.geodata import FetchResult
@@ -88,10 +89,18 @@ def parcel_info(data: FetchResult) -> ParcelInfo:
     )
 
 
-def number_actions(actions: list[Action], plan_numbers: list[int]) -> list[Action]:
-    """Numbers 1..M in report order (retention first, so action no. 1 is the top retention action)."""
+def number_actions(actions: list[Action], plan_numbers: list[int], day: date | None = None) -> list[Action]:
+    """Numbers 1..M in report order: retention, soil and crop, irrigation; inside a group the order stays as
+    `rank_actions` left it. Out of season, actions due before the season starts (21.III) come first."""
     order = {"retencja": 0, "uprawa": 1, "nawadnianie": 2}
-    ranked = sorted(actions, key=lambda a: order[a.group])
+    season_start = None
+    if day is not None and not season_of(day)[1]:
+        season_start = date(day.year + 1 if day.month >= 10 else day.year, 3, 21)
+
+    def early(a: Action) -> int:
+        return 0 if season_start and a.due is not None and a.due < season_start else 1
+
+    ranked = sorted(actions, key=lambda a: (early(a), order[a.group]))
     return [
         a.model_copy(update={"n": i, "in_plan": i in plan_numbers}) for i, a in enumerate(ranked, start=1)
     ]
@@ -153,7 +162,7 @@ def build_report(req: ReportRequest) -> Report:
     actions = _safe("retention", lambda: retention_actions(ctx), []) + _safe(
         "rules", lambda: field_actions(ctx), []
     )
-    ctx.actions = number_actions(actions, req.plan)
+    ctx.actions = number_actions(actions, req.plan, req.day)
     ctx.forecast = _safe("forecast", lambda: forecast_exceedance(ctx), ExceedanceForecast(state="missing"))
     ctx.agreement = _safe(
         "agreement",

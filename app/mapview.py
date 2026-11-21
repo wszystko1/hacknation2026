@@ -203,7 +203,10 @@ def _slope_arrow(ctx: ReportContext, outline: list[Point]) -> list[Point]:
     az = math.radians(ctx.downhill_deg)  # 0 north = up on the photo, 90 east = right
     dx, dy = math.sin(az), -math.cos(az)
     half = SLOPE_ARROW_PX / 2
-    return [(round(cx - dx * half, 1), round(cy - dy * half, 1)), (round(cx + dx * half, 1), round(cy + dy * half, 1))]
+    return [
+        (round(cx - dx * half, 1), round(cy - dy * half, 1)),
+        (round(cx + dx * half, 1), round(cy + dy * half, 1)),
+    ]
 
 
 def _lower_edge_px(ctx: ReportContext, width: int, height: int) -> list[Point]:

@@ -19,7 +19,9 @@ def inputs_file(parcel_id: str, day: str) -> Path:
     return WEATHER_INPUTS / f"{sample_stem(parcel_id, day)}.json"
 
 
-def _frozen_inputs(parcel_id: str, day: str, dates: list[str]) -> tuple[list[float | None], list[float | None]]:
+def _frozen_inputs(
+    parcel_id: str, day: str, dates: list[str]
+) -> tuple[list[float | None], list[float | None]]:
     path = inputs_file(parcel_id, day)
     if not path.is_file():
         return [], []

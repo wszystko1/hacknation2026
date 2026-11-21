@@ -1,11 +1,17 @@
-{# Section 6: the forecast sentence, the plan counter and the timeline; switches live next to each action. #}
+{# Section 6: forecast sentences, "what happened" block, the plan counter and the timeline; switches live next to each action. #}
 <section id="plan" aria-labelledby="h-plan">
   <h2 class="sec-h" id="h-plan"><span class="n">{{ s.n }}</span>{{ s.heading }}{% if s.chip %}<span class="chip">{{ s.chip }}</span>{% endif %}</h2>
-  <p class="forecast" id="prognoza">{{ report.forecast.sentence }}</p>
+  {% if s.state == 'missing' %}
+  <p class="empty">{{ s.reason }}</p>
+  {% else %}
+  {% set f = report.forecast %}
+  {% if f.state != 'missing' and f.sentence %}<p class="forecast" id="prognoza">{{ f.sentence }}</p>{% endif %}
+  {% if f.state == 'ok' and f.skill_sentence %}<p id="trafnosc-prognozy">{{ f.skill_sentence }}</p>{% endif %}
+  {% if f.state != 'missing' and f.what_happened %}
+  <div class="what-happened"><h3>Prognoza a co się stało</h3><p>{{ f.what_happened }}</p></div>
+  {% endif %}
   <p class="cnt" id="licznik-planu"><b data-plan-count>{{ report.plan_count }}</b><span>z {{ report.actions | length }} działań w planie</span></p>
-  <ol class="tl">
-    {% for a in report.actions %}
-    <li class="{{ 'is-planned' if a.in_plan else '' }}" data-plan-item="{{ a.n }}"><span>{{ a.when }}</span>{{ a.n }}. {{ a.title }}<em></em></li>
-    {% endfor %}
-  </ol>
+  {% for sentence in s.sentences %}<p>{{ sentence }}</p>{% endfor %}
+  {{ s.chart_svg | safe }}
+  {% endif %}
 </section>

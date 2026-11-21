@@ -419,7 +419,9 @@ def _due(row: CatalogRow, ctx: ReportContext, now: bool | None) -> date | None:
                 return d
             return None if in_season else _spring(ctx)
         case "nawadnianie-uzupelniajace":
-            return d if now else None
+            if now:
+                return d
+            return None if in_season else _spring(ctx)  # decided again when the season starts
     return None
 
 

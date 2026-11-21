@@ -60,7 +60,9 @@ def etp_dg_daily(
         groups[(int(d[:4]), int(d[5:7]))].append(i)
     out: list[float | None] = [None] * len(dates)
     for (year, month), idx in groups.items():
-        both = [(tmean_c[i], sunshine_h[i]) for i in idx if tmean_c[i] is not None and sunshine_h[i] is not None]
+        both = [
+            (tmean_c[i], sunshine_h[i]) for i in idx if tmean_c[i] is not None and sunshine_h[i] is not None
+        ]
         if len(both) < MIN_DAYS:
             continue
         n_days = calendar.monthrange(year, month)[1]
