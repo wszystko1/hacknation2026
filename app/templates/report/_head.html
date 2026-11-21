@@ -2,7 +2,7 @@
 {% set p = report.parcel %}
 {% set base_q = 'dzialka=' ~ (report.request.parcel_id | urlencode) ~ '&data=' ~ report.request.day.isoformat() ~ '&uprawa=' ~ report.request.crop.value ~ ('&plan=' ~ (report.request.plan | join(',')) if report.request.plan else '') %}
 <header class="report-head">
-  <div class="crumb">gm. {{ p.commune }} › obręb {{ p.precinct }}{% if report.data_copy %} <span class="demo-data">{{ report.data_copy }}</span>{% endif %}</div>
+  <div class="crumb">gm. {{ p.commune }} › obręb {{ p.precinct }}{% if report.data_copy %} <span class="demo-data">{{ report.data_copy }}; pobranie trwało {{ report.data_copy_took_s | seconds }}</span>{% endif %}</div>
   <div class="hrow">
     <h1>Działka {{ p.number }}</h1>
     <nav class="seg" aria-label="Widok">

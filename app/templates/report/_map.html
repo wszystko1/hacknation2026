@@ -32,7 +32,7 @@
     {% endif %}
   </div>
   <section class="ledger" aria-label="Skąd są dane">
-    <header><b>Skąd są dane</b><span>{% if report.data_copy %}{{ report.data_copy }}{% else %}pobrane dla tej działki{% endif %}</span><span class="t">razem {{ report.total_s | seconds }}</span></header>
+    <header><b>Skąd są dane</b><span>{% if report.data_copy %}{{ report.data_copy }}; pobranie trwało {{ report.data_copy_took_s | seconds }}{% else %}pobrane dla tej działki{% endif %}</span><span class="t">razem {{ report.total_s | seconds }}</span></header>
     <ul class="sources">
       {% for r in report.sources %}
       <li class="is-{{ {'ok': 'done', 'copy': 'done', 'fallback': 'fallback', 'missing': 'missing', 'waiting': 'waiting'}[r.status] }}">

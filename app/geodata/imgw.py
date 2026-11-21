@@ -11,6 +11,7 @@ import csv
 import io
 import json
 import math
+import os
 import re
 import threading
 import time
@@ -32,7 +33,9 @@ _loaded: dict = {}
 
 
 def imgw_dir() -> Path:
-    return config.cache_dir().parent / "imgw"
+    """Station archive and index: GEODATA_IMGW_DIR, else `imgw` next to the cache directory."""
+    env = os.environ.get("GEODATA_IMGW_DIR")
+    return Path(env) if env else config.cache_dir().parent / "imgw"
 
 
 def index_path() -> Path:

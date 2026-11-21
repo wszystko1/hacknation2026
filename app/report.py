@@ -149,6 +149,7 @@ def build_report(req: ReportRequest) -> Report:
         request=req,
         parcel=ctx.parcel,
         data_copy=ctx.data_copy,
+        data_copy_took_s=datasource.original_download_s(ctx.data) if ctx.data_copy else None,
         map=_safe("map", lambda: map_view(ctx), None),
         soil=ctx.soil,
         verdict=ctx.verdict,

@@ -73,6 +73,11 @@ def set_offline(value: bool | None) -> None:
     _offline_override = value
 
 
+def imgw_only_weather() -> bool:
+    """GEODATA_WEATHER=imgw skips the Open-Meteo archive, so a series does not depend on its daily limit."""
+    return os.environ.get("GEODATA_WEATHER", "").strip().lower() == "imgw"
+
+
 def stac_provider() -> str:
     name = os.environ.get("GEODATA_STAC", "planetary-computer").strip().lower()
     return name if name in STAC_URLS else "planetary-computer"
@@ -91,3 +96,8 @@ EUCROPMAP_URL = (
     "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EUCROPMAP/2022/EU_CropMap_22_v1_stratum_EU27-HR.tif"
 )
 TIMEOUTS.update({"water": 10.0, "forecast": 6.0, "seasonal": 6.0, "crop_hint": 8.0})
+
+# Sources that run in the background of a live request: the report waits for them only this long after the
+# others have answered; they keep running up to BACKGROUND_S and land in the cache for the next request.
+BACKGROUND_GRACE_S = 2.0
+BACKGROUND_S = 60.0

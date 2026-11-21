@@ -25,6 +25,9 @@ ALL_SOURCES = (
     "parcel", "weather", "ortho", "soil", "satellite", "terrain", "water", "forecast", "seasonal", "crop_hint",
 )  # fmt: skip
 CORE_SOURCES = ("parcel", "weather")
+# Fetched when `sources` is not given. The 183-day seasonal outlook is not part of the report and the crop
+# hint (a 6.8 GiB map read through a window) is cut, so both stay available as functions but are not called.
+DEFAULT_SOURCES = tuple(n for n in ALL_SOURCES if n not in ("seasonal", "crop_hint"))
 DEFAULT_URLS = {
     "parcel": config.ULDK_URL, "weather": config.OPEN_METEO_ARCHIVE_URL, "ortho": config.ORTHO_WMS_URL,
     "soil": config.SOILGRIDS_URL, "satellite": config.stac_search_url(), "terrain": config.NMT_POINTS_URL,
@@ -87,6 +90,7 @@ def fetch_all(
     ortho_m_per_px: float | None = None,
     ortho_max_px: int = 1024,
     history_years: int = 3,
+    background: tuple[str, ...] = (),
 ) -> FetchResult:
     """Fetch everything known about a parcel for a date. Never raises for data or network problems.
 
@@ -94,7 +98,10 @@ def fetch_all(
     date: day of the analysis (datetime.date or "YYYY-MM-DD"), today or earlier.
     budget_s: total wall-clock limit; sources still running at that moment get status `timeout`
         (their downloads finish in the background and land in the cache for the next call).
-    sources: subset of ALL_SOURCES to run; the rest get status `skipped`. Parcel always runs.
+    sources: subset of ALL_SOURCES to run (default DEFAULT_SOURCES); the rest get status `skipped`. Parcel always runs.
+    background: sources that do not hold the answer back: after the others have answered they get
+        BACKGROUND_GRACE_S more seconds; if still running they report `timeout` and finish up to
+        BACKGROUND_S in a daemon thread, so the next call finds them in the cache.
     offline: serve only from the cache (None = follow GEODATA_OFFLINE).
     Raises only InvalidParcelId / ValueError for malformed input.
     """
@@ -106,7 +113,7 @@ def fetch_all(
     if parcel_id is None and lonlat is None:
         raise InvalidParcelId("give a parcel identifier or lonlat=(lon, lat)")
     pid = normalize_parcel_id(parcel_id) if parcel_id is not None else ""
-    wanted = set(sources or ALL_SOURCES) | {"parcel"}
+    wanted = set(sources or DEFAULT_SOURCES) | {"parcel"}
     previous = config._offline_override
     if offline is not None:
         config.set_offline(offline)
@@ -128,6 +135,9 @@ def fetch_all(
             lon, lat = parcel.centroid_4326
             now = time.monotonic()
             limits = {n: min(total_deadline, now + config.TIMEOUTS[n]) for n in others}
+            for n in background:
+                if n in limits:
+                    limits[n] = now + config.BACKGROUND_S
             calls: dict[str, Callable[[], SourceResult[Any]]] = {
                 "weather": lambda: fetch_weather(lat, lon, target, deadline=limits["weather"]),
                 "ortho": lambda: fetch_ortho(
@@ -145,9 +155,15 @@ def fetch_all(
             }
             tasks = {n: _Task(n, calls[n]) for n in others if n in wanted}
             for name in others:
-                if name in tasks:
+                if name in tasks and name not in background:
                     results[name] = tasks[name].collect(limits[name])
-                else:
+            grace = min(total_deadline, time.monotonic() + config.BACKGROUND_GRACE_S)
+            for name in others:
+                if name in tasks and name in background:
+                    results[name] = tasks[name].collect(grace)
+                    if results[name].status == "timeout":
+                        results[name].error = "pobieranie trwa w tle; odśwież raport za chwilę"
+                elif name not in tasks:
                     results[name] = _empty(name, "skipped", 0, note="not requested")
     finally:
         if offline is not None:

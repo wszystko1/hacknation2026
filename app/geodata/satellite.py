@@ -57,7 +57,19 @@ def search_scenes(
     items = [i for i in items if i is not None]
     # Nearest first, but a cloudy tile is pushed back: 10 points of cloud cover count like 2 days.
     items.sort(key=lambda i: abs((date.fromisoformat(i["date"]) - center).days) + 0.2 * (i["cloud"] or 0.0))
-    return items
+    return _one_per_acquisition(items)
+
+
+def _one_per_acquisition(items: list[dict]) -> list[dict]:
+    """The catalogue lists a scene once per reprocessing (id ends with the processing time); keep the first of each."""
+    seen: set[str] = set()
+    unique = []
+    for item in items:
+        acquisition = str(item["id"]).rsplit("_", 1)[0]
+        if acquisition not in seen:
+            seen.add(acquisition)
+            unique.append(item)
+    return unique
 
 
 _token: dict = {"value": "", "expires": 0.0}

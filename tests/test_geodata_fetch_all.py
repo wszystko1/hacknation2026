@@ -19,10 +19,17 @@ def test_all_sources_report_status_time_url_and_timestamp(net):
         assert res.source_url.startswith("https://") and res.retrieved_at
     assert result.parcel.status == "ok" and result.weather.status == "ok" and result.ortho.status == "ok"
     assert result.terrain.status == "ok" and result.water.status == "ok" and result.forecast.status == "ok"
-    assert result.crop_hint.status == "error"  # the crop map is not reachable in tests
+    # the 183-day outlook and the crop hint are cut from the report: fetch_all does not call them
+    assert result.seasonal.status == "skipped" and result.crop_hint.status == "skipped"
+    assert net.count("seasonal-api") == 0 and net.count("jeodpp") == 0
     payload = json.loads(json.dumps(result.to_dict()))
     assert payload["core_ok"] is True and payload["ortho"]["data"]["image"] is None
     assert payload["weather"]["data"]["dates"][-1] == "2016-12-31"
+
+
+def test_seasonal_outlook_is_fetched_only_when_asked_for(net):
+    asked = fetch_all(PID, "2016-12-31", sources=("seasonal",))
+    assert asked.seasonal.status == "ok" and net.count("seasonal-api") == 1
 
 
 def test_second_call_is_served_from_disk_without_network(net):

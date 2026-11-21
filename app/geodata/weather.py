@@ -86,6 +86,8 @@ def _fetch_archive(
     lat: float, lon: float, start: date, end: date, deadline: float | None
 ) -> tuple[dict, str]:
     global _archive_blocked_until
+    if config.imgw_only_weather():
+        raise UpstreamError("Open-Meteo archive not used: GEODATA_WEATHER=imgw")
     if time.monotonic() < _archive_blocked_until:
         raise UpstreamError("Open-Meteo archive skipped: rate limit reported earlier in this process")
     params = {

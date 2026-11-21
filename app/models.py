@@ -401,6 +401,7 @@ class Report(BaseModel):
     request: ReportRequest
     parcel: ParcelInfo
     data_copy: str | None = None  # "kopia danych z 21.11.2026" when the data come from a frozen copy
+    data_copy_took_s: float | None = None  # how long the original download of the copy took
     map: MapView | None = None
     soil: SoilInfo
     verdict: Verdict
