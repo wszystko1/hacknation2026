@@ -42,6 +42,12 @@ class MapOverlay(MapView):
     outlet_label_xy: Point | None = None  # top-left of the label's background box
     outlet_label_w: float = 0.0
     runoff_reason: str = ""  # shown instead of flow arrows: "spadek 0,3% jest za mały, …"
+    slope_arrow_px: list[Point] = []  # tail and tip of the arrow along the fall, from the parcel's centre
+    slope_head_px: list[Point] = []
+    slope_label: str = ""  # "spadek 2,0%"
+    slope_label_xy: Point | None = None
+    slope_label_w: float = 0.0
+    lower_edge_px: list[Point] = []  # the lower boundary segment, a thick line
     legend: list[LegendRow] = []
     # What a click on the photo needs to turn a pixel into a point on the earth (app/static/neighbour.js):
     origin_2180: Point = (0.0, 0.0)  # EPSG:2180 (x, y) of pixel (0, 0), the top-left corner
@@ -182,6 +188,29 @@ def _outlet(ctx: ReportContext) -> Point | None:
     return None
 
 
+SLOPE_ARROW_PX = 70.0
+NO_SLOPE_SENTENCE = "spadek działki nie jest wyznaczony: brak modelu terenu dla tej działki"
+
+
+def _slope_arrow(ctx: ReportContext, outline: list[Point]) -> list[Point]:
+    """Tail (centre of the outline's box) and tip of the arrow that points downhill; empty when the fall is unknown."""
+    if ctx.downhill_deg is None:
+        return []
+    xs, ys = [p[0] for p in outline], [p[1] for p in outline]
+    cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+    az = math.radians(ctx.downhill_deg)  # 0 north = up on the photo, 90 east = right
+    dx, dy = math.sin(az), -math.cos(az)
+    half = SLOPE_ARROW_PX / 2
+    return [(round(cx - dx * half, 1), round(cy - dy * half, 1)), (round(cx + dx * half, 1), round(cy + dy * half, 1))]
+
+
+def _lower_edge_px(ctx: ReportContext, width: int, height: int) -> list[Point]:
+    if ctx.downhill_deg is None:
+        return []
+    px = [p for p in (to_px(ctx, x, y) for x, y in ctx.lower_edge_2180) if p is not None]
+    return px if len(px) >= 2 and _in_image(px, width, height) else []
+
+
 def _box(text: str, anchor: Point, offset: Point, width: int, height: int) -> tuple[Point, float]:
     """Top-left of a label box next to `anchor`, moved so that the box stays inside the photo."""
     w = round(len(text) * LABEL_CHAR_W + 16, 1)
@@ -197,6 +226,14 @@ def map_view(ctx: ReportContext) -> MapOverlay | None:
     outline = [[(float(c), float(r)) for c, r in ring] for ring in o.polygon_px]
     outlet = _outlet(ctx)
     flow = _flow_lines(ctx, o.width, o.height)
+    arrow = _slope_arrow(ctx, outline[0])
+    arrow_head_px = (arrow_head(arrow) or []) if arrow else []
+    lower = _lower_edge_px(ctx, o.width, o.height)
+    slope_label = f"spadek {dec(ctx.slope_pct, 1)}%" if arrow and ctx.slope_pct is not None else ""
+    slope_label_xy, slope_label_w = (
+        _box(slope_label, arrow[1], (12, -LABEL_H - 4), o.width, o.height) if slope_label else (None, 0.0)
+    )
+    reason = "" if arrow else (ctx.runoff_reason or NO_SLOPE_SENTENCE)
     heads = [h for h in (arrow_head(line) for line in flow) if h]
     ditches, basins = _water(ctx, o.width, o.height)
     markers = []
@@ -220,6 +257,10 @@ def map_view(ctx: ReportContext) -> MapOverlay | None:
     legend = [LegendRow(symbol="outline", text=f"obrys działki {label}")]
     if outlet and not any(m.kind == "punkt wypływu" for m in markers):
         legend.append(LegendRow(symbol="outlet", text="punkt wypływu"))
+    if arrow:
+        legend.append(LegendRow(symbol="slope", text="kierunek spadku"))
+    if lower:
+        legend.append(LegendRow(symbol="edge", text="dolny odcinek granicy"))
     if flow:
         legend.append(LegendRow(symbol="flow", text="linia spływu wody"))
     if ditches:
@@ -249,7 +290,13 @@ def map_view(ctx: ReportContext) -> MapOverlay | None:
         outlet_label=outlet_label,
         outlet_label_xy=outlet_label_xy,
         outlet_label_w=outlet_label_w,
-        runoff_reason=ctx.runoff_reason,
+        runoff_reason=reason,
+        slope_arrow_px=arrow,
+        slope_head_px=arrow_head_px,
+        slope_label=slope_label,
+        slope_label_xy=slope_label_xy,
+        slope_label_w=slope_label_w,
+        lower_edge_px=lower,
         legend=legend,
         origin_2180=origin,
         corners_4326=[(round(lon, 7), round(lat, 7)) for lon, lat in corners],

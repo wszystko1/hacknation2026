@@ -5,6 +5,11 @@
   .map[data-neighbour] { cursor: pointer; }
   .mo-neighbour-casing { fill: none; stroke: var(--casing); stroke-width: 7; stroke-linejoin: round; }
   .mo-neighbour { fill: none; stroke: var(--outline); stroke-width: 3; stroke-linejoin: round; stroke-dasharray: 12 8; }
+  .mo-slope-casing { fill: none; stroke: var(--flow-casing); stroke-width: 9; stroke-linecap: round; }
+  .mo-slope { fill: none; stroke: var(--outline); stroke-width: 5; stroke-linecap: round; }
+  .mo-slope-head { fill: var(--outline); stroke: var(--flow-casing); stroke-width: 2; stroke-linejoin: round; }
+  .mo-lower-edge { fill: none; stroke: var(--strip); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+  .map-reason { margin: var(--s2) 0 0; font-size: var(--fs-base); }
   .nb-card { margin: 0; padding: var(--s3) var(--s4); background: var(--card-on-map); color: var(--text); border-radius: var(--radius);
     box-shadow: var(--shadow-map); font-size: var(--fs-base); max-width: 100%; }
   .nb-card[hidden] { display: none; }
@@ -39,6 +44,19 @@
       <rect class="mo-label-bg" x="{{ m.outlet_label_xy[0] }}" y="{{ m.outlet_label_xy[1] }}" width="{{ m.outlet_label_w }}" height="30" rx="6"/>
       <text class="mo-label-sub" x="{{ m.outlet_label_xy[0] + 8 }}" y="{{ m.outlet_label_xy[1] + 21 }}">{{ m.outlet_label }}</text>
       {% endif %}
+      {% if m.lower_edge_px %}
+      <polyline class="mo-strip-casing" points="{{ m.lower_edge_px | map('join', ',') | join(' ') }}"/>
+      <polyline class="mo-lower-edge" points="{{ m.lower_edge_px | map('join', ',') | join(' ') }}"/>
+      {% endif %}
+      {% if m.slope_arrow_px %}
+      <polyline class="mo-slope-casing" points="{{ m.slope_arrow_px | map('join', ',') | join(' ') }}"/>
+      <polyline class="mo-slope" points="{{ m.slope_arrow_px | map('join', ',') | join(' ') }}"/>
+      <polygon class="mo-slope-head" points="{{ m.slope_head_px | map('join', ',') | join(' ') }}"/>
+      {% endif %}
+      {% if m.slope_label and m.slope_label_xy %}
+      <rect class="mo-label-bg" x="{{ m.slope_label_xy[0] }}" y="{{ m.slope_label_xy[1] }}" width="{{ m.slope_label_w }}" height="30" rx="6"/>
+      <text class="mo-label-sub" x="{{ m.slope_label_xy[0] + 8 }}" y="{{ m.slope_label_xy[1] + 21 }}">{{ m.slope_label }}</text>
+      {% endif %}
       {% for k in m.markers %}
       <circle class="mo-marker" cx="{{ k.x }}" cy="{{ k.y }}" r="15"/>
       <text class="mo-marker-text" x="{{ k.x }}" y="{{ k.y + 6 }}">{{ k.n }}</text>
@@ -48,6 +66,7 @@
     <div class="empty">Brak zdjęcia działki: ortofotomapa GUGiK nie odpowiedziała.</div>
     {% endif %}
   </div>
+  {% if m and m.runoff_reason %}<p class="map-reason">Spływ wody: {{ m.runoff_reason }}</p>{% endif %}
   <div class="map-ui">
     {% include "report/_pick.html" %}
     {% if m %}<div class="nb-card" data-nb-card role="status" aria-live="polite" hidden></div>{% endif %}
@@ -55,9 +74,8 @@
     <div class="mlegend">
       <b>Warstwa na mapie</b>
       {% for r in m.legend %}
-      <div>{% if r.symbol == 'number' %}<span class="nb">{{ r.n }}</span>{% elif r.symbol in ('flow', 'line') %}<span class="ar"></span>{% else %}<span class="nb nb--off">&nbsp;</span>{% endif %}{{ r.text }}</div>
+      <div>{% if r.symbol == 'number' %}<span class="nb">{{ r.n }}</span>{% elif r.symbol in ('flow', 'line', 'slope', 'edge') %}<span class="ar"></span>{% else %}<span class="nb nb--off">&nbsp;</span>{% endif %}{{ r.text }}</div>
       {% endfor %}
-      {% if m.runoff_reason %}<div>Spływ wody: {{ m.runoff_reason }}</div>{% endif %}
     </div>
     {% endif %}
   </div>
