@@ -240,7 +240,7 @@ class Cause(BaseModel):
 
 
 class Diagnosis(BaseModel):
-    """Causes, strongest first. Empty when there is no assessment (then there are no recommendations)."""
+    """Every cause whose rule holds, strongest first. Empty when there is no assessment (then no recommendations)."""
 
     causes: list[Cause] = Field(default_factory=list)
     usual_kbw_mm: float | None = None  # median balance of the same period in earlier seasons
@@ -270,13 +270,14 @@ class LegalNote(BaseModel):
 class Place(BaseModel):
     """Where on the parcel an action goes, computed from its geometry."""
 
-    kind: str  # "punkt wypływu", "rów", "linia spływu", "zbiornik"
+    kind: str  # "punkt wypływu", "rów zadarniony", "pas konturowy", "pas trawy", "zastawka", "niecka", "rów", "zbiornik"
     x_2180: float
     y_2180: float
     lon: float
     lat: float
     px: tuple[float, float] | None = None  # position on the orthophoto
     description: str = ""  # "narożnik płd.-zach., przy granicy"
+    catchment_ha: float | None = None  # catchment intercepted here, from the runoff analysis (margin ~300 m)
 
 
 ActionGroup = Literal["retencja", "uprawa", "nawadnianie"]
@@ -288,7 +289,9 @@ class Action(BaseModel):
     group: ActionGroup
     title: str
     sentence: str  # with this parcel's numbers
-    cause: str  # the diagnosed cause it answers
+    cause: str  # the diagnosed cause it answers first (one of `causes`)
+    causes: list[str] = Field(default_factory=list)  # Cause.words of every diagnosed cause it answers
+    effect: str = ""  # literature range from a catalogue row with source and quote, "… (literatura)"; else ""
     when: str  # "po żniwach, do 15.09.2023"
     due: date | None = None  # deadline that places the action on the plan's timeline
     source: str  # "katalog NWRM N01 · CDR 2025"
@@ -325,6 +328,12 @@ class Agreement(BaseModel):
     n_symbols: int | None = None
     table: ConfusionTable | None = None
     baselines: dict[str, float] = Field(default_factory=dict)  # name -> CSI
+    # measures for the farmer, each read next to accuracy_majority ("zawsze częstsza odpowiedź")
+    accuracy: float | None = None
+    balanced_accuracy: float | None = None
+    recall: float | None = None
+    precision: float | None = None
+    accuracy_majority: float | None = None
 
 
 class ExceedanceForecast(BaseModel):

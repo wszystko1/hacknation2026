@@ -27,7 +27,7 @@ EXPECTED = {
     "przebudowa-rowu": ("powiadomienie Wód Polskich", "art. 395 pkt 15"),
     "niecka-przy-wyplywie": ("zgłoszenie", "art. 394 ust. 1 pkt 9"),
     "pobor-wody-nawadnianie": ("pozwolenie wodnoprawne", "art. 34 pkt 12"),
-    "zastawka-nowa": ("sprawdź w Wodach Polskich", ""),
+    "zastawka-nowa": ("powiadomienie Wód Polskich", "art. 395a"),  # a weir rebuilds the ditch to hold water
 }
 
 
@@ -73,3 +73,10 @@ def test_report_shows_the_formality_with_its_article_in_the_retention_section() 
     assert "Prawo wodne" in section
     assert any(f in section for f in FORMALITIES)
     assert "art. " in section or "sprawdź w Wodach Polskich" in section
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+@pytest.mark.parametrize("action_id", ["zastawka-istniejaca", "zastawka-nowa"])
+def test_weirs_warn_to_lower_the_water_level_in_wet_periods(action_id: str) -> None:
+    warning = " ".join(legal_note(action_id).extra).lower()
+    assert "obniż" in warning and "mokr" in warning, warning

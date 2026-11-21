@@ -65,4 +65,7 @@ class ReportContext:
     extra_sources: list[SourceRow] = field(default_factory=list)  # sources fetched outside app.geodata (SMSR)
     flow_2180: list[list[tuple[float, float]]] = field(
         default_factory=list
-    )  # flow lines for the map (EPSG:2180)
+    )  # concentrated flow lines from the runoff analysis, for the map (EPSG:2180)
+    outlet_2180: tuple[float, float] | None = None  # main outlet on the boundary (runoff or lowest point)
+    outlet_catchment_ha: float | None = None  # catchment draining through that outlet
+    runoff_reason: str = ""  # "spadek 0,3% jest za mały, by wskazać linię spływu" instead of arrows

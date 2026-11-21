@@ -140,3 +140,36 @@ def test_flat_parcel_without_ditch_gets_brak_miejsca_with_reason() -> None:
 def test_advisor_view_calls_rule_thresholds_team_proposals() -> None:
     page = html(DOBRCZ, widok="doradca")
     assert "propozycja zespołu" in page or "propozycje zespołu" in page
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_actions_answering_more_causes_rank_higher_in_their_group() -> None:
+    r = report()
+    causes = {c.words for c in r.diagnosis.causes}
+    for group in ("retencja", "uprawa", "nawadnianie"):
+        actions = [a for a in r.actions if a.group == group]
+        for a in actions:
+            assert a.causes and set(a.causes) <= causes and a.cause in a.causes, (a.id, a.causes)
+        counts = [len(a.causes) for a in actions]
+        assert counts == sorted(counts, reverse=True), (group, counts)
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_at_most_three_actions_per_group() -> None:
+    r = report()
+    for group in ("retencja", "uprawa", "nawadnianie"):
+        assert len([a for a in r.actions if a.group == group]) <= 3, group
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_recognised_causes_with_numbers_stand_above_the_actions() -> None:
+    from markupsafe import escape
+
+    r = report()
+    assert len(r.diagnosis.causes) >= 2  # every rule that holds gives a cause, not only the strongest one
+    page = html()
+    retention = page.index('id="retencja"')
+    for c in r.diagnosis.causes:
+        assert re.search(r"\d", c.words), c.words
+        pos = page.find(str(escape(c.words)))
+        assert 0 <= pos < retention, c.words
