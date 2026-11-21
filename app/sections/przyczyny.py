@@ -11,5 +11,5 @@ def build(ctx: ReportContext) -> Section:
     return placeholder(
         "przyczyny",
         "Skąd ten bilans",
-        "Tu pojawi się rozkład niedoboru: zwykły bilans, mniej opadu, więcej parowania, gleba i spadek terenu.",
+        "Brak: rozkład niedoboru na przyczyny, bo rozkładu bilansu jeszcze nie liczymy.",
     )

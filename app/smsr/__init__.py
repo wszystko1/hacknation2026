@@ -7,18 +7,18 @@ from app.models import SmsrRow
 
 
 def smsr_row(ctx: ReportContext) -> SmsrRow:
-    """Skeleton: the row is a placeholder; the parser of susza.iung.pulawy.pl/wykazy comes next."""
+    """The row for the commune and year; until the parser of susza.iung.pulawy.pl/wykazy exists it says what is missing."""
     year = ctx.request.day.year
     if year < 2020:
         return SmsrRow(
             state="before_2020",
             commune=ctx.parcel.commune,
             year=year,
-            reason="SMSR publikuje tabele gmin od 2020 r.",
+            reason="Brak: ocena SMSR, bo SMSR publikuje tabele gmin dopiero od 2020 r.",
         )
     return SmsrRow(
         state="missing",
         commune=ctx.parcel.commune,
         year=year,
-        reason=f"Tu pojawi się ocena SMSR IUNG dla gminy {ctx.parcel.commune} w tym okresie",
+        reason=f"Brak: ocena SMSR dla gminy {ctx.parcel.commune}, bo tabel SMSR jeszcze nie wczytujemy",
     )

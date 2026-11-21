@@ -64,7 +64,7 @@ def agreement_frame(metrics: dict[str, Any], margin_mm: float | None) -> Agreeme
     if csi is None:
         return Agreement(
             available=False,
-            sentence="Tu pojawi się zgodność metody z oceną SMSR, zmierzona na gminach testowych.",
+            sentence="Brak: zgodność metody z oceną SMSR, bo jeszcze jej nie zmierzyliśmy na gminach testowych.",
             base_rate=metrics.get("smsr.base_rate"),
             n_gmina_years=metrics.get("smsr.n_gmina_years"),
         )

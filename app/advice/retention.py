@@ -24,7 +24,7 @@ def placement_input(ctx: ReportContext) -> PlacementInput | None:
 
 
 def retention_actions(ctx: ReportContext) -> list[Action]:
-    """Skeleton: one action at the outlet point; the full rule set from the action catalogue comes next."""
+    """One action at the outlet point; its sentence and term say what is missing until the action catalogue exists."""
     if ctx.diagnosis is None or not ctx.diagnosis.causes:
         return []
     inp = placement_input(ctx)
@@ -36,9 +36,9 @@ def retention_actions(ctx: ReportContext) -> list[Action]:
             n=0,
             group="retencja",
             title="Niecka lub oczko przy punkcie wypływu",
-            sentence="Tu pojawi się zdanie z liczbami tej działki: miejsce, odległość, termin.",
+            sentence="Brak: opis działania z liczbami tej działki, bo katalog działań jeszcze nie jest wczytany.",
             cause=ctx.diagnosis.causes[0].words,
-            when="Tu pojawi się termin",
+            when="Brak: termin, bo terminów działań jeszcze nie wyliczamy",
             source="katalog NWRM N01 · CDR 2025",
             legal=legal_note("niecka-przy-wyplywie"),
             place=outlet.place if outlet else None,

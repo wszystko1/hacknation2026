@@ -11,7 +11,7 @@ def build(ctx: ReportContext) -> Section:
     section = placeholder(
         "uprawa",
         "Uprawa gleby, która trzyma wodę",
-        "Tu pojawią się zabiegi w uprawie z terminem do następnego okna suszy.",
+        "Brak: zabiegi w uprawie z terminem, bo katalog działań w uprawie jeszcze nie jest wczytany.",
     )
     section.actions = [a for a in ctx.actions if a.group == "uprawa"]
     return section

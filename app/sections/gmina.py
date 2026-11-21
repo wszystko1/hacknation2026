@@ -11,5 +11,5 @@ def build(ctx: ReportContext) -> Section:
     return placeholder(
         "gmina",
         "Gmina i trafność metody",
-        "Tu pojawi się wynik SMSR dla gminy obok wyniku działki i tabela zgodności metody z SMSR.",
+        f"Brak: wynik SMSR dla gminy {ctx.parcel.commune} i tabela zgodności metody z SMSR, bo tabel SMSR jeszcze nie wczytujemy.",
     )

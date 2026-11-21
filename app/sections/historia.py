@@ -11,5 +11,5 @@ def build(ctx: ReportContext) -> Section:
     return placeholder(
         "historia",
         "Ostatnie 10 sezonów na tej działce",
-        "Tu pojawi się najgorszy bilans każdego z 10 sezonów wobec progu i liczba sezonów pod progiem.",
+        "Brak: bilans 10 ostatnich sezonów wobec progu, bo historii sezonów jeszcze nie liczymy.",
     )

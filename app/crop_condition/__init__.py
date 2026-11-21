@@ -14,11 +14,11 @@ def compare(
 ) -> CropCondition:
     """NDMI of `current` vs the median NDMI of `history` (same dekads, earlier seasons), read with the crop phase.
 
-    Skeleton: a placeholder; the comparison and the crop phase come next.
+    The comparison is not built yet: the result states what is missing and why.
     """
     return CropCondition(
         state="missing",
-        words="Tu pojawi się kondycja roślin ze zdjęć satelitarnych wobec zwykłej dla tej dekady",
+        words="Brak: kondycja roślin ze zdjęć satelitarnych, bo porównania z poprzednimi sezonami jeszcze nie liczymy",
         reason="porównanie z poprzednimi sezonami jeszcze nie działa",
     )
 

@@ -8,8 +8,8 @@ from app.models import ExceedanceForecast
 
 
 def forecast_exceedance(ctx: ReportContext) -> ExceedanceForecast:
-    """Skeleton: a placeholder; the historical frequency and the analog runs come next."""
+    """Not built yet: the state is `missing` and the sentence says what is missing and why."""
     return ExceedanceForecast(
         state="missing",
-        sentence="Tu pojawi się szansa przekroczenia progu do końca okresu krytycznego, z jej trafnością.",
+        sentence="Brak: szansa przekroczenia progu do końca okresu krytycznego, bo prognozy z poprzednich sezonów jeszcze nie liczymy.",
     )

@@ -12,7 +12,7 @@ _FUTURE = re.compile(r"^Tu pojaw(?:i się|ią się)\s+", re.IGNORECASE)
 def empty_sentence(what: str) -> str:
     """One sentence of the empty state: "Brak: <what> bo <why>."
 
-    A caller that already wrote "Brak: ..." is kept as it is. A promise ("Tu pojawi się X") is turned
+    A caller that already wrote "Brak: ..." is kept as it is. A future-tense promise of X is turned
     into the missing thing ("Brak: X"), so no page ever announces something that is not there.
     """
     text = what.strip()

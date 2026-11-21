@@ -11,7 +11,7 @@ def build(ctx: ReportContext) -> Section:
     section = placeholder(
         "plan",
         "Plan działań i termin",
-        "Tu pojawi się oś czasu do następnego okna suszy z działaniami z sekcji 4, 5 i 7.",
+        "Brak: oś czasu do następnego okna suszy, bo terminów działań jeszcze nie wyliczamy.",
     )
     planned = sum(1 for a in ctx.actions if a.in_plan)
     section.summary = [

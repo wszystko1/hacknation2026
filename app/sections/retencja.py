@@ -11,7 +11,7 @@ def build(ctx: ReportContext) -> Section:
     section = placeholder(
         "retencja",
         "Gdzie zatrzymać wodę na działce",
-        "Tu pojawi się zbliżenie działki z miejscami działań, profil terenu i formalność z Prawa wodnego.",
+        "Brak: miejsca działań na zbliżeniu działki i profil terenu, bo tych widoków jeszcze nie rysujemy.",
     )
     section.actions = [a for a in ctx.actions if a.group == "retencja"]
     placed = [a for a in section.actions if a.place]

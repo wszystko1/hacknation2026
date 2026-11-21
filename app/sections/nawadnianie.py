@@ -9,7 +9,9 @@ from app.sections import placeholder
 
 def build(ctx: ReportContext) -> Section:
     section = placeholder(
-        "nawadnianie", "Czy nawadniać", "Tu pojawi się decyzja o nawadnianiu z dawką w mm i m³ na działkę."
+        "nawadnianie",
+        "Czy nawadniać",
+        "Brak: decyzja o nawadnianiu z dawką w mm i m³, bo reguł nawadniania jeszcze nie wczytujemy.",
     )
     section.actions = [a for a in ctx.actions if a.group == "nawadnianie"]
     return section
