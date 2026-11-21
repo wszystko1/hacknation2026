@@ -57,8 +57,10 @@ def test_missing_parts_carry_the_gap_sentence_in_the_report() -> None:
     r = report()
     for sentence in (r.forecast.sentence, r.agreement.sentence, r.crop_condition.words):
         assert sentence.startswith("Brak:") and " bo " in sentence
-    assert r.smsr.state == "missing"
-    assert r.smsr.reason == "Brak: ocena SMSR dla gminy Dobrcz, bo tabel SMSR jeszcze nie wczytujemy"
+    # The commune's SMSR row is read now (frozen demo page), so it is a value, not a gap.
+    assert r.smsr.state == "ok"
+    assert r.smsr.commune == "Dobrcz" and r.smsr.words
+    assert "Brak" not in r.smsr.words and r.smsr.reason == ""
     for section in r.sections:
         if section.state == "missing" and section.id != "zrodla":
             assert section.reason.startswith("Brak:") and " bo " in section.reason, section.id

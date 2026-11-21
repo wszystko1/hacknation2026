@@ -1,0 +1,201 @@
+teryt,nazwa,wojewodztwo,lon,lat,zbior
+0204013,Góra,dolnośląskie,16.5349,51.6664,dev
+0204032,Niechlów,dolnośląskie,16.3682,51.6887,test
+0206062,Jeżów Sudecki,dolnośląskie,15.7431,50.9351,dev
+0209073,Prochowice,dolnośląskie,16.3653,51.2731,test
+0209082,Ruja,dolnośląskie,16.4118,51.1734,test
+0210072,Siekierczyn,dolnośląskie,15.1937,51.1222,test
+0216013,Chocianów,dolnośląskie,15.9017,51.4187,test
+0216032,Grębocice,dolnośląskie,16.1674,51.5991,dev
+0216062,Radwanice,dolnośląskie,15.948,51.5708,test
+0220052,Zawonia,dolnośląskie,17.1983,51.3162,test
+0224013,Bardo,dolnośląskie,16.7399,50.5059,dev
+0224053,Ząbkowice Śląskie,dolnośląskie,16.8124,50.5897,test
+0225063,Węgliniec,dolnośląskie,15.2289,51.2875,test
+0402053,Górzno,kujawsko-pomorskie,19.6432,53.1978,dev
+0402082,Osiek,kujawsko-pomorskie,19.3865,53.1692,test
+0403022,Dąbrowa Chełmińska,kujawsko-pomorskie,18.3054,53.1752,test
+0405052,Radomin,kujawsko-pomorskie,19.1942,53.0867,test
+0406062,Świecie nad Osą,kujawsko-pomorskie,19.1017,53.444,dev
+0408043,Dobrzyń nad Wisłą,kujawsko-pomorskie,19.3188,52.6381,test
+0408062,Lipno,kujawsko-pomorskie,19.1785,52.8444,test
+0411032,Dobre,kujawsko-pomorskie,18.5776,52.684,test
+0412032,Rogowo,kujawsko-pomorskie,19.3849,52.9771,dev
+0412052,Skrwilno,kujawsko-pomorskie,19.6236,53.0161,test
+0414042,Jeżewo,kujawsko-pomorskie,18.4944,53.5106,test
+0418043,Brześć Kujawski,kujawsko-pomorskie,18.9017,52.6053,test
+0419033,Janowiec Wielkopolski,kujawsko-pomorskie,17.4898,52.7558,dev
+0601102,Międzyrzec Podlaski,lubelskie,22.7825,51.9864,test
+0602112,Potok Górny,lubelskie,22.5619,50.3848,test
+0604032,Horodło,lubelskie,24.0372,50.8946,dev
+0606032,Gorzków,lubelskie,22.987,50.9412,test
+0610042,Milejów,lubelskie,22.9244,51.2323,test
+0612032,Karczmiska,lubelskie,21.9816,51.2295,test
+0613062,Siemień,lubelskie,22.7724,51.6288,test
+0615072,Ulan-Majorat,lubelskie,22.491,51.8103,test
+0615082,Wohyń,lubelskie,22.7858,51.7564,dev
+0616062,Ułęż,lubelskie,22.1074,51.5919,test
+0618112,Tomaszów Lubelski,lubelskie,23.4162,50.4477,test
+0618132,Ulhówek,lubelskie,23.7996,50.4497,test
+0620043,Krasnobród,lubelskie,23.2131,50.5455,dev
+0801062,Santok,lubuskie,15.4102,52.7379,dev
+0802063,Krosno Odrzańskie,lubuskie,15.0988,52.0549,test
+0803023,Międzyrzecz,lubuskie,15.578,52.4446,test
+0803063,Trzciel,lubuskie,15.8731,52.365,test
+0804063,Nowe Miasteczko,lubuskie,15.7317,51.691,test
+0804073,Otyń,lubuskie,15.7111,51.8477,test
+0805022,Górzyca,lubuskie,14.655,52.4945,dev
+0806032,Stare Kurowo,lubuskie,15.6775,52.8567,test
+0806043,Strzelce Krajeńskie,lubuskie,15.5298,52.8773,test
+0808012,Lubrza,lubuskie,15.4432,52.3042,dev
+0808053,Świebodzin,lubuskie,15.5335,52.2475,test
+0809072,Świdnica,lubuskie,15.3901,51.8884,test
+0812013,Sława,lubuskie,16.0721,51.8762,test
+1403052,Górzno,mazowieckie,21.7093,51.8468,dev
+1403062,Łaskarzew,mazowieckie,21.5912,51.7899,test
+1407072,Sieciechów,mazowieckie,21.7447,51.5371,test
+1416072,Ostrów Mazowiecka,mazowieckie,21.8951,52.8025,test
+1419082,Mała Wieś,mazowieckie,20.1022,52.4578,dev
+1421033,Brwinów,mazowieckie,20.717,52.1427,test
+1424052,Świercze,mazowieckie,20.7639,52.6705,test
+1425033,Iłża,mazowieckie,21.2398,51.1631,test
+1426022,Korczew,mazowieckie,22.6134,52.3533,dev
+1426132,Zbuczyn,mazowieckie,22.4383,52.0897,test
+1428062,Rybno,mazowieckie,20.103,52.2428,test
+1436032,Przyłęk,mazowieckie,21.7474,51.3086,test
+1437033,Lubowidz,mazowieckie,19.8459,53.1187,test
+1201042,Lipnica Murowana,małopolskie,20.5262,49.8593,dev
+1201052,Łapanów,małopolskie,20.2915,49.8654,test
+1201082,Trzciana,małopolskie,20.3742,49.8449,test
+1203043,Libiąż,małopolskie,19.3157,50.104,test
+1204042,Mędrzechów,małopolskie,20.9475,50.2822,test
+1204062,Radgoszcz,małopolskie,21.1132,50.2058,test
+1205082,Ropa,małopolskie,21.0443,49.5915,test
+1206082,Michałowice,małopolskie,19.9804,50.159,dev
+1209033,Myślenice,małopolskie,19.9383,49.8338,test
+1209073,Sułkowice,małopolskie,19.801,49.8405,dev
+1214053,Proszowice,małopolskie,20.2891,50.1927,test
+1216112,Wierzchosławice,małopolskie,20.8568,50.0248,test
+1219022,Gdów,małopolskie,20.1988,49.9082,test
+1602022,Branice,opolskie,17.794,50.0511,test
+1603022,Bierawa,opolskie,18.2418,50.2811,dev
+1604013,Byczyna,opolskie,18.2141,51.1139,test
+1604043,Wołczyn,opolskie,18.0499,51.0185,test
+1605023,Krapkowice,opolskie,17.9654,50.4751,test
+1605042,Walce,opolskie,18.0043,50.3732,test
+1608052,Radłów,opolskie,18.5353,50.9333,test
+1608072,Zębowice,opolskie,18.3443,50.7629,test
+1609032,Dobrzeń Wielki,opolskie,17.8465,50.7684,dev
+1609123,Tułowice,opolskie,17.6532,50.5958,dev
+1611012,Izbicko,opolskie,18.1559,50.5716,test
+1611033,Kolonowskie,opolskie,18.3849,50.6534,test
+1611053,Strzelce Opolskie,opolskie,18.3006,50.5107,test
+1801032,Czarna,podkarpackie,22.659,49.3312,dev
+1804082,Radymno,podkarpackie,22.8238,49.9472,test
+1804112,Wiązownica,podkarpackie,22.7067,50.0807,test
+1807033,Iwonicz-Zdrój,podkarpackie,21.7899,49.5632,test
+1807072,Miejsce Piastowe,podkarpackie,21.7873,49.6344,test
+1809053,Narol,podkarpackie,23.3268,50.3492,test
+1812012,Harasiuki,podkarpackie,22.4729,50.4751,dev
+1812063,Rudnik nad Sanem,podkarpackie,22.2486,50.4415,dev
+1815033,Ropczyce,podkarpackie,21.6089,50.0523,test
+1815043,Sędziszów Małopolski,podkarpackie,21.7006,50.0707,test
+1818053,Zaklików,podkarpackie,22.1023,50.7577,test
+1820013,Baranów Sandomierski,podkarpackie,21.542,50.4991,test
+1820022,Gorzyce,podkarpackie,21.8401,50.6672,test
+2001043,Lipsk,podlaskie,23.4022,53.7331,dev
+2002093,Supraśl,podlaskie,23.3393,53.2053,test
+2004053,Szczuczyn,podlaskie,22.2853,53.5633,test
+2005042,Czyże,podlaskie,23.4232,52.7713,test
+2005052,Dubicze Cerkiewne,podlaskie,23.4426,52.6495,test
+2005062,Hajnówka,podlaskie,23.5812,52.7433,test
+2005082,Narew,podlaskie,23.5198,52.9142,dev
+2007082,Wizna,podlaskie,22.3824,53.1952,test
+2008063,Mońki,podlaskie,22.7979,53.405,test
+2011013,Dąbrowa Białostocka,podlaskie,23.3479,53.6536,test
+2012012,Bakałarzewo,podlaskie,22.6522,54.094,dev
+2013072,Nowe Piekuty,podlaskie,22.7103,52.8572,test
+2202052,Konarzyny,pomorskie,17.3789,53.8233,dev
+2203023,Czarne,pomorskie,16.9383,53.6842,test
+2204062,Pszczółki,pomorskie,18.6979,54.173,test
+2206082,Stara Kiszewa,pomorskie,18.1696,53.9901,test
+2207043,Prabuty,pomorskie,19.2055,53.755,test
+2210023,Nowy Dwór Gdański,pomorskie,19.1177,54.2131,test
+2210052,Sztutowo,pomorskie,19.1792,54.3268,test
+2212053,Kępice,pomorskie,16.8897,54.2411,dev
+2213052,Kaliska,pomorskie,18.2188,53.9053,dev
+2213093,Skarszewy,pomorskie,18.4442,54.0691,test
+2216022,Mikołajki Pomorskie,pomorskie,19.1657,53.8513,test
+2216042,Stary Targ,pomorskie,19.17,53.9233,test
+2801032,Bartoszyce,warmińsko-mazurskie,20.8082,54.2535,dev
+2804022,Godkowo,warmińsko-mazurskie,19.9054,54.0796,test
+2805022,Ełk,warmińsko-mazurskie,22.3647,53.8282,dev
+2806062,Miłki,warmińsko-mazurskie,21.8834,53.943,test
+2808062,Srokowo,warmińsko-mazurskie,21.5228,54.2142,test
+2809053,Orneta,warmińsko-mazurskie,20.1333,54.1148,test
+2811043,Nidzica,warmińsko-mazurskie,20.4275,53.3605,test
+2812042,Kurzętnik,warmińsko-mazurskie,19.5786,53.3986,dev
+2814042,Dywity,warmińsko-mazurskie,20.4782,53.8376,test
+2814093,Olsztynek,warmińsko-mazurskie,20.2847,53.5837,test
+2817072,Świętajno,warmińsko-mazurskie,21.2155,53.5669,test
+2818012,Banie Mazurskie,warmińsko-mazurskie,22.0362,54.2466,test
+3003072,Mieleszyn,wielkopolskie,17.4978,52.6687,test
+3004042,Pępowo,wielkopolskie,17.1266,51.7657,test
+3010073,Rychwał,wielkopolskie,18.1651,52.0715,test
+3010123,Ślesin,wielkopolskie,18.3064,52.3704,test
+3011023,Czempiń,wielkopolskie,16.7641,52.144,dev
+3013052,Święciechowa,wielkopolskie,16.498,51.855,test
+3015063,Zbąszyń,wielkopolskie,15.9252,52.2509,test
+3019073,Ujście,wielkopolskie,16.732,53.0534,dev
+3019083,Wyrzysk,wielkopolskie,17.268,53.153,test
+3021042,Czerwonak,wielkopolskie,16.9817,52.4646,test
+3024083,Wronki,wielkopolskie,16.3804,52.7105,test
+3030043,Pyzdry,wielkopolskie,17.69,52.1706,dev
+3201033,Karlino,zachodniopomorskie,15.8774,54.0352,dev
+3202063,Recz,zachodniopomorskie,15.5471,53.2599,test
+3203023,Drawsko Pomorskie,zachodniopomorskie,15.8097,53.5306,test
+3205032,Karnice,zachodniopomorskie,15.055,54.03,test
+3206012,Banie,zachodniopomorskie,14.6623,53.1003,test
+3206033,Chojna,zachodniopomorskie,14.428,52.9639,test
+3206043,Gryfino,zachodniopomorskie,14.4883,53.2524,test
+3206083,Trzcińsko-Zdrój,zachodniopomorskie,14.6067,52.9649,dev
+3207033,Kamień Pomorski,zachodniopomorskie,14.7726,53.9685,test
+3209033,Bobolice,zachodniopomorskie,16.5889,53.9551,test
+3215052,Grzmiąca,zachodniopomorskie,16.4351,53.8373,test
+3218032,Radowo Małe,zachodniopomorskie,15.4479,53.6658,dev
+1002043,Krośniewice,łódzkie,19.1704,52.2559,test
+1002082,Nowe Ostrowy,łódzkie,19.1922,52.3032,test
+1003023,Łask,łódzkie,19.1328,51.5906,test
+1004052,Łęczyca,łódzkie,19.1997,52.0596,test
+1010012,Aleksandrów,łódzkie,19.9901,51.2713,dev
+1011033,Poddębice,łódzkie,18.9573,51.8934,test
+1012092,Ładzice,łódzkie,19.3581,51.0812,test
+1012113,Przedbórz,łódzkie,19.8738,51.0879,test
+1012142,Żytno,łódzkie,19.6278,50.9272,test
+1014042,Brzeźnio,łódzkie,18.6223,51.494,test
+1016092,Tomaszów Mazowiecki,łódzkie,20.0085,51.5313,dev
+1020073,Parzęczew,łódzkie,19.2061,51.9485,dev
+2404112,Mykanów,śląskie,19.2005,50.9236,test
+2405042,Pilchowice,śląskie,18.5613,50.2167,test
+2406023,Krzepice,śląskie,18.7289,50.9706,dev
+2406052,Opatów,śląskie,18.8194,50.9557,test
+2406072,Popów,śląskie,18.9312,51.0403,test
+2407052,Kochanowice,śląskie,18.7491,50.7055,test
+2411042,Krzyżanowice,śląskie,18.2685,49.9825,test
+2412022,Gaszowice,śląskie,18.4304,50.1086,dev
+2413082,Tworóg,śląskie,18.7157,50.531,test
+2417032,Gilowice,śląskie,19.3104,49.7128,test
+2417042,Jeleśnia,śląskie,19.327,49.6425,test
+2417152,Węgierska Górka,śląskie,19.1164,49.6078,dev
+2601013,Busko-Zdrój,świętokrzyskie,20.7188,50.4708,test
+2601022,Gnojno,świętokrzyskie,20.8491,50.6026,test
+2602023,Jędrzejów,świętokrzyskie,20.3045,50.6394,dev
+2602042,Nagłowice,świętokrzyskie,20.1066,50.6784,test
+2604012,Bieliny,świętokrzyskie,20.9415,50.8495,test
+2604033,Chęciny,świętokrzyskie,20.4623,50.8002,dev
+2604153,Pierzchnica,świętokrzyskie,20.7549,50.6975,test
+2607022,Bałtów,świętokrzyskie,21.5438,51.0185,test
+2607032,Bodzechów,świętokrzyskie,21.4371,50.9072,dev
+2609062,Obrazów,świętokrzyskie,21.6504,50.6928,test
+2612022,Łubnice,świętokrzyskie,21.1501,50.4116,test
+2612083,Szydłów,świętokrzyskie,21.0068,50.5911,test
