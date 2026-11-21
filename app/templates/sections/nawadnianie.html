@@ -1,1 +1,29 @@
-{% include "sections/_section.html" %}
+{# The generic section with the literature effect shown under each action. #}
+<section id="{{ s.id }}" aria-labelledby="h-{{ s.id }}">
+  <h2 class="sec-h" id="h-{{ s.id }}"><span class="n">{{ s.n }}</span>{{ s.heading }}{% if s.chip %}<span class="chip">{{ s.chip }}</span>{% endif %}</h2>
+  {% if s.state == 'loading' %}
+  <p class="loading">Liczę… czekam na: <b>{{ s.waiting_for }}</b></p>
+  {% elif s.state == 'missing' %}
+  <p class="empty">{{ s.reason }}</p>
+  {% endif %}
+  {% if s.chart_svg %}<div class="chart" tabindex="0" role="group" aria-label="Wykres: {{ s.title }}">{{ s.chart_svg | safe }}</div>{% endif %}
+  {% for sentence in s.sentences %}<p{% if sentence.startswith('Brak:') %} class="empty"{% endif %}>{{ sentence }}</p>{% endfor %}
+  {% if s.actions %}
+  <ul class="recs">
+    {% for a in s.actions %}
+    <li id="dzialanie-{{ a.n }}" class="{{ 'is-planned' if a.in_plan else '' }}">
+      <span class="nb nb--off">{{ a.n }}</span><span class="title">{{ a.title }}</span>
+      <label class="sw"><input type="checkbox" name="plan" value="{{ a.n }}" data-plan-switch {{ 'checked' if a.in_plan else '' }} aria-label="Działanie {{ a.n }} w planie"><span></span></label>
+      <p>{{ a.sentence }} Termin: {{ a.when }}.</p>
+      {% if a.effect %}<span class="src">efekt: {{ a.effect }}</span>{% endif %}
+      {% if a.legal %}<span class="law"><b>{{ a.legal.formality }}</b>{% if a.legal.article %}: {{ a.legal.act }}, {{ a.legal.article }}{% endif %}</span>{% endif %}
+      <span class="src">przyczyna: {{ a.causes | join('; ') }} · źródło: {{ a.source }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if s.how %}<details class="calc"><summary>Jak to policzono</summary><p>{{ s.how }}</p></details>{% endif %}
+  {% if s.advisor %}
+  <div class="advisor"><b>Widok doradcy</b><dl class="kv">{% for kv in s.advisor %}<dt>{{ kv.key }}</dt><dd>{{ kv.value }}</dd>{% endfor %}</dl></div>
+  {% endif %}
+</section>

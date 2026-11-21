@@ -72,4 +72,6 @@ def test_action_one_stays_but_its_sentence_and_term_are_a_gap() -> None:
     assert a1 is not None and a1.n == 1
     assert a1.sentence.startswith("Brak:") and " bo " in a1.sentence
     assert a1.when.startswith("Brak:") and " bo " in a1.when
-    assert not [a for a in r.actions if a.group in {"uprawa", "nawadnianie"}]
+    # Tillage and irrigation actions are computed from indicators now: none is a placeholder.
+    for a in (a for a in r.actions if a.group in {"uprawa", "nawadnianie"}):
+        assert "Tu pojawi" not in a.sentence and not a.sentence.startswith("Brak:"), a.id
