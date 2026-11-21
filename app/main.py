@@ -265,7 +265,12 @@ def _waiting_page(request: Request, q: dict, req: ReportRequest) -> HTMLResponse
 
 
 def _wait_for_report(req: ReportRequest) -> Future[Report]:
-    return _stored(req) or _pool.submit(build_report, req)
+    """The running job for this request, or a new one kept for the next poll (one computation per report)."""
+    future = _stored(req)
+    if future is None:
+        future = _pool.submit(build_report, req)
+        _stash(req, future)
+    return future
 
 
 def _error_fragment(section_id: str, message: str) -> HTMLResponse:

@@ -10,6 +10,7 @@ import math
 from urllib.parse import urlencode
 
 from pydantic import BaseModel
+from pyproj import Transformer
 
 from app.context import ReportContext
 from app.fmt import dec, ha
@@ -42,6 +43,27 @@ class MapOverlay(MapView):
     outlet_label_w: float = 0.0
     runoff_reason: str = ""  # shown instead of flow arrows: "spadek 0,3% jest za mały, …"
     legend: list[LegendRow] = []
+    # What a click on the photo needs to turn a pixel into a point on the earth (app/static/neighbour.js):
+    origin_2180: Point = (0.0, 0.0)  # EPSG:2180 (x, y) of pixel (0, 0), the top-left corner
+    corners_4326: list[Point] = []  # (lon, lat) of the top-left, top-right and bottom-left corner of the photo
+
+
+_TO_4326 = Transformer.from_crs(2180, 4326, always_xy=True)
+
+
+def px_to_2180(view: MapOverlay, col: float, row: float) -> Point:
+    """Pixel (column, row) of the photo -> EPSG:2180 metres: the inverse of to_px."""
+    return view.origin_2180[0] + col * view.m_per_px, view.origin_2180[1] - row * view.m_per_px
+
+
+def px_to_lonlat(view: MapOverlay, col: float, row: float) -> Point:
+    """Pixel -> (lon, lat) by the affine map through the photo's three corners, the same arithmetic as neighbour.js.
+
+    The photo is about a kilometre wide; over that distance the difference to the exact projection is centimetres.
+    """
+    (lon0, lat0), (lon1, lat1), (lon2, lat2) = view.corners_4326
+    u, v = col / view.width, row / view.height
+    return lon0 + u * (lon1 - lon0) + v * (lon2 - lon0), lat0 + u * (lat1 - lat0) + v * (lat2 - lat0)
 
 
 def to_px(ctx: ReportContext, x: float, y: float) -> Point | None:
@@ -205,6 +227,11 @@ def map_view(ctx: ReportContext) -> MapOverlay | None:
     if basins:
         legend.append(LegendRow(symbol="basin", text="zbiornik wodny (BDOT10k)"))
     legend += [LegendRow(symbol="number", text=m.kind, n=m.n) for m in markers]
+    origin = (o.bbox_2180[0], o.bbox_2180[3])
+    corners = [
+        _TO_4326.transform(origin[0] + col * o.m_per_px, origin[1] - row * o.m_per_px)
+        for col, row in ((0, 0), (o.width, 0), (0, o.height))
+    ]
     query = urlencode({"dzialka": ctx.request.parcel_id, "data": ctx.request.day.isoformat()})
     return MapOverlay(
         image_url=f"/raport/zdjecie?{query}",
@@ -224,4 +251,6 @@ def map_view(ctx: ReportContext) -> MapOverlay | None:
         outlet_label_w=outlet_label_w,
         runoff_reason=ctx.runoff_reason,
         legend=legend,
+        origin_2180=origin,
+        corners_4326=[(round(lon, 7), round(lat, 7)) for lon, lat in corners],
     )

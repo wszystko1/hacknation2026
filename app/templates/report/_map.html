@@ -2,9 +2,21 @@
 {% set m = report.map %}
 <style>
   .map-ui .mlegend { align-self: flex-end; }
+  .map[data-neighbour] { cursor: pointer; }
+  .mo-neighbour-casing { fill: none; stroke: var(--casing); stroke-width: 7; stroke-linejoin: round; }
+  .mo-neighbour { fill: none; stroke: var(--outline); stroke-width: 3; stroke-linejoin: round; stroke-dasharray: 12 8; }
+  .nb-card { margin: 0; padding: var(--s3) var(--s4); background: var(--card-on-map); color: var(--text); border-radius: var(--radius);
+    box-shadow: var(--shadow-map); font-size: var(--fs-base); max-width: 100%; }
+  .nb-card[hidden] { display: none; }
+  .nb-title, .nb-wait { display: block; font-weight: 650; }
+  .nb-error { color: var(--danger); }
+  .nb-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: var(--s3); }
+  .nb-actions a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 650; }
 </style>
 <div class="mapcol">
-  <div class="map">
+  <div class="map"{% if m %} data-neighbour data-parcel="{{ report.parcel.id }}" data-day="{{ report.request.day.isoformat() }}" data-crop="{{ report.request.crop.value }}"
+       data-width="{{ m.width }}" data-height="{{ m.height }}" data-m-per-px="{{ m.m_per_px }}"
+       data-origin-2180="{{ m.origin_2180 | join(',') }}" data-corners-4326="{{ m.corners_4326 | map('join', ',') | join(' ') }}"{% endif %}>
     {% if m %}
     <img src="{{ m.image_url }}" width="{{ m.width }}" height="{{ m.height }}" alt="Ortofotomapa działki {{ report.parcel.number }}">
     <svg viewBox="0 0 {{ m.width }} {{ m.height }}" preserveAspectRatio="xMidYMid slice" role="img"
@@ -16,6 +28,7 @@
       {% for d in m.ditches_px %}<polygon class="mo-ditch" points="{{ d | map('join', ',') | join(' ') }}"/>{% endfor %}
       <polygon class="mo-casing" points="{{ pts }}"/>
       <polygon class="mo-outline" points="{{ pts }}"/>
+      <g class="mo-neighbours"></g>
       {% for f in m.flow_px %}
       <polyline class="mo-flow-casing" points="{{ f | map('join', ',') | join(' ') }}"/>
       <polyline class="mo-flow" points="{{ f | map('join', ',') | join(' ') }}"/>
@@ -37,6 +50,7 @@
   </div>
   <div class="map-ui">
     {% include "report/_pick.html" %}
+    {% if m %}<div class="nb-card" data-nb-card role="status" aria-live="polite" hidden></div>{% endif %}
     {% if m %}
     <div class="mlegend">
       <b>Warstwa na mapie</b>
@@ -60,3 +74,4 @@
     </ul>
   </section>
 </div>
+{% if m %}<script src="/static/neighbour.js" defer></script>{% endif %}
