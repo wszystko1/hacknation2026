@@ -1,17 +1,31 @@
 {# Left column: the parcel photo with the overlay, the selection bar, the legend and "Skąd są dane". #}
 {% set m = report.map %}
+<style>
+  .map-ui .mlegend { align-self: flex-end; }
+</style>
 <div class="mapcol">
   <div class="map">
     {% if m %}
     <img src="{{ m.image_url }}" width="{{ m.width }}" height="{{ m.height }}" alt="Ortofotomapa działki {{ report.parcel.number }}">
     <svg viewBox="0 0 {{ m.width }} {{ m.height }}" preserveAspectRatio="xMidYMid slice" role="img"
-         aria-label="Obrys działki {{ report.parcel.number }}{% if m.markers %} i miejsca działań {{ m.markers | map(attribute='n') | join(', ') }}{% endif %}">
+         aria-label="Obrys działki {{ report.parcel.number }}{% if m.outlet_label %}, punkt wypływu ({{ m.outlet_label }}){% endif %}{% if m.markers %} i miejsca działań {{ m.markers | map(attribute='n') | join(', ') }}{% endif %}">
       {% set ring = m.outline_px[0] %}
       {% set pts = ring | map('join', ',') | join(' ') %}
       <path class="mo-scrim" d="M0 0H{{ m.width }}V{{ m.height }}H0Z M{{ ring | map('join', ' ') | join(' L') }}Z"/>
+      {% for b in m.basins_px %}<polygon class="mo-basin" points="{{ b | map('join', ',') | join(' ') }}"/>{% endfor %}
+      {% for d in m.ditches_px %}<polygon class="mo-ditch" points="{{ d | map('join', ',') | join(' ') }}"/>{% endfor %}
       <polygon class="mo-casing" points="{{ pts }}"/>
       <polygon class="mo-outline" points="{{ pts }}"/>
+      {% for f in m.flow_px %}
+      <polyline class="mo-flow-casing" points="{{ f | map('join', ',') | join(' ') }}"/>
+      <polyline class="mo-flow" points="{{ f | map('join', ',') | join(' ') }}"/>
+      {% endfor %}
+      {% for h in m.flow_heads_px %}<polygon class="mo-arrowhead" points="{{ h | map('join', ',') | join(' ') }}"/>{% endfor %}
       {% if m.outlet_px %}<circle class="mo-outlet" cx="{{ m.outlet_px[0] }}" cy="{{ m.outlet_px[1] }}" r="7"/>{% endif %}
+      {% if m.outlet_label and m.outlet_label_xy %}
+      <rect class="mo-label-bg" x="{{ m.outlet_label_xy[0] }}" y="{{ m.outlet_label_xy[1] }}" width="{{ m.outlet_label_w }}" height="30" rx="6"/>
+      <text class="mo-label-sub" x="{{ m.outlet_label_xy[0] + 8 }}" y="{{ m.outlet_label_xy[1] + 21 }}">{{ m.outlet_label }}</text>
+      {% endif %}
       {% for k in m.markers %}
       <circle class="mo-marker" cx="{{ k.x }}" cy="{{ k.y }}" r="15"/>
       <text class="mo-marker-text" x="{{ k.x }}" y="{{ k.y + 6 }}">{{ k.n }}</text>
@@ -26,8 +40,10 @@
     {% if m %}
     <div class="mlegend">
       <b>Warstwa na mapie</b>
-      <div><span class="nb nb--off">&nbsp;</span>obrys działki {{ m.label }}</div>
-      {% for k in m.markers %}<div><span class="nb">{{ k.n }}</span>{{ k.kind }}</div>{% endfor %}
+      {% for r in m.legend %}
+      <div>{% if r.symbol == 'number' %}<span class="nb">{{ r.n }}</span>{% elif r.symbol in ('flow', 'line') %}<span class="ar"></span>{% else %}<span class="nb nb--off">&nbsp;</span>{% endif %}{{ r.text }}</div>
+      {% endfor %}
+      {% if m.runoff_reason %}<div>Spływ wody: {{ m.runoff_reason }}</div>{% endif %}
     </div>
     {% endif %}
   </div>

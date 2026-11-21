@@ -1,14 +1,44 @@
-{# The dark selection bar: three fields and "Oceń działkę". Used on the start screen and over the map. #}
-<form class="pick" action="/raport" method="get" aria-label="Wybór działki, daty i uprawy">
-  <div class="field">
+{# The dark selection bar: three fields and "Oceń działkę". Used on the start screen and over the map.
+   The form is sent by htmx (the button is disabled while the request runs, so a double click sends one request)
+   and works as a plain GET form without scripts. The date is a text field with a dd.mm.rrrr mask. #}
+{% set date_in = q.get('data', '') %}
+{% set date_shown = (date_in[8:10] ~ '.' ~ date_in[5:7] ~ '.' ~ date_in[0:4]) if (date_in[4:5] == '-' and date_in | length == 10) else date_in %}
+<meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"[45]..","swap":false,"error":true}]}'>
+<style>
+  .pick { flex-wrap: wrap; }
+  .pick .field--id { flex: 1 1 100%; border-bottom: 1px solid var(--chrome-line); }
+  .pick .field--id + .field { border-left: 0; }
+  .pick .field-hint { color: var(--on-dark-muted); font-size: var(--fs-sm); }
+  .pick .choices { list-style: none; margin: var(--s1) 0 0; padding: 0; }
+  .pick .choices a { display: block; min-height: 44px; padding: var(--s1) 0; color: var(--on-dark); line-height: 1.35; }
+  .pick .when-busy { display: none; }
+  .pick.htmx-request .when-busy { display: inline; }
+  .pick.htmx-request .when-idle { display: none; }
+</style>
+<form class="pick" action="/raport" method="get" aria-label="Wybór działki, daty i uprawy"
+      hx-get="/raport" hx-target="body" hx-swap="innerHTML show:window:top" hx-push-url="true" hx-disabled-elt="find button">
+  <div class="field field--id">
     <label for="f-dzialka">Działka</label>
     <input id="f-dzialka" name="dzialka" value="{{ q.get('dzialka', '') }}" placeholder="040303_2.0002.189/13"
-           autocomplete="off" {% if errors and errors.dzialka %}aria-invalid="true" aria-describedby="e-dzialka"{% endif %}>
-    {% if errors and errors.dzialka %}<span class="field-error" id="e-dzialka">{{ errors.dzialka }}</span>{% endif %}
+           autocomplete="off" spellcheck="false" {% if errors and errors.dzialka %}aria-invalid="true" aria-describedby="e-dzialka"{% endif %}>
+    {% if errors and errors.dzialka %}
+    {% set lines = errors.dzialka.split('\n') %}
+    <span class="field-error" id="e-dzialka">{{ lines[0] }}</span>
+    {% if lines | length > 1 %}
+    <ul class="choices">
+      {% for line in lines[1:] %}{% set id, label = line.split('|', 1) %}
+      <li><a href="/raport?dzialka={{ id | urlencode }}&amp;data={{ date_shown | urlencode }}&amp;uprawa={{ q.get('uprawa', '') | urlencode }}">{{ id }}<br>{{ label }}</a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% elif not report %}
+    <span class="field-hint">Numer działki, obręb i numer (Dobrcz 189/13) albo współrzędne</span>
+    {% endif %}
   </div>
   <div class="field">
     <label for="f-data">Data oceny</label>
-    <input id="f-data" name="data" type="date" value="{{ q.get('data', '') }}"
+    <input id="f-data" name="data" type="text" inputmode="numeric" maxlength="10" autocomplete="off"
+           placeholder="dd.mm.rrrr" value="{{ date_shown }}"
            {% if errors and errors.data %}aria-invalid="true" aria-describedby="e-data"{% endif %}>
     {% if errors and errors.data %}<span class="field-error" id="e-data">{{ errors.data }}</span>{% endif %}
   </div>
@@ -20,5 +50,19 @@
     </select>
     {% if errors and errors.uprawa %}<span class="field-error" id="e-uprawa">{{ errors.uprawa }}</span>{% endif %}
   </div>
-  <button type="submit">Oceń działkę</button>
+  <button type="submit"><span class="when-idle">Oceń działkę</span><span class="when-busy" aria-hidden="true">Liczę…</span></button>
+  <script>
+    (function () {
+      var field = document.getElementById("f-data");
+      if (!field) return;
+      field.addEventListener("input", function () {
+        var iso = field.value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        var digits = iso ? iso[3] + iso[2] + iso[1] : field.value.replace(/\D/g, "").slice(0, 8);
+        var shown = digits.slice(0, 2);
+        if (digits.length > 2) shown += "." + digits.slice(2, 4);
+        if (digits.length > 4) shown += "." + digits.slice(4);
+        if (shown !== field.value) field.value = shown;
+      });
+    })();
+  </script>
 </form>

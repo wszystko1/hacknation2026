@@ -1,22 +1,26 @@
-"""K1, K3: retention places come from a runoff analysis on an elevation grid with a ~300 m margin around the parcel.
+"""K1, K3: retention places come from the parcel's geometry; flow accumulation and wet zones only where they win.
 
-Depressions shallower than ~0.2 m are filled (a 10 m grid with heights rounded to 0.1 m is full of them); deeper
-ones are kept, as in the ACPF manual v7.0. Accumulation is computed both with one direction per cell (D8) and with
-D-infinity; the ditch test picks which of D8, D-infinity or the lowest boundary point the app uses. Accumulation is
-the catchment area in ha, and concentrated flow lines are cells above a threshold. Outlets and inlets on the parcel
-boundary carry their catchment; candidate places are sorted by the catchment they intercept. Placement thresholds
-follow the ACPF manual in metric units: a grassed waterway where the stream power index ln(SCA * tan(slope)) is
-above its threshold, at least 50 m long; contour buffer strips on slopes of 4-15%. A parcel too flat for a reliable
-flow line gets a sentence instead of arrows.
+The base: a plane z = ax + by + c fitted by least squares to the heights inside the parcel gives the mean slope in %
+and the downhill direction; the lower edge is the part of the outline with the lowest heights; the lowest boundary and
+interior points, depressions (a cell lower than all eight neighbours) and the nearest BDOT10k ditch complete it. The
+rules: a grass strip on the lower edge (along the ditch when the ditch runs by that edge), tillage across the slope
+(perpendicular to the downhill direction), a basin at the lowest interior point or in a depression, a weir only on a
+ditch by the lower edge. A plane too flat to show a lower edge gets a sentence instead. The module finds the lowest
+points from the grid itself.
 
-The synthetic terrain: a 100 m x 100 m parcel on a plane falling 2% to the west, with a valley (5% side slopes)
-crossing it from east to west, inside a 700 m x 700 m grid (300 m margin, 10 m cells, heights rounded to 0.1 m).
+The extension: D8 flow accumulation (O'Callaghan and Mark 1984) on a grid with a ~300 m margin, and wet zones from
+the per-pixel median NDMI of dry periods. It replaces the base only where it scores higher in the ditch test (outlet
+within 30 m of a ditch) or in the pond test (AUC at ponds); a tie keeps the base.
+
+The synthetic terrain: a 100 m x 100 m parcel on a plane inside a 700 m x 700 m grid (300 m margin, 10 m cells,
+heights rounded to 0.1 m). By default the plane falls 2% to the west.
 """
 
 from __future__ import annotations
 
 import json
-import math
+import re
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -24,21 +28,20 @@ import pytest
 X0, Y0 = 500_000.0, 600_000.0  # south-west corner of the parcel, EPSG:2180
 SIDE, MARGIN, STEP = 100.0, 300.0, 10.0
 VALLEY_Y = Y0 + 55.0  # a row of cell centres
-VALLEY_MID = (X0 + 55.0, VALLEY_Y)  # a cell centre on the valley floor, inside the parcel
 OUTLINE = [[X0, Y0], [X0 + SIDE, Y0], [X0 + SIDE, Y0 + SIDE], [X0, Y0 + SIDE], [X0, Y0]]
-SE_CORNER = [X0 + SIDE - 5.0, Y0 + 5.0]
-FLOW_METHODS = ("d8", "dinf")
+PIT = (X0 + 75.0, Y0 + 45.0)  # a cell centre inside the parcel, away from its lowest (west) column
 
 
 def _grid(
     *,
+    fall_west_pct: float = 2.0,
+    fall_south_pct: float = 0.0,
     flat: bool = False,
-    valley: bool = True,
-    slope_pct: float = 2.0,
+    valley: bool = False,
     pits: tuple[tuple[float, float, float], ...] = (),
 ):
-    """Pits are (x, y, depth): the cell is set `depth` metres below its lowest neighbour, so `depth` is the depth
-    of the depression that filling would remove."""
+    """The plane rises to the east by `fall_west_pct` and to the north by `fall_south_pct` (negative: the other way).
+    Pits are (x, y, depth): the cell is set `depth` metres below its lowest neighbour."""
     from app.geodata import ElevationGrid
 
     n = int((SIDE + 2 * MARGIN) / STEP)
@@ -50,7 +53,7 @@ def _grid(
     def base(x: float, y: float) -> float:
         if flat:
             return 100.0
-        h = 100.0 + slope_pct / 100.0 * (x - X0)
+        h = 100.0 + fall_west_pct / 100.0 * (x - X0) + fall_south_pct / 100.0 * (y - Y0)
         return h + 0.05 * abs(y - VALLEY_Y) if valley else h
 
     z = [[round(base(*centre(r, c)), 1) for c in range(n)] for r in range(n)]
@@ -67,29 +70,35 @@ def _grid(
     )
 
 
-def _ditch_along_the_west_edge():
+def _ditch(side: str):
+    """A ditch 4-8 m outside the west or the east edge, longer than the parcel."""
     from app.geodata import WaterFeature
 
-    ring = [
-        [X0 - 8, Y0 - 250],
-        [X0 - 4, Y0 - 250],
-        [X0 - 4, Y0 + 350],
-        [X0 - 8, Y0 + 350],
-        [X0 - 8, Y0 - 250],
-    ]
+    a, b = (X0 - 8, X0 - 4) if side == "west" else (X0 + SIDE + 4, X0 + SIDE + 8)
+    ring = [[a, Y0 - 250], [b, Y0 - 250], [b, Y0 + 350], [a, Y0 + 350], [a, Y0 - 250]]
     return WaterFeature(kind="ditch", distance_m=4.0, area_m2=2400.0, rings_2180=[ring])
 
 
-def _input(grid, water=(), lowest=None, slope=3.0):
+def _input(grid, water=(), slope: float = 2.0):
     from app.advice.placement import PlacementInput
 
     return PlacementInput(
         outline_2180=OUTLINE,
         grid=grid,
-        lowest_outline_point_2180=lowest,
+        lowest_outline_point_2180=None,
         water=list(water),
         slope_mean_pct=slope,
     )
+
+
+def _places(inp, kind: str) -> list:
+    from app.advice.placement import find_places
+
+    return [c for c in find_places(inp) if c.kind == kind and c.place is not None]
+
+
+def _plain(text: str) -> str:
+    return "".join(ch for ch in unicodedata.normalize("NFKD", text.lower()) if not unicodedata.combining(ch))
 
 
 def _near(p, x: float, y: float, tol: float = 20.0) -> bool:
@@ -97,13 +106,110 @@ def _near(p, x: float, y: float, tol: float = 20.0) -> bool:
 
 
 @pytest.mark.xfail(reason="not built yet", strict=False)
-@pytest.mark.parametrize("method", FLOW_METHODS)
-def test_outlet_is_where_the_valley_leaves_the_parcel_and_collects_the_neighbours_water(
-    method: str,
+@pytest.mark.parametrize(
+    ("fall_west", "fall_south", "slope_pct", "downhill_deg"),
+    [(2.0, 0.0, 2.0, 270.0), (0.0, 3.0, 3.0, 180.0), (-3.0, -4.0, 5.0, 36.87)],
+    ids=["west", "south", "north-east"],
+)
+def test_plane_fit_gives_the_mean_slope_and_the_downhill_direction(
+    fall_west: float, fall_south: float, slope_pct: float, downhill_deg: float
 ) -> None:
+    from app.advice.placement import fit_plane
+
+    plane = fit_plane(_grid(fall_west_pct=fall_west, fall_south_pct=fall_south))
+    assert plane.slope_pct == pytest.approx(slope_pct, abs=0.2)
+    # azimuth of the downhill direction: 0 north, 90 east, 180 south, 270 west
+    off = (plane.downhill_deg - downhill_deg + 180.0) % 360.0 - 180.0
+    assert abs(off) <= 3.0, plane.downhill_deg
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+@pytest.mark.parametrize(
+    ("fall_west", "fall_south", "edge_x", "edge_y"),
+    [(2.0, 0.0, X0, None), (0.0, -2.0, None, Y0 + SIDE)],
+    ids=["falls-west", "falls-north"],
+)
+def test_grass_strip_lies_on_the_lower_edge_of_the_outline(
+    fall_west: float, fall_south: float, edge_x: float | None, edge_y: float | None
+) -> None:
+    strips = _places(_input(_grid(fall_west_pct=fall_west, fall_south_pct=fall_south)), "pas trawy")
+    assert strips, "a plane falling 2% has a lower edge"
+    s = strips[0]
+    if edge_x is not None:
+        assert abs(s.place.x_2180 - edge_x) <= 15.0, s.place
+    if edge_y is not None:
+        assert abs(s.place.y_2180 - edge_y) <= 15.0, s.place
+    # the lower edge is one side of the square, perhaps with the low ends of its neighbours, never the whole outline
+    assert s.length_m is not None and 50.0 <= s.length_m < 2 * SIDE, s.length_m
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_weir_only_on_a_ditch_by_the_lower_edge_and_the_strip_runs_along_it() -> None:
+    grid = _grid()  # falls to the west
+    by_lower_edge = _input(grid, water=[_ditch("west")])
+    weirs = _places(by_lower_edge, "zastawka")
+    assert weirs, "the ditch runs along the lower (west) edge"
+    for w in weirs:
+        assert X0 - 30.0 <= w.place.x_2180 <= X0 + 5.0, w.place
+        assert Y0 - 30.0 <= w.place.y_2180 <= Y0 + SIDE + 30.0, w.place
+    strips = _places(by_lower_edge, "pas trawy")
+    assert strips and re.search(r"\brow(u|em|ie)?\b", _plain(strips[0].place.description)), strips
+    assert not _places(_input(grid, water=[_ditch("east")]), "zastawka"), "a ditch by the upper edge"
+    assert not _places(_input(grid), "zastawka"), "no ditch"
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_depressions_are_cells_inside_the_parcel_lower_than_all_eight_neighbours() -> None:
+    from app.advice.placement import depressions
+
+    assert list(depressions(_grid())) == [], "a plane has no depression"
+    outside = (X0 - 95.0, Y0 + 45.0)
+    found = list(depressions(_grid(pits=((*PIT, 0.3), (*outside, 0.3)))))
+    assert any(abs(x - PIT[0]) <= 5.0 and abs(y - PIT[1]) <= 5.0 for x, y in found), found
+    assert not any(x < X0 for x, _ in found), "only cells inside the parcel"
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_basin_is_at_the_lowest_interior_point_or_in_a_depression() -> None:
+    basins = _places(_input(_grid()), "niecka")
+    assert basins
+    b = basins[0].place
+    assert X0 < b.x_2180 < X0 + 20.0 and Y0 < b.y_2180 < Y0 + SIDE, b  # the lowest interior column
+    # a 3 m deep pit is both a depression and the lowest interior point
+    deep = _places(_input(_grid(pits=((*PIT, 3.0),))), "niecka")
+    assert deep and _near(deep[0].place, *PIT, tol=10.0), deep
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+@pytest.mark.parametrize(
+    ("fall_west", "fall_south", "rows_deg"),
+    [(6.0, 0.0, 0.0), (0.0, 6.0, 90.0)],
+    ids=["falls-west", "falls-south"],
+)
+def test_tillage_runs_across_the_slope(fall_west: float, fall_south: float, rows_deg: float) -> None:
+    grid = _grid(fall_west_pct=fall_west, fall_south_pct=fall_south)
+    rows = _places(_input(grid, slope=6.0), "uprawa w poprzek stoku")
+    assert rows
+    # direction of ploughing and sowing as an azimuth in [0, 180): 0 north-south, 90 east-west
+    off = abs(rows[0].direction_deg % 180.0 - rows_deg)
+    assert min(off, 180.0 - off) <= 5.0, rows[0].direction_deg
+    assert not _places(_input(_grid(flat=True), slope=0.0), "uprawa w poprzek stoku")
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_too_flat_plane_gets_a_sentence_instead_of_a_lower_edge() -> None:
+    from app.advice.placement import find_places
+
+    candidates = find_places(_input(_grid(flat=True), slope=0.0))
+    assert not any(c.kind == "pas trawy" and c.place is not None for c in candidates)
+    assert any("spad" in (c.reason or "").lower() for c in candidates), [c.reason for c in candidates]
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_accumulation_outlet_is_where_the_valley_leaves_the_parcel_with_the_neighbours_water() -> None:
     from app.advice.placement import runoff
 
-    r = runoff(_input(_grid()), method=method)
+    r = runoff(_input(_grid(valley=True)))
     assert r.outlets, "no outlet on the boundary"
     top = r.outlets[0]
     assert _near(top, X0, VALLEY_Y), (top.x_2180, top.y_2180)
@@ -111,141 +217,53 @@ def test_outlet_is_where_the_valley_leaves_the_parcel_and_collects_the_neighbour
     assert top.catchment_ha > 5.0
     assert [o.catchment_ha for o in r.outlets] == sorted((o.catchment_ha for o in r.outlets), reverse=True)
     assert any(_near(p, X0 + SIDE, VALLEY_Y) and p.catchment_ha > 5.0 for p in r.inlets)
-    assert r.flow_lines, "the valley is a concentrated flow line"
+
+
+def _retention_metrics() -> dict:
+    return json.loads(Path("metrics.json").read_text(encoding="utf-8")).get("retention", {})
+
+
+def _winner(m: dict, prefix: str) -> str:
+    """The highest score wins; a tie keeps the base ("lowest"), then the simpler D8."""
+    order = ("lowest", "d8", "ndmi")
+    return max(order, key=lambda k: (m[f"{prefix}_{k}"], -order.index(k)))
 
 
 @pytest.mark.xfail(reason="not built yet", strict=False)
-def test_shallow_pits_are_filled_and_a_deep_corner_hole_is_not_the_outlet() -> None:
-    from app.advice.placement import runoff
-
-    # 0.1 m is one rounding step of the heights: filled. The 8 m hole is the lowest boundary point, yet no water
-    # leaves the parcel through it.
-    pits = ((*VALLEY_MID, 0.1), (SE_CORNER[0], SE_CORNER[1], 8.0))
-    r = runoff(_input(_grid(pits=pits), lowest=SE_CORNER))
-    top = r.outlets[0]
-    assert _near(top, X0, VALLEY_Y), (top.x_2180, top.y_2180)
-    assert top.catchment_ha > 5.0
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_depression_deeper_than_20_cm_is_kept_and_holds_the_valley_water() -> None:
-    from app.advice.placement import runoff
-
-    r = runoff(_input(_grid(pits=((*VALLEY_MID, 1.0),))))
-    # the water still enters the parcel along the valley ...
-    assert any(_near(p, X0 + SIDE, VALLEY_Y) and p.catchment_ha > 5.0 for p in r.inlets)
-    # ... but stays in the 1 m deep depression instead of reaching the western edge
-    assert r.outlets
-    assert not any(_near(o, X0, VALLEY_Y) and o.catchment_ha > 5.0 for o in r.outlets)
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_flat_parcel_gets_a_sentence_instead_of_flow_lines() -> None:
-    from app.advice.placement import runoff
-
-    r = runoff(_input(_grid(flat=True), slope=0.0))
-    assert r.flow_lines == []
-    assert "spad" in r.reason.lower()
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_stream_power_index_is_log_of_specific_catchment_times_slope() -> None:
-    from app.advice.placement import stream_power_index
-
-    assert stream_power_index(sca_m=100.0, slope_pct=5.0) == pytest.approx(math.log(100.0 * 0.05))
-    assert stream_power_index(sca_m=400.0, slope_pct=5.0) > stream_power_index(sca_m=100.0, slope_pct=5.0)
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_grassed_waterway_lies_on_the_valley_and_is_at_least_50_m_long() -> None:
-    from app.advice.placement import find_places
-
-    waterways = [c for c in find_places(_input(_grid())) if c.kind == "rów zadarniony" and c.place]
-    assert waterways, "the valley carries > 5 ha through the parcel: its SPI is above the threshold"
-    for c in waterways:
-        assert abs(c.place.y_2180 - VALLEY_Y) <= 20.0, c.place
-        assert c.length_m >= 50.0, c.length_m
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_contour_buffer_strips_only_on_slopes_from_4_to_15_percent() -> None:
-    from app.advice.placement import find_places
-
-    def has_strip(slope: float) -> bool:
-        grid = _grid(valley=False, slope_pct=slope)
-        return any(c.kind == "pas konturowy" and c.place for c in find_places(_input(grid, slope=slope)))
-
-    assert has_strip(8.0)
-    assert not has_strip(2.0)
-    assert not has_strip(20.0)
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_weir_only_where_the_flow_line_reaches_a_ditch() -> None:
-    from app.advice.placement import find_places
-
-    with_ditch = {
-        c.kind for c in find_places(_input(_grid(), water=[_ditch_along_the_west_edge()])) if c.place
-    }
-    assert "zastawka" in with_ditch
-    assert "rów zadarniony" in with_ditch
-    without = {c.kind for c in find_places(_input(_grid())) if c.place}
-    assert "zastawka" not in without
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_outflow_onto_a_neighbours_field_gets_a_strip_and_a_basin_inside() -> None:
-    from app.advice.placement import find_places
-
-    places = [c for c in find_places(_input(_grid())) if c.place]
-    kinds = {c.kind for c in places}
-    assert {"pas trawy", "niecka"} <= kinds
-    basin = next(c.place for c in places if c.kind == "niecka")
-    assert X0 < basin.x_2180 < X0 + SIDE and Y0 < basin.y_2180 < Y0 + SIDE
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_places_are_sorted_by_intercepted_catchment() -> None:
-    from app.advice.placement import find_places
-
-    sites = {"rów zadarniony", "pas trawy", "zastawka", "niecka"}
-    places = [
-        c
-        for c in find_places(_input(_grid(), water=[_ditch_along_the_west_edge()]))
-        if c.place and c.kind in sites
-    ]
-    assert places
-    catchments = [c.catchment_ha for c in places]
-    assert all(v is not None and v > 0 for v in catchments)
-    assert catchments == sorted(catchments, reverse=True)
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_number_of_weirs_follows_ditch_length_slope_and_head() -> None:
-    from app.advice.placement import weir_count
-
-    assert weir_count(length_m=400.0, slope_pct=0.5, head_m=0.4) == 5  # 400 m x 0.005 / 0.4 m
-    assert weir_count(length_m=100.0, slope_pct=0.2, head_m=0.3) >= 1
-
-
-@pytest.mark.xfail(reason="not built yet", strict=False)
-def test_app_uses_the_outlet_method_that_wins_the_ditch_test() -> None:
+def test_outlet_comes_from_the_variant_that_wins_the_ditch_test() -> None:
     from app.advice.placement import outlet_method
 
-    m = json.loads(Path("metrics.json").read_text(encoding="utf-8")).get("retention", {})
-    keys = {"outlet_hit_d8", "outlet_hit_dinf", "outlet_hit_lowest", "outlet_hit_random", "outlet_hit_share"}
+    m = _retention_metrics()
+    keys = {"outlet_hit_lowest", "outlet_hit_d8", "outlet_hit_ndmi", "outlet_hit_random", "outlet_hit_share"}
     assert keys <= set(m), keys - set(m)
-    # a tie goes to the simpler method: the lowest boundary point, then D8
-    scores = [("lowest", m["outlet_hit_lowest"]), ("d8", m["outlet_hit_d8"]), ("dinf", m["outlet_hit_dinf"])]
-    best = max(scores, key=lambda s: s[1])
-    assert outlet_method() == best[0]
-    assert m["outlet_hit_share"] == pytest.approx(best[1])  # the share of the method the app uses
+    best = _winner(m, "outlet_hit")
+    assert outlet_method() == best
+    assert m["outlet_hit_share"] == pytest.approx(m[f"outlet_hit_{best}"])
 
 
 @pytest.mark.xfail(reason="not built yet", strict=False)
-def test_readme_cites_the_runoff_method_and_compares_the_outlet_methods() -> None:
+def test_basin_comes_from_the_variant_that_wins_the_pond_test() -> None:
+    from app.advice.placement import basin_method
+
+    m = _retention_metrics()
+    keys = {"pond_auc_lowest", "pond_auc_d8", "pond_auc_ndmi", "pond_auc"}
+    assert keys <= set(m), keys - set(m)
+    best = _winner(m, "pond_auc")
+    assert basin_method() == best
+    assert m["pond_auc"] == pytest.approx(m[f"pond_auc_{best}"])
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_readme_cites_classic_methods_compares_the_variants_and_does_not_rest_on_acpf() -> None:
     readme = Path("README.md").read_text(encoding="utf-8")
-    for ref in ("ACPF", "Tomer", "2013", "2015", "Porter", "7.0"):
+    assert re.search(r"O[’']Callaghan", readme)
+    for ref in (
+        "1984",
+        "najmniejszych kwadratów",
+        "NDMI",
+        "najniższy punkt granicy",
+        "patentu",
+        "21.11.2026",
+    ):
         assert ref in readme, ref
-    for method in ("D8", "D-nieskończoność", "najniższy punkt granicy"):
-        assert method in readme, method
+    assert "ACPF" not in readme

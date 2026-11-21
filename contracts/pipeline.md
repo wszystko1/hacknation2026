@@ -27,25 +27,33 @@ Funkcje pomocnicze z ustalonym wejściem i wyjściem (używają ich testy akcept
   kategoria i sąsiednia kategoria, gdy uziarnienie leży blisko granicy klas;
 - `app/smsr/parser.parse_commune_page(html) -> CommuneTable` z `.commune`, `.year`, `.symbol(crop_label, soil, period)`,
   `.area_share_pct(crop_label, period)`;
-- `app/advice/placement.py` (analiza spływu, jeden wymienny moduł, numpy):
-  - `PlacementInput(outline_2180, grid, lowest_outline_point_2180, water, slope_mean_pct)`; `grid` to siatka z marginesem
-    ok. 300 m (`Terrain.catchment_grid`, gdy jest; inaczej `Terrain.grid`), `ElevationGrid.inside` = 1 w obrysie;
-  - `runoff(PlacementInput, method: "d8" | "dinf" = "d8") -> Runoff`: zagłębienia płytsze niż ok. 0,2 m wypełnione, głębsze
-    zostają; akumulacja D8 albo D-nieskończonością; `outlets` i `inlets` (`list[BoundaryPoint]`: `x_2180`, `y_2180`,
-    `catchment_ha`, malejąco po `catchment_ha`), `flow_lines` (`list[list[[x, y]]]` w EPSG:2180, akumulacja powyżej progu)
-    i `reason` (gdy spadek za mały: zdanie ze słowem „spadek”, `flow_lines == []`);
-  - `stream_power_index(sca_m, slope_pct) -> float` = ln(sca_m × slope_pct / 100) (SPI jak w ACPF; SCA z D-nieskończoności,
-    zlewnia na metr szerokości oczka);
+- `app/advice/placement.py` (rozmieszczanie działań retencji, jeden wymienny moduł, numpy):
+  - `PlacementInput(outline_2180, grid, lowest_outline_point_2180, water, slope_mean_pct)`; `grid` to siatka wysokości
+    (`Terrain.grid`; do akumulacji `Terrain.catchment_grid` z marginesem ok. 300 m, gdy jest), `ElevationGrid.inside` = 1
+    w obrysie;
+  - podstawa: `fit_plane(grid) -> Plane` (`a`, `b`, `c`, `slope_pct` = 100 · √(a² + b²), `downhill_deg` = azymut wektora
+    (−a, −b): 0 płn., 90 wsch., 180 płd., 270 zach.) z płaszczyzny z = ax + by + c dopasowanej metodą najmniejszych
+    kwadratów do oczek w obrysie; `lower_edge(inp) -> LowerEdge` (`points_2180`: ciągły fragment obrysu z najniższymi
+    wysokościami, punkty co krok siatki; `length_m`; `None`, gdy spadek płaszczyzny poniżej progu z katalogu);
+    `lowest_boundary_point(inp)` i `lowest_interior_point(inp) -> [x, y] | None` liczone z siatki;
+    `depressions(grid) -> list[[x, y]]` (oczka w obrysie niższe od wszystkich 8 sąsiadów);
   - `find_places(PlacementInput) -> list[PlaceCandidate]` (`kind`, `place: Place | None`, `reason`, `catchment_ha`,
-    `length_m: float | None` = długość odcinka dla „rów zadarniony”); rodzaje miejsc: „rów zadarniony” (SPI powyżej progu
-    z katalogu, odcinek ≥ `cond_length_min_m`), „pas konturowy” (nachylenie w `cond_slope_min_pct`–`cond_slope_max_pct`),
-    „pas trawy”, „zastawka”, „niecka”, „uprawa w poprzek stoku”, oraz „punkt wypływu”, „rów”, „zbiornik”; progi rozmieszczania
-    czytane z `app/advice/catalog_retencja.csv` (`load_catalog()`), nie z kodu; miejsca malejąco po `catchment_ha`; bez
-    miejsca: `place=None` i `reason`;
-  - `weir_count(length_m, slope_pct, head_m) -> int` = max(1, round(length_m × slope_pct / 100 / head_m));
-  - `outlet_method() -> "d8" | "dinf" | "lowest"`: metoda z najwyższym `retention.outlet_hit_d8` /
-    `retention.outlet_hit_dinf` / `retention.outlet_hit_lowest` w `metrics.json` (remis: „lowest”, potem „d8”; bez kluczy:
-    „lowest”, punkt wypływu = najniższy punkt granicy); `retention.outlet_hit_share` = wynik tej metody;
+    `length_m: float | None` dla „pas trawy”, `direction_deg: float | None` dla „uprawa w poprzek stoku”: kierunek orki
+    i siewu jako azymut w [0, 180), prostopadły do kierunku spadku); rodzaje: „pas trawy” (dolny odcinek granicy;
+    `place.description` ze słowem „rów”, gdy rów z BDOT10k biegnie przy tym odcinku), „uprawa w poprzek stoku”, „niecka”
+    (najniższy punkt wnętrza albo zagłębienie), „zastawka” (tylko rów przy dolnym odcinku), oraz „punkt wypływu”, „rów”,
+    „zbiornik”; progi (najmniejszy spadek dolnego odcinka, odległość rowu od odcinka, spadek dla uprawy w poprzek stoku)
+    czytane z `app/advice/catalog_retencja.csv` (`load_catalog()`), nie z kodu; za mały spadek: brak „pas trawy” i `reason`
+    ze słowem „spadek”; bez miejsca: `place=None` i `reason`;
+  - rozszerzenie (zastępuje podstawę tylko po wygranej w sprawdzeniu miejsc): `runoff(PlacementInput) -> Runoff`: akumulacja
+    D8 (O'Callaghan i Mark 1984) po wypełnieniu zagłębień; `outlets` i `inlets` (`list[BoundaryPoint]`: `x_2180`, `y_2180`,
+    `catchment_ha`, malejąco po `catchment_ha`), `flow_lines` (`list[list[[x, y]]]` w EPSG:2180) i `reason`;
+    `app/advice/wet_zones.py`: `wet_zones(satellite, weather, outline_2180) -> WetZones | None` (mediana NDMI w każdym pikselu
+    działki ze scen bez chmur z suchych okresów; `wettest_boundary_2180`, `wettest_interior_2180`, `n_scenes`, `reason`);
+  - `outlet_method() -> "lowest" | "d8" | "ndmi"`: wariant z najwyższym `retention.outlet_hit_lowest` / `_d8` / `_ndmi`
+    w `metrics.json`; `basin_method() -> "lowest" | "d8" | "ndmi"`: to samo dla `retention.pond_auc_lowest` / `_d8` /
+    `_ndmi`; remis: „lowest”, potem „d8”; bez kluczy: „lowest”; `retention.outlet_hit_share` i `retention.pond_auc` = wynik
+    wybranego wariantu;
 - `app/advice/legal.legal_note(action_id) -> LegalNote` z `app/advice/prawo_wodne.csv`
   (`action_id,formality,article,quote,pdf_page,checked_on,extra`);
 - `app/validation/agreement.confusion(pairs)`, `scores(table)`, `bucket_of(margin_mm)`; `scores` zwraca `accuracy`,
@@ -58,11 +66,14 @@ Funkcje pomocnicze z ustalonym wejściem i wyjściem (używają ich testy akcept
   „literatura” tylko przy pełnym źródle, inaczej „”), `rank_actions(actions) -> list[Action]` (w grupie: liczba przyczyn,
   wykonalność od daty oceny, rolnik zrobi sam; najwyżej 3 na grupę).
 
-Siatka wysokości do analizy spływu: `Terrain.catchment_grid: ElevationGrid | None` (`app/geodata/models.py`): obrys
-działki plus ok. 300 m, jeden krok dla całej siatki: 5 m, gdy punkty w obrysie co 5 m i poza nim co 10 m mieszczą się
-w limicie punktów i czasu (oczka poza pobranymi punktami interpolowane z siatki 10 m), inaczej 10 m, a gdy i to się nie mieści,
-20–30 m; `inside` = 1 w obrysie; `Terrain.catchment_step_inside_m` i `Terrain.catchment_note` mówią, co pobrano;
-`Terrain.grid` (gęsta, wokół działki) zostaje dla statystyk i profilu terenu.
+Siatka wysokości z marginesem (tylko do akumulacji D8 i jej sprawdzenia): `Terrain.catchment_grid: ElevationGrid | None`
+(`app/geodata/models.py`): obrys działki plus ok. 300 m, jeden krok dla całej siatki (10 m; poza działką 20–30 m przy limicie
+punktów i czasu); `inside` = 1 w obrysie; `Terrain.catchment_note` mówi, co pobrano; pobierana na żywo tylko, gdy
+`outlet_method()` albo `basin_method()` zwraca „d8”, zawsze w `make eval`. `Terrain.grid` (w obrysie) wystarcza podstawie.
+
+Kontekst dla mapy i sekcji (ustawia `retention_actions`): `ctx.slope_pct`, `ctx.downhill_deg` (strzałka kierunku spadku,
+`None` przy za małym spadku), `ctx.lower_edge_2180` (dolny odcinek granicy), `ctx.outlet_2180`, `ctx.outlet_catchment_ha`
+(tylko wariant „d8”), `ctx.flow_2180` (tylko wariant „d8”), `ctx.runoff_reason` (zdanie o za małym spadku).
 
 Identyfikatory działań (`Action.id`) z formalnością w Prawie wodnym: `zastawka-istniejaca`, `zastawka-nowa`,
 `dreny-regulowany-odplyw`, `przebudowa-rowu`, `niecka-przy-wyplywie`, `pobor-wody-nawadnianie`; pozostałe działania
@@ -70,6 +81,8 @@ z katalogu mają własne stałe identyfikatory (małe litery, myślniki).
 
 Metryki (`make eval` → `metrics.json`, zagnieżdżone po kropkach): `smsr.*` (`scripts/eval_smsr.py`), `soil.*`
 (`scripts/eval_soil.py`), `forecast.*` (`scripts/eval_forecast.py`), `robustness.*` (`scripts/eval_parcels.py`), `retention.*`
-(`scripts/eval_retention.py`: `place_or_reason_share`, `outlet_hit_share`, `outlet_hit_lowest`, `outlet_hit_random`, `pond_auc`).
+(`scripts/eval_retention.py`: `place_or_reason_share`, `with_place_share`, `n_parcels`, `outlet_hit_lowest`, `outlet_hit_d8`,
+`outlet_hit_ndmi`, `outlet_hit_random`, `outlet_hit_share`, `n_ditch_parcels`; `scripts/eval_ponds.py`: `pond_auc_lowest`,
+`pond_auc_d8`, `pond_auc_ndmi`, `pond_auc`, `n_ponds`).
 Każdy skrypt ma `run() -> dict[str, float | int]` z płaskimi kluczami; `scripts/evaluate.py` je scala.
 Zgodność według odległości od progu: `smsr.agreement_by_distance.<koszyk>` z koszykami `0–10 mm`, `10–25 mm`, `25–50 mm`, `>50 mm`.

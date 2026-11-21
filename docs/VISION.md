@@ -32,9 +32,11 @@ nie ten raport. Przy każdym działaniu retencyjnym stoi formalność z cytatem 
 ## Złota ścieżka demo
 
 Ekran startowy: z lewej mapa do wskazania działki (mapa podkładowa GUGiK, przy dużym przybliżeniu ortofotomapa), na niej ciemny pasek
-wyboru z polem „Działka”. Ekran raportu: z lewej ortofotomapa z białym obrysem, przyciemnionym otoczeniem, punktem wypływu, rowem i
-numerami działań, nieruchoma przy przewijaniu, na niej ciemny pasek wyboru i karta „Skąd są dane”; z prawej biały raport, werdykt raz na
-górze, pod nim „Cały raport w skrócie”. W demo stoją liczby policzone przez aplikację. Dane demo to prawdziwe pobrania zamrożone
+wyboru z polem „Działka”. Ekran raportu ma trzy kolumny: pasek ikon 56 px (znak kropli, „Nowa ocena”, „Raport PDF”, „Zgodność
+z SMSR”; bez awatara i konta), ortofotomapa 560 px (na ekranie węższym niż 1180 px 44% szerokości) i raport w całej pozostałej
+szerokości, bo raport jest główną treścią. Mapa: biały obrys, przyciemnione otoczenie, strzałka kierunku spadku, dolny odcinek granicy,
+rów i numery działań, nieruchoma przy przewijaniu, na niej ciemny pasek wyboru i karta „Skąd są dane”. Raport biały, werdykt raz na
+górze, pod nim „Cały raport w skrócie”. Telefon (do 860 px): jedna kolumna, mapa nad raportem. W demo stoją liczby policzone przez aplikację. Dane demo to prawdziwe pobrania zamrożone
 21.11.2026 w `demo/data/` (sceny nie wychodzą do sieci), w interfejsie z etykietą „kopia danych z 21.11.2026”.
 
 Działka 1: `040303_2.0002.189/13` (gm. Dobrcz, 21,53 ha, staw przy granicy), „Zboża jare”. Datę wybieramy według SMSR, nie według naszego
@@ -62,9 +64,9 @@ się różni, demo to pokazuje. Działka 2: `100403_2.0011.144` (gm. Góra Świ�
    przypadków; odpowiedź „zawsze częstsza odpowiedź” w T na 100”, z `metrics.json`), pod nią 8 wierszy z liczbą (sekcje 1–8 poniżej),
    każdy przewija do swojej sekcji.
 5. **Retencja i plan** (sceny „Gdzie zatrzymać wodę na działce”, „Plan działań: przełącznik „W planie””): klik w „Zatrzymanie wody”; nad
-   działaniami lista rozpoznanych przyczyn z liczbami; mapa pokazuje linie spływu skoncentrowanego, punkt wypływu z powierzchnią zlewni
-   w ha, rów i miejsca 1–3 (albo zdanie, że spadek jest za mały, by wskazać linię spływu); sekcja ma profil terenu i formalność z cytatem
-   przepisu. Przełączenie działania na „W planie” zmienia licznik planu z N na N+1 na osi czasu do następnego okna suszy; nad osią stoi
+   działaniami lista rozpoznanych przyczyn z liczbami; mapa pokazuje strzałkę kierunku spadku ze spadkiem w %, dolny odcinek granicy
+   z pasem trawy, rów i miejsca 1–3 (albo zdanie, że spadek jest za mały, by wskazać dolny odcinek); sekcja ma profil terenu i formalność
+   z cytatem przepisu. Przełączenie działania na „W planie” zmienia licznik planu z N na N+1 na osi czasu do następnego okna suszy; nad osią stoi
    zdanie prognozy przekroczenia progu z jednym zdaniem jej trafności obok odpowiedzi trywialnej, z `metrics.json`.
 6. **Trafność i źródła** (sceny „Zgodność z oceną państwa (SMSR)”, „Źródła, czasy i braki danych”, „Widok doradcy i raport PDF”): tabela
    2×2 z liczbą przypadków, pod nią trafność, trafność zrównoważona, czułość i precyzja dla suszy, każda obok wyniku odpowiedzi „zawsze
@@ -109,22 +111,21 @@ zalecenia wybierają reguły na wskaźnikach, model językowy nie bierze udział
    z przyczyną różnicy; zgodność według odległości od progu, tabela 2×2 i miary z sekcji „Pomiar zgodności z SMSR” z `metrics.json`.
 3. **Przyczyny.** Wykres kaskadowy: zwykły bilans tego okresu (mediana 10 sezonów) → mniej opadu → więcej parowania = wynik. Gleba słowami
    IUNG („bardzo podatna na suszę”, kat. I), spadek terenu z NMT, przebieg NDVI i NDMI w sezonie wobec mediany poprzednich sezonów.
-4. **Zatrzymanie wody.** Miejsce każdego działania liczy aplikacja z analizy spływu (sekcja „Modele i metody obliczeń”): siatka wysokości
-   GUGiK z marginesem ok. 300 m wokół działki, bo woda spływa od sąsiadów i do nich. Wynik: linie spływu skoncentrowanego, punkty
-   wypływu i dopływu na granicy działki z powierzchnią zlewni w ha, rowy, cieki i zbiorniki z BDOT10k, profil terenu. Kandydaci na
-   miejsca idą malejąco po przechwyconej zlewni; raport pokazuje najwyżej 3, każde z tą liczbą. Progi rozmieszczania są z podręcznika
-   ACPF v7.0 (USDA ARS, 06/2025), przeliczone na jednostki metryczne, każdy ze stroną podręcznika w kolumnie źródła katalogu:
-   - rów zadarniony (pas trawy w linii spływu skoncentrowanego), gdzie indeks siły strumienia SPI = ln(SCA · tan β) przekracza próg
-     z podręcznika, na odcinku co najmniej 50 m, z długością w m; pas trawy na odcinku granicy z wypływem;
-   - pasy konturowe przy nachyleniu działki 4–15%; uprawa w poprzek stoku, prostopadle do średniego spadku;
-   - drenaż kontrolowany (regulowany odpływ z drenów) na gruntach zdrenowanych przy nachyleniu ok. 1% lub mniej;
-   - zastawka tylko, gdy linia spływu z działki dochodzi do rowu z BDOT10k; liczba zastawek ≈ długość odcinka rowu × spadek rowu
-     (z modelu terenu wzdłuż rowu) / wysokość piętrzenia;
-   - gdy wypływ trafia na pole sąsiada: pas przy tej granicy i niecka w najniższym punkcie wewnątrz działki;
-   - pozostałe działania rozmieszczania ACPF z progami z podręcznika i stroną; próg bez sprawdzonej strony: „propozycja zespołu”.
-   Gdy spadek działki jest za mały, by wiarygodnie wskazać linię spływu, raport pisze to wprost i nie rysuje strzałek. Gdy żadne miejsce
-   nie spełnia warunku: „brak miejsca na działce, bo …”. Milimetrów ani m³ wody odpływającej z działki nie podajemy: współczynnik spływu
-   nie ma źródła; efekt działania tylko jako zakres z literatury z dopiskiem „literatura”.
+4. **Zatrzymanie wody.** Miejsce każdego działania liczy aplikacja z geometrii działki (sekcja „Modele i metody obliczeń”): płaszczyzna
+   dopasowana do wysokości w obrysie daje średni spadek w % i kierunek spadku; dolny odcinek granicy to część obrysu z najniższymi
+   wysokościami; do tego najniższy punkt granicy i wnętrza, zagłębienia (oczko niższe od wszystkich sąsiadów) i najbliższy rów z BDOT10k
+   z odległością w m. Reguły:
+   - pas trawy na dolnym odcinku granicy, z długością w m; gdy rów biegnie przy tym odcinku, pas idzie wzdłuż rowu;
+   - uprawa w poprzek stoku: orka i siew prostopadle do kierunku spadku, kierunek na zdjęciu i słowami („z północy na południe”);
+   - niecka w najniższym punkcie wnętrza działki albo w zagłębieniu;
+   - zastawka tylko na rowie przy dolnym odcinku granicy.
+   Progi reguł (najmniejszy spadek, przy którym wskazujemy dolny odcinek, odległość rowu od odcinka, spadek dla uprawy w poprzek stoku)
+   są z poradnika CDR 2025 ze stroną; gdzie poradnik progu nie podaje, wiersz katalogu ma poziom pewności „propozycja zespołu”. Gdy
+   spadek płaszczyzny jest za mały, by wskazać dolny odcinek, raport pisze to wprost i nie rysuje strzałki. Gdy żadne miejsce nie spełnia
+   warunku: „brak miejsca na działce, bo …”. Akumulacja spływu i wilgotne strefy z satelity zastępują podstawę tylko tam, gdzie wygrały
+   w sprawdzeniu miejsc (sekcja „Sprawdzenie miejsc retencji”); gdy wygra akumulacja, przy miejscu stoi też zlewnia w ha. Milimetrów
+   ani m³ wody odpływającej z działki nie podajemy: współczynnik spływu nie ma źródła; efekt działania tylko jako zakres z literatury
+   z dopiskiem „literatura”.
    Formalność z `app/advice/prawo_wodne.csv` (działanie, artykuł, cytat przepisu, strona PDF tekstu jednolitego Dz.U. 2026 poz. 1335,
    data sprawdzenia):
    - „nic nie trzeba”: zatrzymywanie wody w rowie i hamowanie odpływu z drenów istniejącym urządzeniem (art. 395 pkt 11, 12), gdy skutek
@@ -159,20 +160,19 @@ Ocena bieżąca nie używa uczenia maszynowego: każdą liczbę daje rachunek al
   przy granicy klas. Mapa IUNG, gdy odpowiada dla punktu, jest odczytem, nie modelem; na niej mierzymy zgodność reguły.
 - **Roślinność:** odchylenie NDVI i NDMI od mediany tej samej dekady w poprzednich sezonach na tej samej działce (własna historia
   działki, nie średnia regionu).
-- **Spływ:** siatka wysokości GUGiK 10 m z wysokościami zaokrąglonymi do 0,1 m i marginesem ok. 300 m; wewnątrz działki siatka 5 m,
-  gdy mieści się w limicie punktów i czasu. Jak w ACPF wypełniamy zagłębienia płytsze niż ok. 0,2 m, a głębsze zostają; potem obsługa
-  płaskich fragmentów. Akumulację (powierzchnia zlewni w ha) liczymy dwiema metodami: D8 (jeden kierunek na oczko; tak ACPF liczy
-  akumulację) i D-nieskończoność Tarbotona (woda dzielona między dwóch niższych sąsiadów proporcjonalnie do spadku; ACPF używa jej
-  tylko do SPI i TWI). ACPF zakłada model terenu 1–2 m, nasza siatka jest rzadsza, więc metodę wybiera pomiar: punkt wypływu z D8,
-  z D-nieskończoności i najniższy punkt granicy idą do testu rowów (sekcja „Sprawdzenie miejsc retencji”); aplikacja używa najlepszego,
-  porównanie idzie do README. Linia spływu skoncentrowanego = akumulacja powyżej progu; SPI = ln(SCA · tan β) z D-nieskończoności,
-  jak w ACPF (SCA: zlewnia na metr szerokości oczka, β: spadek oczka). Rachunek w numpy (działa w Windows), w jednym wymiennym module
-  `app/advice/placement.py`.
-- **Źródło metody rozmieszczania:** ACPF (Agricultural Conservation Planning Framework, USDA ARS). README cytuje Tomer i in. 2013
-  (J. Soil Water Conserv. 68(5), 113A–120A), Tomer i in. 2015 (J. Environ. Qual. 44(3), 754–767) i podręcznik ACPF v7.0 (Porter
-  i in. 2025); DOI podajemy dopiero po sprawdzeniu, że prowadzą do tych prac. Kodu ani tekstu ACPF nie kopiujemy (narzędzia pobiera
-  się po przyjęciu umowy, której treści nie znamy): katalog podaje stronę podręcznika bez cytatu. ACPF daje tylko część
-  rozmieszczania; ocena suszy, progi z rozporządzenia, formalności z Prawa wodnego i raport są nasze.
+- **Rozmieszczanie, podstawa:** płaszczyzna z = ax + by + c dopasowana metodą najmniejszych kwadratów do wysokości oczek siatki GUGiK
+  w obrysie (10 m, wysokości co 0,1 m); średni spadek = 100 · √(a² + b²) %, kierunek spadku = kierunek wektora (−a, −b). Dolny odcinek
+  granicy: ciągły fragment obrysu (punkty co krok siatki) z najniższymi wysokościami; najniższy punkt granicy i wnętrza; zagłębienie =
+  oczko w obrysie niższe od wszystkich 8 sąsiadów; najbliższy rów z BDOT10k. Rachunek w numpy (działa w Windows), w jednym wymiennym
+  module `app/advice/placement.py`.
+- **Rozmieszczanie, rozszerzenie (tylko po wygranej w sprawdzeniu miejsc):** akumulacja spływu D8 (O'Callaghan i Mark 1984) na siatce
+  z marginesem ok. 300 m wokół działki po wypełnieniu zagłębień, bo woda spływa od sąsiadów i do nich; punkt wypływu = oczko granicy
+  z największą zlewnią w ha. Wilgotne strefy z satelity: mediana NDMI w każdym pikselu działki ze scen Sentinel-2 bez chmur z suchych
+  okresów (okres rozporządzenia z bilansem działki poniżej mediany jej 10 sezonów; ta definicja to propozycja zespołu), z danych, które
+  już pobieramy do wiersza satelity. Każdy wariant daje punkt wypływu i ocenę miejsca; który trafia do aplikacji, rozstrzyga pomiar.
+- **Źródła metod:** najmniejsze kwadraty i kierunek spadku płaszczyzny to klasyczna geometria; akumulacja D8: O'Callaghan J.F.,
+  Mark D.M. 1984, „The extraction of drainage networks from digital elevation data”, Computer Vision, Graphics, and Image Processing
+  28(3), 323–344. README mówi: metody pochodzą z klasycznej literatury; patentu na nie nie znaleźliśmy (wyszukiwanie 21.11.2026).
 - **Podpowiedź uprawy:** odczyt klas mapy upraw JRC EUCROPMAP 2022 (10 m) w obrysie. Wiarygodna, gdy jedna klasa pokrywa co najmniej
   połowę obrysu; wtedy 1–2 grupy rozporządzenia idą nad listę jako podpowiedź, bez wyboru za użytkownika. Mapa nie dzieli zbóż na ozime
   i jare, więc dla zbóż podpowiada obie grupy. Lista alfabetyczna pod podpowiedzią zostaje cała.
@@ -203,24 +203,24 @@ okres z progiem dla grupy upraw) KBW spadnie poniżej progu. Okresy zakończone 
 ## Skąd biorą się rekomendacje
 
 Baza: 26 działań spisanych ze źródeł (11 retencji krajobrazowej, 11 glebowych i agrotechnicznych, 4 nawadniania; CDR 2025, katalog NWRM
-Komisji Europejskiej, IUNG, FAO-56, ACPF, załącznik organizatora) w katalogu CSV (`app/advice/catalog*.csv`). Kolumny: działanie, grupa,
+Komisji Europejskiej, IUNG, FAO-56, załącznik organizatora) w katalogu CSV (`app/advice/catalog*.csv`). Kolumny: działanie, grupa,
 przyczyny, warunki (każdy próg w osobnej kolumnie), efekt (od, do, jednostka), źródło (dokument, strona, dosłowny cytat, adres), poziom
 pewności (badanie / opinia ekspercka / propozycja zespołu), formalność (artykuł), termin. Liczba trafia do raportu tylko z wypełnionym
-źródłem i cytatem; test to sprawdza. Efekt działania tylko jako zakres z literatury, oznaczony „literatura”. Wiersze z progami ACPF
-(rów zadarniony, pasy konturowe, drenaż kontrolowany i inne) mają progi w jednostkach metrycznych i stronę podręcznika v7.0, bez cytatu.
+źródłem i cytatem; test to sprawdza. Efekt działania tylko jako zakres z literatury, oznaczony „literatura”. Progi warunków są
+z polskich źródeł (poradnik CDR 2025) ze stroną; gdzie ich brak, wiersz ma poziom pewności „propozycja zespołu”.
 1. Diagnoza przyczyn z danych działki: za mało opadu, gleba słabo trzyma wodę, woda spływa z pola, uprawa wrażliwa w tej fazie. Wszystkie
    spełnione reguły dają przyczyny; nad działaniami stoi lista rozpoznanych przyczyn z liczbami działki.
 2. Dopasowanie: każde działanie jest przypisane do przyczyn, na które działa (mulcz i międzyplon ograniczają parowanie i poprawiają
    glebę; zastawka i pas przy rowie zatrzymują odpływ; nawadnianie uzupełnia brak opadu). Bez przyczyny nie ma zalecenia.
 3. Warunki stosowania: działanie odpada, gdy nie pasuje do działki (głęboszowanie tylko na glebach średnich i ciężkich; regulowany
-   odpływ tylko na gruntach zdrenowanych o spadku do 1%; zastawka tylko, gdy linia spływu dochodzi do rowu).
+   odpływ tylko na gruntach zdrenowanych o spadku do 1%, CDR 2025; zastawka tylko na rowie przy dolnym odcinku granicy).
 4. Kolejność w grupie: wyżej działanie odpowiadające na więcej przyczyn naraz; dalej wykonalność w terminie od daty oceny i to, czy
    rolnik zrobi je sam. Najwyżej 3 działania na grupę; grupy w kolejności zadania (retencja, agrotechnika, nawadnianie).
-5. Stałe zdanie z podstawionymi liczbami tej działki (powierzchnia, spadek, zlewnia w ha, odległość do rowu, niedobór w mm, termin,
-   miejsce).
+5. Stałe zdanie z podstawionymi liczbami tej działki (powierzchnia, spadek i jego kierunek, długość dolnego odcinka, odległość do rowu,
+   niedobór w mm, termin, miejsce).
 
-Progi rozmieszczania mają stronę podręcznika ACPF. Progi bez potwierdzonego źródła (np. odległość od rowu, wysokość piętrzenia) mają
-poziom pewności „propozycja zespołu”; widok doradcy tak je opisuje.
+Progi bez strony w polskim źródle (np. odległość rowu od dolnego odcinka, wysokość piętrzenia) mają poziom pewności „propozycja
+zespołu”; widok doradcy tak je opisuje.
 
 ## Pomiar zgodności z SMSR
 
@@ -251,14 +251,18 @@ Liczba z walidacji: **CSI wyniku „pod progiem / nad progiem” względem symbo
 ## Sprawdzenie miejsc retencji
 
 `scripts/eval_retention.py` (`make eval`), obok `retention.place_or_reason_share`. Przed automatyzacją ręczne sprawdzenie na ok. 10
-działkach na ortofotomapie, ze zrzutami ekranu.
-- **Wypływ wobec rowu:** ok. 50 działek z rowem BDOT10k do 50 m od granicy; odsetek działek, w których punkt wypływu leży do 30 m od
-  rowu, dla D8 (`retention.outlet_hit_d8`), D-nieskończoności (`retention.outlet_hit_dinf`), najniższego punktu granicy
-  (`retention.outlet_hit_lowest`) i 100 losowych punktów granicy (`retention.outlet_hit_random`). Aplikacja używa metody z najwyższym
-  wynikiem (przy remisie prostszej: najniższy punkt, potem D8); jej wynik to `retention.outlet_hit_share`. Rów jest zagłębieniem
-  w modelu terenu, więc wynik jest optymistyczny; README to mówi i pokazuje porównanie czterech wariantów.
-- **Zbiorniki:** zbiorniki i oczka z BDOT10k w promieniu ok. 1 km od działek; AUC akumulacji w miejscach zbiorników wobec losowych
-  miejsc (`retention.pond_auc`).
+działkach na ortofotomapie, ze zrzutami ekranu. Pomiar rozstrzyga, czy rozszerzenie zastępuje podstawę.
+- **Rowy (punkt wypływu):** ok. 50 działek z rowem BDOT10k do 50 m od granicy; odsetek działek, w których punkt wypływu leży do 30 m
+  od rowu, dla podstawy, czyli najniższego punktu granicy (`retention.outlet_hit_lowest`), akumulacji D8 (`retention.outlet_hit_d8`),
+  najwilgotniejszego punktu granicy z mediany NDMI (`retention.outlet_hit_ndmi`) i 100 losowych punktów granicy
+  (`retention.outlet_hit_random`); wynik wariantu, którego używa aplikacja: `retention.outlet_hit_share`. Rów jest zagłębieniem
+  w modelu terenu, więc wynik jest optymistyczny; README to mówi.
+- **Zbiorniki (miejsce niecki):** zbiorniki i oczka z BDOT10k w promieniu ok. 1 km od działek; AUC oceny miejsca w zbiornikach wobec
+  losowych miejsc dla podstawy, czyli głębokości pod płaszczyzną dopasowaną w oknie ok. 100 m wokół miejsca
+  (`retention.pond_auc_lowest`), akumulacji D8 (`retention.pond_auc_d8`) i mediany NDMI bez pikseli samej wody
+  (`retention.pond_auc_ndmi`); wynik wariantu aplikacji: `retention.pond_auc`.
+- **Wybór:** punkt wypływu (pas trawy, zastawka) bierze wariant z najwyższym wynikiem testu rowów, miejsce niecki wariant z najwyższym
+  AUC; przy remisie zostaje podstawa, potem akumulacja. Tabela wszystkich wariantów w README.
 
 ## Odrębność
 
@@ -266,9 +270,9 @@ Typowe rozwiązanie tego zadania, jakiego się spodziewamy: mapa, NDVI, semafor 
 albo z szablonu bez warunku, bez walidacji. Forma jest podobna (mapa + raport), różnica jest sprawdzalna: bilans definicją prawną suszy
 w mm wobec progu, który zna każdy, kto składał wniosek suszowy, obok oceny SMSR dla gminy; zmierzona zgodność z oceną państwa na co
 najmniej 300 gmino-latach, porównana z odpowiedziami trywialnymi; prognoza przekroczenia progu sprawdzona na odłożonych latach wobec
-częstości historycznej; zalecenie z przyczyn i warunku, retencyjne z miejscem z analizy spływu z progami podręcznika ACPF ze stroną
-(metoda wypływu wybrana pomiarem wobec rowów spośród D8, D-nieskończoności i najniższego punktu granicy, obok losowych punktów)
-i formalnością z cytatem przepisu; ten sam numer i data dają zawsze ten sam raport; braki
+częstości historycznej; zalecenie z przyczyn i warunku, retencyjne z miejscem z geometrii działki (płaszczyzna spadku, dolny odcinek
+granicy, zagłębienia, rów) sprawdzonym wobec rowów i zbiorników z BDOT10k obok losowych punktów, akumulacja spływu i wilgotne strefy
+z satelity tylko po wygranej, formalność z cytatem przepisu; ten sam numer i data dają zawsze ten sam raport; braki
 danych wprost; działanie sprawdzone na 50 losowych działkach, także z datą listopadową.
 
 ## Dane
@@ -277,8 +281,8 @@ danych wprost; działanie sprawdzone na 50 losowych działkach, także z datą l
 adresem; 10 działek: 6,1 s typowo, 8,7 s najgorzej, 10 ms z pamięci podręcznej) i leży w `app/geodata` z testami. Działka z punktu na
 mapie: ULDK GetParcelByXY; kafle mapy: mapa podkładowa i ortofotomapa GUGiK. Pogoda: Open-Meteo, a gdy odmawia, posterunki IMGW + ET0
 FAO-56 ze stacji synoptycznej, luki z NASA POWER. Dochodzą: tabele gmin SMSR IUNG (wiersz gminy na żywo, archiwum do pomiaru), kategoria
-gleby z warstwy IUNG, progi z Dz.U. 2019 poz. 739 w CSV z testem, katalog działań (CDR 2025, NWRM, ACPF), formalności Prawa wodnego
-w CSV z cytatami, siatka wysokości GUGiK z marginesem ok. 300 m, rowy, zbiorniki i oczka z BDOT10k do testu miejsc, pogoda 2001–2026 dla centroidów 200 gmin (2020–2026 do pomiaru zgodności, 2001–2025 do walidacji prognozy), prognoza 16 dni
+gleby z warstwy IUNG, progi z Dz.U. 2019 poz. 739 w CSV z testem, katalog działań (CDR 2025, NWRM), formalności Prawa wodnego
+w CSV z cytatami, siatka wysokości GUGiK w obrysie (z marginesem ok. 300 m do akumulacji spływu), rowy, zbiorniki i oczka z BDOT10k do testu miejsc, pogoda 2001–2026 dla centroidów 200 gmin (2020–2026 do pomiaru zgodności, 2001–2025 do walidacji prognozy), prognoza 16 dni
 Open-Meteo, mapa upraw JRC EUCROPMAP 2022 czytana oknem w obrysie. Danych syntetycznych w produkcie nie ma; dane demo to prawdziwe
 pobrania z datą, oznaczone w interfejsie.
 
@@ -295,8 +299,8 @@ pobrania z datą, oznaczone w interfejsie.
 7. Plakietki „Susza rolnicza” ani zastosowania raportu jako dowodu we wniosku suszowym.
 8. Milimetrów ani m³ wody odpływającej z działki; zostaje miejsce, kierunek spływu i powierzchnia zlewni (otwarta decyzja). Efektów
    działań bez źródła z cytatem.
-9. Kodu ani tekstu ACPF (cytujemy metodę i stronę podręcznika) ani bibliotek hydrologicznych bez działającej wersji dla Windows;
-   spływ liczymy w numpy.
+9. Metod, progów ani tekstu ACPF (USDA); bibliotek hydrologicznych bez działającej wersji dla Windows: geometrię i spływ liczymy
+   w numpy.
 10. Niczego innego z listy „Otwarte decyzje”, dopóki nie zapadnie decyzja.
 
 ## Moduły krytyczne dla jury
@@ -307,11 +311,12 @@ Małe, typowane, z testami i opisem w `docs/PYTANIA_JURY.md`:
 2. `app/advice/rules.py` + `app/advice/catalog*.csv` + `app/advice/prawo_wodne.csv`: reguła = przyczyny i warunek na wskaźnikach →
    szablon zdania, liczby, termin, źródło, formalność; kolejność po liczbie przyczyn, wykonalności i tym, czy rolnik zrobi to sam. Testy:
    każde działanie ma w CSV artykuł, cytat, stronę PDF i datę sprawdzenia albo „sprawdź w Wodach Polskich” bez numeru artykułu; liczba
-   efektu tylko z cytatem źródła; progi ACPF w jednostkach metrycznych ze stroną podręcznika. Progi bez źródła w widoku doradcy
-   opisane jako propozycje zespołu.
-3. `app/advice/placement.py`: analiza spływu (wypełnienie zagłębień płytszych niż 0,2 m, akumulacja D8 i D-nieskończonością w ha, SPI)
-   i miejsca działań z progami ACPF albo „brak miejsca, bo …”. Typowane wejście (obrys, siatka wysokości z marginesem, wody z BDOT10k) i wyjście (lista miejsc z rodzajem,
-   położeniem, zlewnią w ha i powodem); moduł da się wymienić bez zmian w reszcie raportu.
+   efektu tylko z cytatem źródła; próg z polskiego źródła ze stroną albo z poziomem „propozycja zespołu”. Progi bez źródła w widoku
+   doradcy opisane jako propozycje zespołu.
+3. `app/advice/placement.py`: płaszczyzna najmniejszych kwadratów (spadek, kierunek), dolny odcinek granicy, najniższe punkty,
+   zagłębienia, rów i z nich miejsca działań albo „brak miejsca, bo …”; rozszerzenie (akumulacja D8, mediana NDMI) za tym samym
+   interfejsem, wybierane wynikiem sprawdzenia miejsc. Typowane wejście (obrys, siatka wysokości, wody z BDOT10k) i wyjście (lista
+   miejsc z rodzajem, położeniem, długością albo kierunkiem i powodem); moduł da się wymienić bez zmian w reszcie raportu.
 4. `app/validation/agreement.py`: tabela 2×2, trafność, trafność zrównoważona, czułość, precyzja, CSI, POD, FAR, Peirce, linie
    odniesienia, bootstrap po gminach; wołany przez `scripts/eval_smsr.py`.
 5. `app/forecast/exceedance.py`: częstość historyczna, dopełnianie przebiegami i model za jednym typowanym interfejsem, stany „ok”,
@@ -343,10 +348,10 @@ raporty do zgłoszenia robi `scripts/export_reports.py` (Playwright, `page.pdf`)
 | Open-Meteo archiwum odrzuca limitem dziennym | łańcuch IMGW + NASA POWER, pamięć podręczna, dostawca i odległość stacji w raporcie |
 | SMSR ogranicza pobieranie archiwum | przerwy 0,5 s, mniejsza próba z podanym N; 84 strony już sparsowane |
 | Satelita lub NMT przekracza limit czasu | nie blokują bilansu; wiersz mówi „brak” i dlaczego; historia satelity dociąga się w tle |
-| Ani D8, ani D-nieskończoność nie bije najniższego punktu granicy w teście rowów | aplikacja używa najniższego punktu granicy; porównanie czterech wariantów w README |
-| Siatka z marginesem 300 m przekracza limit punktów lub czasu | w działce 10 m zamiast 5 m, poza działką co 20–30 m; zlewnia przycięta do marginesu, raport to mówi |
-| Wysokości zaokrąglone do 0,1 m dają płaskie fragmenty | wypełnienie zagłębień płytszych niż 0,2 m i obsługa płaskich fragmentów; za mały spadek: zdanie zamiast strzałek |
-| Próg SPI z podręcznika ACPF (model 1–2 m) na siatce 10 m wskazuje za mało albo za dużo rowów zadarnionych | próg z podręcznika zostaje; liczba rowów zadarnionych na 50 działkach testowych w README; inny próg tylko jako „propozycja zespołu” z powodem |
+| Ani akumulacja spływu, ani wilgotne strefy z satelity nie biją podstawy w sprawdzeniu miejsc | aplikacja zostaje przy podstawie; porównanie wszystkich wariantów w README |
+| Siatka z marginesem 300 m przekracza limit punktów lub czasu | poza działką co 20–30 m; zlewnia przycięta do marginesu, raport to mówi; podstawa marginesu nie potrzebuje |
+| Wysokości co 0,1 m dają płaskie fragmenty i fałszywe zagłębienia | płaszczyzna ze wszystkich oczek obrysu uśrednia zaokrąglenia; za mały spadek: zdanie zamiast dolnego odcinka; test zbiorników mierzy, czy zagłębienia trafiają |
+| Poradnik CDR 2025 nie podaje progu reguły rozmieszczania | próg w katalogu z poziomem „propozycja zespołu”, widok doradcy to mówi; pytanie do mentora |
 | Prognoza nie bije punktów odniesienia | model nie wchodzi do aplikacji (porównanie w README); gdy i dopełnianie przegrywa z częstością historyczną, raport podaje samą częstość i mówi to wprost |
 | Mapa JRC myli uprawę na działce | podpowiedź tylko przy pokryciu ≥ 50% obrysu, nigdy wybór za użytkownika; pierwsza do cięcia |
 | L1 nie stoi o 20:00 | kolejność cięcia z „Drabiny cięć”; lista „Nigdy nie tniemy” zostaje |
@@ -361,8 +366,8 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
 - **Wariant ekranu z drugiej rundy makiet;** do decyzji obowiązuje kierunek wizualny z `docs/DESIGN.md`.
 - **Hosting:** publiczny link (konto w usłudze hostingowej, ok. 7 USD miesięcznie, do 3 godzin pracy) czy tylko instrukcja w README.
 - **Źródło opadu:** stacja czy siatka (różnica w oknie 60 dni typowo 29 mm, najwięcej 139 mm, może zmienić werdykt); pytanie do mentora.
-- **Progi reguł poza rozmieszczaniem ACPF** (odległość od rowu, wysokość piętrzenia, warunki agrotechniki): od mentorów; do tego czasu
-  propozycje zespołu. Reguły z tymi progami budujemy.
+- **Progi bez źródła w poradniku CDR 2025** (odległość rowu od dolnego odcinka, najmniejszy spadek, wysokość piętrzenia, warunki
+  agrotechniki): od mentorów; do tego czasu propozycje zespołu. Reguły z tymi progami budujemy.
 - Czym jest referencja jury i w jakim formacie poda numer działki (pytania do mentorów); nazwa produktu.
 
 ## Drabina cięć
@@ -374,20 +379,21 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
 - **L1 (sob 20:00):** dowolna działka i data, także listopadowa: wejście numerem albo klikiem na mapie startowej (przybliżanie, ULDK
   GetParcelByXY, obrys i numer do potwierdzenia „To ta działka” / „Wskaż inną”), klik w sąsiednią działkę na zdjęciu raportu z propozycją
   przejścia, zdjęcie z obrysem, werdykt z wykresem bilansu, plakietką i zastrzeżeniem, wiersz SMSR gminy dla daty analizy, wiersz stanu
-  roślin z satelity, działanie retencyjne nr 1 (najniższy punkt obrysu z siatki wysokości + najbliższy rów z BDOT10k + formalność z CSV),
-  agrotechnika i nawadnianie jako zdania z reguł, skrót, źródła i braki, widok do druku.
-- **L2 (ndz 02:00):** `smsr.*` w `metrics.json` z miarami dla rolnika i sekcja gminy, 10 sezonów i lista przyczyn, analiza spływu
-  (margines 300 m, zagłębienia płytsze niż 0,2 m wypełnione, D8 i D-nieskończoność, SPI, zlewnia w ha, linie spływu, wypływy
-  i dopływy) z miejscami działań i progami ACPF ze stroną, cytaty metody w README, katalog działań CSV ze źródłami i kolejnością po
+  roślin z satelity, działania retencyjne z podstawy rozmieszczania (płaszczyzna spadku, dolny odcinek granicy, najniższe punkty,
+  zagłębienia, najbliższy rów z BDOT10k; pas trawy, uprawa w poprzek stoku, niecka, zastawka) z formalnością z CSV, agrotechnika
+  i nawadnianie jako zdania z reguł, skrót, źródła i braki, widok do druku; ekran raportu: pasek ikon 56 px, mapa 560 px, reszta raport.
+- **L2 (ndz 02:00):** `smsr.*` w `metrics.json` z miarami dla rolnika i sekcja gminy, 10 sezonów i lista przyczyn, sprawdzenie miejsc
+  na rowach i zbiornikach (podstawa wobec akumulacji D8 z marginesem 300 m, mediany NDMI z suchych okresów i losowych punktów) z wariantem
+  zwycięskim w aplikacji, cytat O'Callaghan i Mark 1984 i zdanie o patencie w README, katalog działań CSV ze źródłami i kolejnością po
   liczbie przyczyn, wykresy agrotechniki i nawadniania, plan z przełącznikami i osią czasu, `soil.category_agreement`, test 50 działek
-  z `retention.*` (test wypływu wobec rowów dla D8, D-nieskończoności, najniższego i losowych punktów) i `robustness.*`, przełącznik
-  Rolnik / Doradca, prognoza dopełnianiem przebiegami nad osią planu z `forecast.*` z walidacji kroczącej.
-- **L3 (ndz 09:00, potem bez nowych funkcji):** model prognozy w aplikacji, jeśli wygrał; podpowiedź uprawy z mapy JRC; siatka 5 m
-  wewnątrz działki; pełny widok doradcy; bilans FAO-56 w nawadnianiu; układ na telefon; wyszukiwanie po nazwie obrębu; dopracowanie
-  wyglądu.
-- **Kolejność cięcia:** podpowiedź uprawy → siatka 5 m w działce (zostaje 10 m) → test zbiorników (`retention.pond_auc`) → model prognozy w aplikacji (zostaje dopełnianie,
-  porównanie w README) → analiza spływu w aplikacji (zostaje najniższy punkt granicy z L1, test rowów w README) → bilans FAO-56
-  w nawadnianiu (zostaje prosta decyzja) → wykres gminy w sekcji 2 (wiersz SMSR zostaje) → stan planu w linku i PDF (przełącznik
+  z `retention.*` i `robustness.*`, przełącznik Rolnik / Doradca, prognoza dopełnianiem przebiegami nad osią planu z `forecast.*`
+  z walidacji kroczącej.
+- **L3 (ndz 09:00, potem bez nowych funkcji):** model prognozy w aplikacji, jeśli wygrał; podpowiedź uprawy z mapy JRC; pełny widok
+  doradcy; bilans FAO-56 w nawadnianiu; układ na telefon; wyszukiwanie po nazwie obrębu; dopracowanie wyglądu.
+- **Kolejność cięcia:** podpowiedź uprawy → wilgotne strefy z satelity (zostają podstawa i akumulacja) → test zbiorników
+  (`retention.pond_auc`; niecka zostaje w najniższym punkcie albo zagłębieniu) → model prognozy w aplikacji (zostaje dopełnianie,
+  porównanie w README) → akumulacja spływu i siatka z marginesem 300 m (zostaje podstawa z L1, test rowów z najniższym i losowymi
+  punktami w README) → bilans FAO-56 w nawadnianiu (zostaje prosta decyzja) → wykres gminy w sekcji 2 (wiersz SMSR zostaje) → stan planu w linku i PDF (przełącznik
   w raporcie należy do złotej ścieżki i zostaje).
 - **Nigdy nie tniemy:** złotej ścieżki, wskazania działki na mapie (obowiązkowy zakres zadania, pkt 3.3 ppkt 2), liczby zgodności z SMSR,
   wiersza SMSR gminy i zdania zastrzeżenia pod werdyktem, działania retencyjnego nr 1 z miejscem, daty poza okresem monitoringu, jawnych
@@ -430,3 +436,14 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
   „pas zadarniony” to teraz „rów zadarniony”, doszły testy SPI, rowu zadarnionego ≥ 50 m, pasów konturowych i cytatów w README,
   w `test_action_catalog.py` test progów ACPF ze stroną; żaden test nie został usunięty (powód: ACPF liczy D8 na modelu 1–2 m,
   u nas siatka 10 m z wysokościami co 0,1 m, więc metodę wybieramy pomiarem, a progi bierzemy ze źródła zamiast własnych).
+- sob 20:29, W06: miejsca działań retencyjnych liczy podstawa z geometrii działki bez ACPF (płaszczyzna najmniejszych kwadratów ze
+  spadkiem i kierunkiem, dolny odcinek granicy, najniższe punkty, zagłębienia, najbliższy rów; pas trawy, uprawa w poprzek stoku, niecka,
+  zastawka), a akumulacja D8 (O'Callaghan i Mark 1984) i mediana NDMI z suchych okresów zastępują ją tylko po wygranej w teście rowów
+  i zbiorników; progi z poradnika CDR 2025 albo jako propozycja zespołu; README ze zdaniem o klasycznej literaturze i patencie; ekran
+  raportu: pasek ikon 56 px, mapa 560 px (44% na węższym ekranie), reszta raport; w `tests/acceptance/test_runoff_placement.py`
+  usunięte testy płytkich i głębokich zagłębień, SPI, rowu zadarnionego, pasów konturowych, zastawki przy linii spływu, pasa i niecki
+  przy wypływie, sortowania po zlewni, liczby zastawek i wyboru D8 / D-nieskończoności, doszły testy płaszczyzny, dolnego odcinka,
+  zastawki przy dolnym odcinku, zagłębień, niecki, uprawy w poprzek stoku, płaskiej działki, wyboru wariantu w obu testach i README
+  bez ACPF; w `test_action_catalog.py` test progów ACPF zastąpiony testem progów z polskiego źródła albo propozycji zespołu; doszedł
+  `tests/acceptance/test_report_layout.py` (xfail do zbudowania) (powód przy ACPF: nie podany; przy układzie: mapa zajmowała za dużo
+  ekranu, a raport jest główną treścią).
