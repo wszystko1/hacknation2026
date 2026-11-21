@@ -36,3 +36,15 @@ def scene(page, base_url: str) -> None:
     assert "Ocena SMSR dla gminy Dobrcz" in page.locator("#wiersz-smsr").inner_text()
     page.locator("#zdanie-werdyktu").scroll_into_view_if_needed()
     page.wait_for_timeout(PAUSE)
+    # Three separate answers under the badge: plants, the reading of verdict and plants together, vulnerability.
+    plants = page.locator("#wiersz-satelita").inner_text()
+    assert "Stan roślin" in plants and ("zdjęcie z" in plants or "brak" in plants.lower() or "w toku" in plants), plants
+    reading = page.locator("#wiersz-odczyt")
+    if reading.count():
+        text = reading.inner_text()
+        expected = ("Susza potwierdzona", "satelita jeszcze nie pokazuje stresu", "Spadek niewyjaśniony",
+                    "Brak oznak problemu z wodą", "Sam bilans")  # fmt: skip
+        assert any(e in text for e in expected), text
+    assert "gdyby rosły" in page.locator("#wiersz-podatnosc").inner_text().lower()
+    page.locator("#wiersz-satelita").scroll_into_view_if_needed()
+    page.wait_for_timeout(PAUSE)

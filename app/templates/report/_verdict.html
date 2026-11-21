@@ -23,7 +23,7 @@
   <dl class="facts">
     <div id="wiersz-smsr"><dt>Ocena SMSR dla gminy {{ report.smsr.commune }} w tym okresie</dt>
       <dd>{% if report.smsr.state == 'ok' %}<b>{{ report.smsr.words }}</b>{% if report.smsr.soil_category %} (gleba kat. {{ report.smsr.soil_category }}){% endif %}{% else %}{{ report.smsr.reason }}{% endif %}</dd></div>
-    <div id="wiersz-satelita"><dt>Stan roślin na działce</dt><dd>{{ report.crop_condition.words }}</dd></div>
+    <div id="wiersz-satelita"><dt>Stan roślin na działce</dt><dd>{% if report.crop_condition.state == 'waiting' %}ocena roślin w toku{% else %}{{ report.crop_condition.words }}{% if report.crop_condition.scene_date %} (zdjęcie z {{ report.crop_condition.scene_date | day }}){% endif %}{% endif %}</dd></div>
     {% if report.reading %}<div id="wiersz-odczyt"><dt>Werdykt i rośliny razem</dt><dd>{{ report.reading }}</dd></div>{% endif %}
     <div id="wiersz-podatnosc"><dt>Podatność działki</dt><dd>{{ report.vulnerability.sentence or report.vulnerability.reason }}</dd></div>
     <div id="dzialanie-1"><dt>Działanie nr 1</dt>

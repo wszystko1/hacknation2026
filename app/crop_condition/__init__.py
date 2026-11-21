@@ -13,9 +13,10 @@ from app.geodata import SceneIndex
 from app.models import CropCondition
 
 from .compare import compare
+from .reading import read_together
 from .rotation import classify_season
 
-__all__ = ["assess_crop_condition", "classify_season", "compare"]
+__all__ = ["assess_crop_condition", "classify_season", "compare", "read_together"]
 
 
 def _by_year(readings: list[SceneIndex], before: int) -> dict[int, list[SceneIndex]]:
