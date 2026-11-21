@@ -47,11 +47,13 @@
       "name": "Prostota obsługi",
       "weight": 15,
       "required": true,
-      "evidence": "Trzy pola (działka, data, uprawa z alfabetycznej listy 14 grup i „Inna uprawa”; nad nią podpowiedź z mapy upraw JRC 2022, gdy jedna klasa mapy pokrywa co najmniej połowę obrysu), zdjęcie działki z obrysem do potwierdzenia, wynik jednym zdaniem z liczbą, tekst co najmniej 16 px (raport 18 px), widok rolnika bez żargonu (KBW, ewapotranspiracja, NDVI, NDMI, BSS tylko w widoku doradcy), błędy wejścia opisane przy polu po polsku.",
+      "evidence": "Trzy pola (działka, data, uprawa z alfabetycznej listy 14 grup i „Inna uprawa”; nad nią podpowiedź z mapy upraw JRC 2022, gdy jedna klasa mapy pokrywa co najmniej połowę obrysu); działkę można wpisać numerem albo wskazać klikiem na mapie obok pola numeru (mapa podkładowa i ortofotomapa GUGiK z przybliżaniem, bez bibliotek z CDN): klik zamienia się na działkę ewidencyjną przez ULDK GetParcelByXY, mapa pokazuje obrys i numer do potwierdzenia („To ta działka” / „Wskaż inną”), a klik w sąsiednią działkę na zdjęciu raportu proponuje przejście do niej; zdjęcie działki z obrysem do potwierdzenia, wynik jednym zdaniem z liczbą, tekst co najmniej 16 px (raport 18 px), widok rolnika bez żargonu (KBW, ewapotranspiracja, NDVI, NDMI, BSS tylko w widoku doradcy), błędy wejścia opisane przy polu po polsku.",
       "checks": [
+        {"kind": "scene", "target": "Wskazanie działki na mapie"},
         {"kind": "scene", "target": "Działka z ewidencji na zdjęciu"},
         {"kind": "scene", "target": "Werdykt: bilans wobec progu z rozporządzenia"},
-        {"kind": "test", "target": "tests/acceptance/test_plain_language.py"}
+        {"kind": "test", "target": "tests/acceptance/test_plain_language.py"},
+        {"kind": "test", "target": "tests/acceptance/test_map_pick.py"}
       ]
     },
     {

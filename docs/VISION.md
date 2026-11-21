@@ -1,11 +1,12 @@
 # Bilans działki (nazwa robocza)
 
-Raport wodny dla jednej działki ewidencyjnej, daty i uprawy. Bilans wody liczymy definicją suszy z rozporządzenia MRiRW (Dz.U. 2019
-poz. 739) i stawiamy obok progu dla tej uprawy i gleby. Pod nim stoją ocena SMSR IUNG dla gminy, stan roślin z Sentinel-2 i pierwsze
-działanie retencyjne z miejscem na zdjęciu. Dalej przyczyny, miejsca zatrzymania wody z formalnością z Prawa wodnego, zabiegi w uprawie,
-decyzja o nawadnianiu, plan z terminami i prognoza przekroczenia progu do końca okresu krytycznego. Zgodność metody z SMSR i trafność
-prognozy są zmierzone i pokazane w raporcie. Raport nie jest urzędowym stwierdzeniem suszy i mówi to zdaniem pod werdyktem. Ocenę
-bieżącą liczy rachunek i reguły, bez uczenia maszynowego; prognoza w aplikacji nie ma zapisanych wag.
+Raport wodny dla jednej działki ewidencyjnej, daty i uprawy. Działkę podaje się numerem albo klikiem na mapie. Bilans wody liczymy
+definicją suszy z rozporządzenia MRiRW (Dz.U. 2019 poz. 739) i stawiamy obok progu dla tej uprawy i gleby. Pod nim stoją ocena SMSR IUNG
+dla gminy, stan roślin z Sentinel-2 i pierwsze działanie retencyjne z miejscem na zdjęciu. Dalej przyczyny, miejsca zatrzymania wody z
+formalnością z Prawa wodnego, zabiegi w uprawie, decyzja o nawadnianiu, plan z terminami i prognoza przekroczenia progu do końca okresu
+krytycznego. Zgodność metody z SMSR i trafność prognozy są zmierzone i pokazane w raporcie. Raport nie jest urzędowym stwierdzeniem suszy
+i mówi to zdaniem pod werdyktem. Ocenę bieżącą liczy rachunek i reguły, bez uczenia maszynowego; prognoza w aplikacji nie ma zapisanych
+wag.
 
 ## Użytkownik i ból
 
@@ -21,52 +22,59 @@ bieżącą liczy rachunek i reguły, bez uczenia maszynowego; prognoza w aplikac
 
 ## Test poniedziałku
 
-Doradca wpisuje numer działki, datę i uprawę. Po kilku sekundach widzi bilans w mm wobec progu z rozporządzenia dla tej gleby i uprawy,
-ocenę SMSR dla gminy i działanie retencyjne nr 1 z miejscem na zdjęciu; w ciągu 30 s cały raport. PDF albo link z zapisanym planem idzie
-do rozmowy z rolnikiem, do spółki wodnej albo jako załącznik do powiadomienia Wód Polskich: art. 395a ust. 2 Prawa wodnego wymaga m.in.
-numerów działek i współrzędnych miejsca robót, a raport je podaje. Pojęcia są te same co w aplikacji suszowej (14 grup upraw, kategorie
-gleby I–IV, okres 6 dekad), ale o pomocy suszowej rozstrzyga ocena SMSR dla gminy, nie ten raport. Przy każdym działaniu retencyjnym stoi
-formalność z cytatem przepisu albo „sprawdź w Wodach Polskich”.
+Doradca wpisuje numer działki albo przybliża mapę i klika pole rolnika, potem wybiera datę i uprawę. Po kilku sekundach widzi bilans w mm
+wobec progu z rozporządzenia dla tej gleby i uprawy, ocenę SMSR dla gminy i działanie retencyjne nr 1 z miejscem na zdjęciu; w ciągu 30 s
+cały raport. PDF albo link z zapisanym planem idzie do rozmowy z rolnikiem, do spółki wodnej albo jako załącznik do powiadomienia Wód
+Polskich: art. 395a ust. 2 Prawa wodnego wymaga m.in. numerów działek i współrzędnych miejsca robót, a raport je podaje. Pojęcia są te
+same co w aplikacji suszowej (14 grup upraw, kategorie gleby I–IV, okres 6 dekad), ale o pomocy suszowej rozstrzyga ocena SMSR dla gminy,
+nie ten raport. Przy każdym działaniu retencyjnym stoi formalność z cytatem przepisu albo „sprawdź w Wodach Polskich”.
 
 ## Złota ścieżka demo
 
-Układ ekranu: z lewej ortofotomapa z białym obrysem, przyciemnionym otoczeniem, punktem wypływu, rowem i numerami działań, nieruchoma przy
-przewijaniu, na niej ciemny pasek wyboru i karta „Skąd są dane”; z prawej biały raport, werdykt raz na górze, pod nim „Cały raport
-w skrócie”. W demo stoją liczby policzone przez aplikację. Dane demo to prawdziwe pobrania zamrożone 21.11.2026 w `demo/data/` (sceny
-nie wychodzą do sieci), w interfejsie z etykietą „kopia danych z 21.11.2026”.
+Ekran startowy: z lewej mapa do wskazania działki (mapa podkładowa GUGiK, przy dużym przybliżeniu ortofotomapa), na niej ciemny pasek
+wyboru z polem „Działka”. Ekran raportu: z lewej ortofotomapa z białym obrysem, przyciemnionym otoczeniem, punktem wypływu, rowem i
+numerami działań, nieruchoma przy przewijaniu, na niej ciemny pasek wyboru i karta „Skąd są dane”; z prawej biały raport, werdykt raz na
+górze, pod nim „Cały raport w skrócie”. W demo stoją liczby policzone przez aplikację. Dane demo to prawdziwe pobrania zamrożone
+21.11.2026 w `demo/data/` (sceny nie wychodzą do sieci), w interfejsie z etykietą „kopia danych z 21.11.2026”.
 
 Działka 1: `040303_2.0002.189/13` (gm. Dobrcz, 21,53 ha, staw przy granicy), „Zboża jare”. Datę wybieramy według SMSR, nie według naszego
 wyniku: koniec okresu, w którym SMSR oznaczył w gminie Dobrcz w 2023 r. suszę dla zbóż jarych (roboczo 20.07.2023); jeśli nasz wynik
 się różni, demo to pokazuje. Działka 2: `100403_2.0011.144` (gm. Góra Świętej Małgorzaty, 2,48 ha, rów przy granicy).
 
-1. **Wejście i zdjęcie** (scena „Działka z ewidencji na zdjęciu”): numer, data, uprawa z listy alfabetycznej (14 grup, „Inna uprawa” na
-   końcu; nad nią grupa „Podpowiedź z mapy upraw JRC 2022”, gdy podpowiedź jest wiarygodna: warunek w „Modele i metody obliczeń”), „Oceń
-   działkę”. Scena wybiera „Zboża jare” jak każdy użytkownik. Najpierw zdjęcie z obrysem, nagłówek „gm. Dobrcz › obręb Dobrcz”, 21,53 ha;
-   karta źródeł wypełnia się wierszami ze stanem i czasem.
-2. **Werdykt** (scena „Werdykt: bilans wobec progu z rozporządzenia”): plakietka „Bilans poniżej progu suszy (szacunek dla działki)” albo
+1. **Wskazanie na mapie** (scena „Wskazanie działki na mapie”): rolnik nie zna numeru. Scena przybliża okolice Dobrcza przyciskiem „+”
+   i kółkiem myszy i klika pole; serwer zamienia punkt na działkę ewidencyjną (ULDK GetParcelByXY), mapa pokazuje biały obrys i kartę
+   „Działka 189/13 · obręb Dobrcz · 21,53 ha” z przyciskami „To ta działka” i „Wskaż inną”. Scena kończy na karcie i sprawdza numer
+   i powierzchnię. Klik poza Polską albo bez odpowiedzi ULDK: jedno zdanie przy mapie, pole numeru działa dalej.
+2. **Wejście i zdjęcie** (scena „Działka z ewidencji na zdjęciu”): „To ta działka” wpisuje pełny identyfikator w pole „Działka” (numer
+   można też wpisać), data, uprawa z listy alfabetycznej (14 grup, „Inna uprawa” na końcu; nad nią grupa „Podpowiedź z mapy upraw JRC
+   2022”, gdy podpowiedź jest wiarygodna: warunek w „Modele i metody obliczeń”), „Oceń działkę”. Scena wybiera „Zboża jare” jak każdy
+   użytkownik. Najpierw zdjęcie z obrysem, nagłówek „gm. Dobrcz › obręb Dobrcz”, 21,53 ha; karta źródeł wypełnia się wierszami ze stanem i
+   czasem. Klik na zdjęciu raportu poza obrysem pokazuje obrys i numer sąsiedniej działki z propozycją „Otwórz raport tej działki” (ta
+   sama data i uprawa).
+3. **Werdykt** (scena „Werdykt: bilans wobec progu z rozporządzenia”): plakietka „Bilans poniżej progu suszy (szacunek dla działki)” albo
    „Bilans powyżej progu suszy (szacunek dla działki)”, bilans w mm jako największy element, zdanie „W tych 60 dniach wyparowało o X mm
    więcej wody, niż spadło. To Y mm poniżej progu suszy dla zbóż jarych na tej glebie”, pasek z kreską progu, linia „opad P − parowanie E
    = bilans (okres nn, dd.mm–dd.mm) · próg z Dz.U. 2019 poz. 739” i stałe zdanie „To nie jest urzędowe stwierdzenie suszy; we wniosku
    liczy się ocena SMSR IUNG dla gminy”. Pod nim wiersz „Ocena SMSR dla gminy Dobrcz w tym okresie” z symbolem dla kategorii gleby
    działki, wiersz stanu roślin z satelity i działanie nr 1 z numerem na zdjęciu. Scena sprawdza tekst plakietki, zdanie zastrzeżenia
    i wartość z wiersza SMSR.
-3. **Skrót** (scena „Cały raport w skrócie”): ramka zgodności („przy takiej odległości od progu metoda zgadzała się z SMSR w K na 100
+4. **Skrót** (scena „Cały raport w skrócie”): ramka zgodności („przy takiej odległości od progu metoda zgadzała się z SMSR w K na 100
    przypadków”, z `metrics.json`), pod nią 8 wierszy z liczbą (sekcje 1–8 poniżej), każdy przewija do swojej sekcji.
-4. **Retencja i plan** (sceny „Gdzie zatrzymać wodę na działce”, „Plan działań: przełącznik „W planie””): klik w „Zatrzymanie wody”, mapa
+5. **Retencja i plan** (sceny „Gdzie zatrzymać wodę na działce”, „Plan działań: przełącznik „W planie””): klik w „Zatrzymanie wody”, mapa
    pokazuje punkt wypływu, najbliższy rów i miejsca 1, 2 (od L2 także strzałki spływu i powierzchnię spływającą do punktu), sekcja ma
    profil terenu i formalność z cytatem przepisu. Przełączenie działania na „W planie” zmienia licznik planu z N na N+1 na osi czasu
    do następnego okna suszy; nad osią stoi zdanie prognozy przekroczenia progu z jednym zdaniem jej trafności z `metrics.json`.
-5. **Trafność i źródła** (sceny „Zgodność z oceną państwa (SMSR)”, „Źródła, czasy i braki danych”, „Widok doradcy i raport PDF”): tabela
+6. **Trafność i źródła** (sceny „Zgodność z oceną państwa (SMSR)”, „Źródła, czasy i braki danych”, „Widok doradcy i raport PDF”): tabela
    2×2 z CSI, POD, FAR, liczbą gmino-lat i częstością suszy w SMSR, obok CSI strategii „zawsze susza” i klimatologii gminy; źródła
    z godziną, czasem i stanem, braki wprost; „Doradca” odsłania wejścia i niepewność; „Raport PDF” otwiera widok do druku tego samego raportu.
-6. **Data dzisiejsza** (scena „Raport na dziś: poza okresem monitoringu suszy”): działka 2, 21.11.2026, „Rośliny strączkowe”. Raport mówi
+7. **Data dzisiejsza** (scena „Raport na dziś: poza okresem monitoringu suszy”): działka 2, 21.11.2026, „Rośliny strączkowe”. Raport mówi
    „poza okresem monitoringu suszy (21.III–30.IX)”, podaje wynik sezonu 2026 i plan przed następnym sezonem (np. zastawka na rowie po roztopach).
 
 Tytuły scen w `demo/scenes.py`, dokładnie i w tej kolejności (są też w `DONE.json`):
 ```
-Działka z ewidencji na zdjęciu | Werdykt: bilans wobec progu z rozporządzenia | Cały raport w skrócie | Gdzie zatrzymać wodę na działce
-Plan działań: przełącznik „W planie” | Zgodność z oceną państwa (SMSR) | Źródła, czasy i braki danych | Widok doradcy i raport PDF
-Raport na dziś: poza okresem monitoringu suszy
+Wskazanie działki na mapie | Działka z ewidencji na zdjęciu | Werdykt: bilans wobec progu z rozporządzenia | Cały raport w skrócie
+Gdzie zatrzymać wodę na działce | Plan działań: przełącznik „W planie” | Zgodność z oceną państwa (SMSR) | Źródła, czasy i braki danych
+Widok doradcy i raport PDF | Raport na dziś: poza okresem monitoringu suszy
 ```
 
 ## Raport: sekcje w tej kolejności
@@ -215,13 +223,14 @@ losowych działkach, także z datą listopadową.
 
 ## Dane
 
-Źródła, licencje, rozmiary i daty: `docs/DANE.md`. Pobieranie dla działki jest napisane i zmierzone (10 źródeł, każde ze stanem, czasem
-i adresem; 10 działek: 6,1 s typowo, 8,7 s najgorzej, 10 ms z pamięci podręcznej) i leży w `app/geodata` z testami. Pogoda: Open-Meteo,
-a gdy odmawia, posterunki IMGW + ET0 FAO-56 ze stacji synoptycznej, luki z NASA POWER. Dochodzą: tabele gmin SMSR IUNG (wiersz gminy na
-żywo, archiwum do pomiaru), kategoria gleby z warstwy IUNG, progi z Dz.U. 2019 poz. 739 w CSV z testem, katalog działań (CDR 2025, NWRM),
-formalności Prawa wodnego w CSV z cytatami, pogoda 2001–2026 dla centroidów 200 gmin (2020–2026 do pomiaru zgodności, 2001–2025 do
-walidacji prognozy), prognoza 16 dni Open-Meteo, mapa upraw JRC EUCROPMAP 2022 czytana oknem w obrysie. Danych syntetycznych
-w produkcie nie ma; dane demo to prawdziwe pobrania z datą, oznaczone w interfejsie.
+Źródła, licencje, rozmiary i daty: `docs/DANE.md`. Pobieranie dla działki jest napisane i zmierzone (10 źródeł, każde ze stanem, czasem i
+adresem; 10 działek: 6,1 s typowo, 8,7 s najgorzej, 10 ms z pamięci podręcznej) i leży w `app/geodata` z testami. Działka z punktu na
+mapie: ULDK GetParcelByXY; kafle mapy: mapa podkładowa i ortofotomapa GUGiK. Pogoda: Open-Meteo, a gdy odmawia, posterunki IMGW + ET0
+FAO-56 ze stacji synoptycznej, luki z NASA POWER. Dochodzą: tabele gmin SMSR IUNG (wiersz gminy na żywo, archiwum do pomiaru), kategoria
+gleby z warstwy IUNG, progi z Dz.U. 2019 poz. 739 w CSV z testem, katalog działań (CDR 2025, NWRM), formalności Prawa wodnego w CSV z
+cytatami, pogoda 2001–2026 dla centroidów 200 gmin (2020–2026 do pomiaru zgodności, 2001–2025 do walidacji prognozy), prognoza 16 dni
+Open-Meteo, mapa upraw JRC EUCROPMAP 2022 czytana oknem w obrysie. Danych syntetycznych w produkcie nie ma; dane demo to prawdziwe
+pobrania z datą, oznaczone w interfejsie.
 
 ## Czego NIE budujemy
 
@@ -229,7 +238,8 @@ w produkcie nie ma; dane demo to prawdziwe pobrania z datą, oznaczone w interfe
 2. Logowania, kont, danych osobowych (numer działki z ULDK nie wskazuje właściciela).
 3. Rozpoznawania uprawy siecią neuronową (zostaje podpowiedź z mapy JRC) ani „działki bliźniaka” z zabiegów sąsiadów (brak danych).
 4. Kroku „sprawdź dane przed zapisem”, osobnej aplikacji mobilnej, PDF składanego w LaTeX (PDF to wydruk strony).
-5. Mapy kafelkowej z biblioteką (Leaflet, WMTS w przeglądarce): mapa to zdjęcie działki z serwera z nakładką SVG.
+5. Mapy z biblioteką (Leaflet, OpenLayers) ani z CDN; przeglądarka nie łączy się z serwerami GUGiK. Mapa wskazania to nasz krótki skrypt
+   na kaflach podawanych przez nasz serwer; mapa raportu to zdjęcie działki z serwera z nakładką SVG.
 6. Własnego indeksu suszy, kosztorysów bez źródła cen, prognozy sezonowej Open-Meteo (183 dni) w widoku rolnika, uczenia maszynowego
    w ocenie bieżącej, sieci neuronowych (PyTorch) do prognozy.
 7. Plakietki „Susza rolnicza” ani zastosowania raportu jako dowodu we wniosku suszowym.
@@ -255,11 +265,13 @@ Małe, typowane, z testami i opisem w `docs/PYTANIA_JURY.md`:
 ## Stos
 
 Szablon bez zmian: FastAPI + Jinja + HTMX, Python 3.12, uv; z warstwy danych httpx, numpy, pyproj, rasterio (gotowe pakiety dla Windows);
-do porównania prognozy LightGBM (gotowe pakiety dla Windows, procesor).
-Wykresy i mapa to SVG z serwera, bez bibliotek JS i CDN. Części raportu dochodzą przez odpytywanie HTMX (co ok. 1 s) o fragmenty liczone,
-gdy ich źródło jest gotowe; pobrane dane w pamięci podręcznej na dysku. Uruchomienie bez `make`: `uv run python -m app` (port `HN_PORT`,
-domyślnie 8000), także w Windows. PDF: styl do druku; przykładowe raporty do zgłoszenia robi `scripts/export_reports.py` (Playwright,
-`page.pdf`). Bez PyTorcha i karty graficznej.
+do porównania prognozy LightGBM (gotowe pakiety dla Windows, procesor). Wykresy i mapa raportu to SVG z serwera. Mapa wskazania: nasz
+skrypt bez bibliotek (przesuwanie, przybliżanie przyciskami +/− i kółkiem, klik → długość i szerokość geograficzna → `/api/dzialka` → ULDK
+GetParcelByXY); kafle mapy podkładowej i ortofotomapy pobiera z WMS/WMTS GUGiK nasz serwer, z pamięcią podręczną na dysku; kafle i
+odpowiedzi ULDK dla okolic obu działek demo leżą w `demo/data/`, więc test i scena działają bez sieci. Bez bibliotek JS i CDN. Części
+raportu dochodzą przez odpytywanie HTMX (co ok. 1 s) o fragmenty liczone, gdy ich źródło jest gotowe; pobrane dane w pamięci podręcznej na
+dysku. Uruchomienie bez `make`: `uv run python -m app` (port `HN_PORT`, domyślnie 8000), także w Windows. PDF: styl do druku; przykładowe
+raporty do zgłoszenia robi `scripts/export_reports.py` (Playwright, `page.pdf`). Bez PyTorcha i karty graficznej.
 
 ## Ryzyka i plan B
 
@@ -278,7 +290,8 @@ domyślnie 8000), także w Windows. PDF: styl do druku; przykładowe raporty do 
 | Prognoza nie bije punktów odniesienia | model nie wchodzi do aplikacji (porównanie w README); gdy i dopełnianie przegrywa z częstością historyczną, raport podaje samą częstość i mówi to wprost |
 | Mapa JRC myli uprawę na działce | podpowiedź tylko przy pokryciu ≥ 50% obrysu, nigdy wybór za użytkownika; pierwsza do cięcia |
 | L1 nie stoi o 20:00 | kolejność cięcia z „Drabiny cięć”; lista „Nigdy nie tniemy” zostaje |
-| Jury poda numer w innym formacie | pełny identyfikator, obręb + numer (ULDK GetParcelByIdOrNr z listą), współrzędne, klik na zdjęciu |
+| Jury poda numer w innym formacie albo nie zna numeru | pełny identyfikator, obręb + numer (ULDK GetParcelByIdOrNr z listą), współrzędne, klik na mapie startowej (ULDK GetParcelByXY) |
+| Kafle GUGiK albo ULDK GetParcelByXY nie odpowiadają w czasie pokazu | kafle i odpowiedzi ULDK dla okolic działek demo zamrożone w `demo/data/`; pole numeru działa bez mapy; zdanie przy mapie mówi, co się stało |
 
 ## Otwarte decyzje
 
@@ -297,10 +310,11 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
 - **Szkielet (sob 16:30):** `app/geodata` z testami; `app/drought/kbw.py` z CSV progów; wynik i widok do druku dla dowolnej działki
   i daty. W tle od razu: `scripts/fetch_smsr.py` (ok. 16 min) i pogoda 2001–2026 dla 200 gmin. Pierwsze 20 min: odczyt warstwy IUNG
   `Susza:katgl_landuse2024` dla 10 działek z pomiaru czasu.
-- **L1 (sob 20:00):** dowolna działka i data, także listopadowa: wejście, zdjęcie z obrysem, werdykt z wykresem bilansu, plakietką
-  i zastrzeżeniem, wiersz SMSR gminy dla daty analizy, wiersz stanu roślin z satelity, działanie retencyjne nr 1 (najniższy punkt obrysu
-  z siatki wysokości + najbliższy rów z BDOT10k + formalność z CSV), agrotechnika i nawadnianie jako zdania z reguł, skrót, źródła
-  i braki, widok do druku.
+- **L1 (sob 20:00):** dowolna działka i data, także listopadowa: wejście numerem albo klikiem na mapie startowej (przybliżanie, ULDK
+  GetParcelByXY, obrys i numer do potwierdzenia „To ta działka” / „Wskaż inną”), klik w sąsiednią działkę na zdjęciu raportu z propozycją
+  przejścia, zdjęcie z obrysem, werdykt z wykresem bilansu, plakietką i zastrzeżeniem, wiersz SMSR gminy dla daty analizy, wiersz stanu
+  roślin z satelity, działanie retencyjne nr 1 (najniższy punkt obrysu z siatki wysokości + najbliższy rów z BDOT10k + formalność z CSV),
+  agrotechnika i nawadnianie jako zdania z reguł, skrót, źródła i braki, widok do druku.
 - **L2 (ndz 02:00):** `smsr.*` w `metrics.json` i sekcja gminy, 10 sezonów i przyczyny, spływ D8 ze strzałkami i udziałem powierzchni,
   wykresy agrotechniki i nawadniania, plan z przełącznikami i osią czasu, `soil.category_agreement`, test 50 działek z `retention.*`
   i `robustness.*`, przełącznik Rolnik / Doradca, prognoza dopełnianiem przebiegami nad osią planu z `forecast.*` z walidacji kroczącej.
@@ -309,8 +323,9 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
 - **Kolejność cięcia:** podpowiedź uprawy → model prognozy w aplikacji (zostaje dopełnianie, porównanie w README) → bilans FAO-56
   w nawadnianiu (zostaje prosta decyzja) → wykres gminy w sekcji 2 (wiersz SMSR zostaje) → stan planu w linku i PDF (przełącznik
   w raporcie należy do złotej ścieżki i zostaje).
-- **Nigdy nie tniemy:** złotej ścieżki, liczby zgodności z SMSR, wiersza SMSR gminy i zdania zastrzeżenia pod werdyktem, działania
-  retencyjnego nr 1 z miejscem, daty poza okresem monitoringu, jawnych braków danych, działania dla dowolnej działki.
+- **Nigdy nie tniemy:** złotej ścieżki, wskazania działki na mapie (obowiązkowy zakres zadania, pkt 3.3 ppkt 2), liczby zgodności z SMSR,
+  wiersza SMSR gminy i zdania zastrzeżenia pod werdyktem, działania retencyjnego nr 1 z miejscem, daty poza okresem monitoringu, jawnych
+  braków danych, działania dla dowolnej działki.
 
 ## Historia zmian
 
@@ -326,3 +341,9 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
   wobec częstości historycznej, model tylko po wygranej), podpowiedź uprawy z mapy JRC nad listą alfabetyczną i kolejność cięć; K3
   znów ma czek `forecast.brier_skill ≥ 0,05`, doszedł test `tests/acceptance/test_exceedance_forecast.py` (xfail do zbudowania), żaden
   test nie został usunięty (powód: W01 objęła za dużo, właściciel miał na myśli tylko punkt o spływie).
+- sob 17:29, W03: działkę można wskazać klikiem na mapie startowej (mapa podkładowa i ortofotomapa GUGiK z przybliżaniem, bez bibliotek
+  z CDN, ULDK GetParcelByXY, obrys i numer do potwierdzenia „To ta działka” / „Wskaż inną”), a klik w sąsiednią działkę na zdjęciu
+  raportu proponuje przejście do niej; doszła scena „Wskazanie działki na mapie” na początku złotej ścieżki, czek tej sceny i testu
+  `tests/acceptance/test_map_pick.py` (xfail do zbudowania) w K4, punkt w L1 i na liście „Nigdy nie tniemy”; żaden test nie został
+  usunięty (powód: zadanie wymienia wskazanie działki na mapie w obowiązkowym zakresie prototypu, pkt 3.2 i 3.3 ppkt 2, a jury może
+  tak zacząć).
