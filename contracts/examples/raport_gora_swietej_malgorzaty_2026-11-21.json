@@ -1,0 +1,734 @@
+{
+ "request": {
+  "parcel_id": "100403_2.0011.144",
+  "day": "2026-11-21",
+  "crop": "rosliny_straczkowe",
+  "view": "rolnik",
+  "plan": [],
+  "soil_override": null
+ },
+ "parcel": {
+  "id": "100403_2.0011.144",
+  "number": "144",
+  "precinct": "Konstancin",
+  "commune": "Góra Świętej Małgorzaty",
+  "county": "powiat łęczycki",
+  "voivodeship": "łódzkie",
+  "teryt_commune": "1004032",
+  "area_ha": 2.4786,
+  "centroid_lonlat": [
+   19.3503128,
+   52.0993747
+  ]
+ },
+ "data_copy": "kopia danych z 21.11.2026",
+ "map": {
+  "image_url": "/raport/zdjecie?dzialka=100403_2.0011.144&data=2026-11-21",
+  "width": 171,
+  "height": 512,
+  "m_per_px": 1.0182,
+  "outline_px": [
+   [
+    [
+     117.0,
+     105.4
+    ],
+    [
+     35.3,
+     115.0
+    ],
+    [
+     55.1,
+     406.6
+    ],
+    [
+     135.7,
+     399.3
+    ],
+    [
+     117.0,
+     105.4
+    ]
+   ]
+  ],
+  "outlet_px": [
+   55.7,
+   112.6
+  ],
+  "ditches_px": [],
+  "flow_px": [],
+  "markers": [
+   {
+    "n": 1,
+    "x": 55.7,
+    "y": 112.6,
+    "kind": "punkt wypływu"
+   }
+  ],
+  "label": "144 · 2,48 ha",
+  "attribution": "ortofotomapa i obrys: GUGiK"
+ },
+ "soil": {
+  "category": null,
+  "source": "brak",
+  "words": "Tu pojawi się kategoria gleby z mapy IUNG albo z uziarnienia SoilGrids",
+  "neighbour_category": null,
+  "sand_pct": 73.3,
+  "silt_pct": 19.1,
+  "clay_pct": 7.6,
+  "note": ""
+ },
+ "verdict": {
+  "state": "out_of_season",
+  "badge": "Sezon 2026",
+  "kbw_mm": -171.7,
+  "threshold_mm": null,
+  "margin_mm": null,
+  "period": {
+   "n": 5,
+   "start": "2026-05-01",
+   "end": "2026-06-30",
+   "precip_mm": 67.5,
+   "et0_mm": 239.2,
+   "kbw_mm": -171.7,
+   "threshold_mm": null,
+   "margin_mm": null,
+   "complete": true,
+   "days": 61
+  },
+  "periods": [
+   {
+    "n": 1,
+    "start": "2026-03-21",
+    "end": "2026-05-20",
+    "precip_mm": 24.5,
+    "et0_mm": 147.5,
+    "kbw_mm": -123.0,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 2,
+    "start": "2026-04-01",
+    "end": "2026-05-31",
+    "precip_mm": 23.8,
+    "et0_mm": 177.2,
+    "kbw_mm": -153.4,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 3,
+    "start": "2026-04-11",
+    "end": "2026-06-10",
+    "precip_mm": 50.5,
+    "et0_mm": 195.7,
+    "kbw_mm": -145.2,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 4,
+    "start": "2026-04-21",
+    "end": "2026-06-20",
+    "precip_mm": 65.5,
+    "et0_mm": 209.1,
+    "kbw_mm": -143.6,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 5,
+    "start": "2026-05-01",
+    "end": "2026-06-30",
+    "precip_mm": 67.5,
+    "et0_mm": 239.2,
+    "kbw_mm": -171.7,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 6,
+    "start": "2026-05-11",
+    "end": "2026-07-10",
+    "precip_mm": 80.9,
+    "et0_mm": 248.4,
+    "kbw_mm": -167.5,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 7,
+    "start": "2026-05-21",
+    "end": "2026-07-20",
+    "precip_mm": 123.9,
+    "et0_mm": 264.5,
+    "kbw_mm": -140.6,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 8,
+    "start": "2026-06-01",
+    "end": "2026-07-31",
+    "precip_mm": 149.3,
+    "et0_mm": 265.5,
+    "kbw_mm": -116.2,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 9,
+    "start": "2026-06-11",
+    "end": "2026-08-10",
+    "precip_mm": 134.3,
+    "et0_mm": 273.1,
+    "kbw_mm": -138.8,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 10,
+    "start": "2026-06-21",
+    "end": "2026-08-20",
+    "precip_mm": 173.4,
+    "et0_mm": 277.3,
+    "kbw_mm": -103.9,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   },
+   {
+    "n": 11,
+    "start": "2026-07-01",
+    "end": "2026-08-31",
+    "precip_mm": 195.8,
+    "et0_mm": 256.3,
+    "kbw_mm": -60.5,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 62
+   },
+   {
+    "n": 12,
+    "start": "2026-07-11",
+    "end": "2026-09-10",
+    "precip_mm": 192.0,
+    "et0_mm": 247.5,
+    "kbw_mm": -55.5,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 62
+   },
+   {
+    "n": 13,
+    "start": "2026-07-21",
+    "end": "2026-09-20",
+    "precip_mm": 155.4,
+    "et0_mm": 228.8,
+    "kbw_mm": -73.4,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 62
+   },
+   {
+    "n": 14,
+    "start": "2026-08-01",
+    "end": "2026-09-30",
+    "precip_mm": 134.7,
+    "et0_mm": 200.7,
+    "kbw_mm": -66.0,
+    "threshold_mm": null,
+    "margin_mm": null,
+    "complete": true,
+    "days": 61
+   }
+  ],
+  "sentence": "W tych 60 dniach bilans wody wyniósł −172 mm. Tu pojawi się porównanie z progiem z Dz.U. 2019 poz. 739 dla upraw: rośliny strączkowe.",
+  "how": "opad 68 − parowanie 239 = −172 mm (okres 5, 01.05–30.06.2026) · próg z Dz.U. 2019 poz. 739",
+  "disclaimer": "To nie jest urzędowe stwierdzenie suszy; we wniosku liczy się ocena SMSR IUNG dla gminy",
+  "season_year": 2026,
+  "note": ""
+ },
+ "smsr": {
+  "state": "missing",
+  "commune": "Góra Świętej Małgorzaty",
+  "year": 2026,
+  "period_n": null,
+  "crop_label": "",
+  "soil_category": null,
+  "symbol": null,
+  "words": "",
+  "area_share_pct": null,
+  "url": "",
+  "reason": "Tu pojawi się ocena SMSR IUNG dla gminy Góra Świętej Małgorzaty w tym okresie"
+ },
+ "crop_condition": {
+  "state": "missing",
+  "words": "Tu pojawi się kondycja roślin ze zdjęć satelitarnych wobec zwykłej dla tej dekady",
+  "scene_date": null,
+  "ndvi": null,
+  "ndmi": null,
+  "ndmi_median": null,
+  "n_seasons": 0,
+  "reason": "porównanie z poprzednimi sezonami jeszcze nie działa"
+ },
+ "diagnosis": {
+  "causes": [
+   {
+    "code": "malo_opadu",
+    "words": "spadło 68 mm, parowanie zabrało 239 mm",
+    "strength_mm": -171.7
+   }
+  ],
+  "usual_kbw_mm": null
+ },
+ "action_1": {
+  "id": "niecka-przy-wyplywie",
+  "n": 1,
+  "group": "retencja",
+  "title": "Niecka lub oczko przy punkcie wypływu",
+  "sentence": "Tu pojawi się zdanie z liczbami tej działki: miejsce, odległość, termin.",
+  "cause": "spadło 68 mm, parowanie zabrało 239 mm",
+  "when": "Tu pojawi się termin",
+  "due": null,
+  "source": "katalog NWRM N01 · CDR 2025",
+  "legal": {
+   "formality": "sprawdź w Wodach Polskich",
+   "article": "",
+   "quote": "",
+   "pdf_page": null,
+   "checked_on": null,
+   "act": "Prawo wodne, Dz.U. 2026 poz. 1335",
+   "extra": []
+  },
+  "place": {
+   "kind": "punkt wypływu",
+   "x_2180": 523958.02,
+   "y_2180": 470562.8,
+   "lon": 19.34987597400414,
+   "lat": 52.10069094365129,
+   "px": null,
+   "description": "najniższy punkt obrysu"
+  },
+  "no_place_reason": "",
+  "in_plan": false
+ },
+ "action_1_reason": "",
+ "agreement": {
+  "available": false,
+  "sentence": "Tu pojawi się zgodność metody z oceną SMSR, zmierzona na gminach testowych.",
+  "k_per_100": null,
+  "distance_bucket": "",
+  "csi": null,
+  "pod": null,
+  "far": null,
+  "peirce": null,
+  "base_rate": 0.0991,
+  "csi_gain_vs_baseline": null,
+  "n_gmina_years": 84,
+  "n_symbols": null,
+  "table": null,
+  "baselines": {}
+ },
+ "forecast": {
+  "state": "missing",
+  "method": "",
+  "k": null,
+  "n": null,
+  "probability": null,
+  "sentence": "Tu pojawi się szansa przekroczenia progu do końca okresu krytycznego, z jej trafnością.",
+  "skill_sentence": "",
+  "what_happened": ""
+ },
+ "sections": [
+  {
+   "id": "historia",
+   "n": 1,
+   "title": "10 sezonów",
+   "heading": "Ostatnie 10 sezonów na tej działce",
+   "state": "missing",
+   "summary": [
+    {
+     "text": "Tu pojawi się najgorszy bilans każdego z 10 sezonów wobec progu i liczba sezonów pod progiem.",
+     "bold": false,
+     "warn": false
+    }
+   ],
+   "chip": "",
+   "chart_svg": "",
+   "sentences": [],
+   "how": "",
+   "advisor": [],
+   "actions": [],
+   "waiting_for": "",
+   "reason": "Tu pojawi się najgorszy bilans każdego z 10 sezonów wobec progu i liczba sezonów pod progiem."
+  },
+  {
+   "id": "gmina",
+   "n": 2,
+   "title": "Gmina i trafność",
+   "heading": "Gmina i trafność metody",
+   "state": "missing",
+   "summary": [
+    {
+     "text": "Tu pojawi się wynik SMSR dla gminy obok wyniku działki i tabela zgodności metody z SMSR.",
+     "bold": false,
+     "warn": false
+    }
+   ],
+   "chip": "",
+   "chart_svg": "",
+   "sentences": [],
+   "how": "",
+   "advisor": [],
+   "actions": [],
+   "waiting_for": "",
+   "reason": "Tu pojawi się wynik SMSR dla gminy obok wyniku działki i tabela zgodności metody z SMSR."
+  },
+  {
+   "id": "przyczyny",
+   "n": 3,
+   "title": "Przyczyny",
+   "heading": "Skąd ten bilans",
+   "state": "missing",
+   "summary": [
+    {
+     "text": "Tu pojawi się rozkład niedoboru: zwykły bilans, mniej opadu, więcej parowania, gleba i spadek terenu.",
+     "bold": false,
+     "warn": false
+    }
+   ],
+   "chip": "",
+   "chart_svg": "",
+   "sentences": [],
+   "how": "",
+   "advisor": [],
+   "actions": [],
+   "waiting_for": "",
+   "reason": "Tu pojawi się rozkład niedoboru: zwykły bilans, mniej opadu, więcej parowania, gleba i spadek terenu."
+  },
+  {
+   "id": "retencja",
+   "n": 4,
+   "title": "Zatrzymanie wody",
+   "heading": "Gdzie zatrzymać wodę na działce",
+   "state": "missing",
+   "summary": [
+    {
+     "text": "Działanie nr 1: ",
+     "bold": false,
+     "warn": false
+    },
+    {
+     "text": "niecka lub oczko przy punkcie wypływu",
+     "bold": true,
+     "warn": false
+    },
+    {
+     "text": " (najniższy punkt obrysu).",
+     "bold": false,
+     "warn": false
+    }
+   ],
+   "chip": "",
+   "chart_svg": "",
+   "sentences": [],
+   "how": "",
+   "advisor": [],
+   "actions": [
+    {
+     "id": "niecka-przy-wyplywie",
+     "n": 1,
+     "group": "retencja",
+     "title": "Niecka lub oczko przy punkcie wypływu",
+     "sentence": "Tu pojawi się zdanie z liczbami tej działki: miejsce, odległość, termin.",
+     "cause": "spadło 68 mm, parowanie zabrało 239 mm",
+     "when": "Tu pojawi się termin",
+     "due": null,
+     "source": "katalog NWRM N01 · CDR 2025",
+     "legal": {
+      "formality": "sprawdź w Wodach Polskich",
+      "article": "",
+      "quote": "",
+      "pdf_page": null,
+      "checked_on": null,
+      "act": "Prawo wodne, Dz.U. 2026 poz. 1335",
+      "extra": []
+     },
+     "place": {
+      "kind": "punkt wypływu",
+      "x_2180": 523958.02,
+      "y_2180": 470562.8,
+      "lon": 19.34987597400414,
+      "lat": 52.10069094365129,
+      "px": null,
+      "description": "najniższy punkt obrysu"
+     },
+     "no_place_reason": "",
+     "in_plan": false
+    }
+   ],
+   "waiting_for": "",
+   "reason": "Tu pojawi się zbliżenie działki z miejscami działań, profil terenu i formalność z Prawa wodnego."
+  },
+  {
+   "id": "uprawa",
+   "n": 5,
+   "title": "Uprawa gleby",
+   "heading": "Uprawa gleby, która trzyma wodę",
+   "state": "missing",
+   "summary": [
+    {
+     "text": "Tu pojawią się zabiegi w uprawie z terminem do następnego okna suszy.",
+     "bold": false,
+     "warn": false
+    }
+   ],
+   "chip": "",
+   "chart_svg": "",
+   "sentences": [],
+   "how": "",
+   "advisor": [],
+   "actions": [
+    {
+     "id": "uprawa-placeholder",
+     "n": 2,
+     "group": "uprawa",
+     "title": "Zabieg w uprawie",
+     "sentence": "Tu pojawi się zabieg w uprawie z terminem, dobrany do gleby i przyczyny.",
+     "cause": "spadło 68 mm, parowanie zabrało 239 mm",
+     "when": "Tu pojawi się termin",
+     "due": null,
+     "source": "Tu pojawi się źródło",
+     "legal": null,
+     "place": null,
+     "no_place_reason": "",
+     "in_plan": false
+    }
+   ],
+   "waiting_for": "",
+   "reason": "Tu pojawią się zabiegi w uprawie z terminem do następnego okna suszy."
+  },
+  {
+   "id": "plan",
+   "n": 6,
+   "title": "Plan i termin",
+   "heading": "Plan działań i termin",
+   "state": "missing",
+   "summary": [
+    {
+     "text": "0 z 3",
+     "bold": true,
+     "warn": false
+    },
+    {
+     "text": " działań w planie; oś czasu do następnego okna suszy.",
+     "bold": false,
+     "warn": false
+    }
+   ],
+   "chip": "",
+   "chart_svg": "",
+   "sentences": [],
+   "how": "",
+   "advisor": [],
+   "actions": [],
+   "waiting_for": "",
+   "reason": "Tu pojawi się oś czasu do następnego okna suszy z działaniami z sekcji 4, 5 i 7."
+  },
+  {
+   "id": "nawadnianie",
+   "n": 7,
+   "title": "Nawadnianie",
+   "heading": "Czy nawadniać",
+   "state": "missing",
+   "summary": [
+    {
+     "text": "Tu pojawi się decyzja o nawadnianiu z dawką w mm i m³ na działkę.",
+     "bold": false,
+     "warn": false
+    }
+   ],
+   "chip": "",
+   "chart_svg": "",
+   "sentences": [],
+   "how": "",
+   "advisor": [],
+   "actions": [
+    {
+     "id": "nawadnianie-placeholder",
+     "n": 3,
+     "group": "nawadnianie",
+     "title": "Decyzja o nawadnianiu",
+     "sentence": "Tu pojawi się decyzja „teraz tak / nie” z dawką w mm i m³ na działkę.",
+     "cause": "spadło 68 mm, parowanie zabrało 239 mm",
+     "when": "Tu pojawi się termin",
+     "due": null,
+     "source": "Tu pojawi się źródło",
+     "legal": null,
+     "place": null,
+     "no_place_reason": "",
+     "in_plan": false
+    }
+   ],
+   "waiting_for": "",
+   "reason": "Tu pojawi się decyzja o nawadnianiu z dawką w mm i m³ na działkę."
+  },
+  {
+   "id": "zrodla",
+   "n": 8,
+   "title": "Źródła i braki",
+   "heading": "Źródła, czasy i braki danych",
+   "state": "ready",
+   "summary": [
+    {
+     "text": "8 z 8",
+     "bold": true,
+     "warn": false
+    },
+    {
+     "text": " źródeł z danymi",
+     "bold": false,
+     "warn": false
+    },
+    {
+     "text": ".",
+     "bold": false,
+     "warn": false
+    }
+   ],
+   "chip": "razem 3,9 s",
+   "chart_svg": "",
+   "sentences": [
+    "Raport nie uwzględnia drenowania, wód gruntowych ani faktycznej daty siewu."
+   ],
+   "how": "",
+   "advisor": [],
+   "actions": [],
+   "waiting_for": "",
+   "reason": ""
+  }
+ ],
+ "sources": [
+  {
+   "key": "parcel",
+   "label": "Obrys działki",
+   "provider": "ULDK GUGiK",
+   "gave": "",
+   "status": "copy",
+   "elapsed_s": 0.0,
+   "retrieved_at": "2026-11-21T15:03:38+00:00",
+   "resolution": "EGiB cadastral geometry (vector, EPSG:2180)",
+   "reason": "",
+   "url": "https://uldk.gugik.gov.pl/?request=GetParcelById&id=100403_2.0011.144&result=id%2Cvoivodeship%2Ccounty%2Ccommune%2Cregion%2Cparcel%2Cgeom_wkt&srid=2180"
+  },
+  {
+   "key": "ortho",
+   "label": "Zdjęcie działki",
+   "provider": "ortofotomapa GUGiK",
+   "gave": "",
+   "status": "copy",
+   "elapsed_s": 0.0,
+   "retrieved_at": "2026-11-21T15:03:38+00:00",
+   "resolution": "GUGiK orthophoto, source pixel 0.25 m or better, resampled to the requested pixel size",
+   "reason": "",
+   "url": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=Raster&STYLES=&FORMAT=image%2Fjpeg&SRS=EPSG%3A2180&BBOX=523901.28%2C470156.14%2C524075.39%2C470677.45&WIDTH=171&HEIGHT=512"
+  },
+  {
+   "key": "weather",
+   "label": "Opad i parowanie",
+   "provider": "Open-Meteo / IMGW",
+   "gave": "",
+   "status": "copy",
+   "elapsed_s": 0.1,
+   "retrieved_at": "2026-11-21T15:03:39+00:00",
+   "resolution": "IMGW-PIB station measurements (rain gauge / synoptic station), daily; NASA POWER: MERRA-2 0.5 x 0.625 deg (~50 km) meteorology, CERES 1 deg radiation, daily",
+   "reason": "",
+   "url": "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/"
+  },
+  {
+   "key": "soil",
+   "label": "Uziarnienie gleby",
+   "provider": "SoilGrids",
+   "gave": "",
+   "status": "copy",
+   "elapsed_s": 3.8,
+   "retrieved_at": "2026-11-21T15:03:55+00:00",
+   "resolution": "SoilGrids 2.0, 250 m grid, global model (not the Polish soil-agricultural map)",
+   "reason": "",
+   "url": "https://rest.isric.org/soilgrids/v2.0/properties/query?lon=19.35031&lat=52.09937&value=mean&property=sand&property=silt&property=clay&depth=0-5cm&depth=5-15cm&depth=15-30cm"
+  },
+  {
+   "key": "terrain",
+   "label": "Spadek terenu",
+   "provider": "NMT GUGiK",
+   "gave": "",
+   "status": "copy",
+   "elapsed_s": 0.0,
+   "retrieved_at": "2026-11-21T15:03:40+00:00",
+   "resolution": "GUGiK NMT 1 m model sampled on a regular grid (heights rounded to 0.1 m by the service)",
+   "reason": "",
+   "url": "https://services.gugik.gov.pl/nmt/"
+  },
+  {
+   "key": "water",
+   "label": "Rowy i cieki",
+   "provider": "BDOT10k",
+   "gave": "",
+   "status": "copy",
+   "elapsed_s": 0.0,
+   "retrieved_at": "2026-11-21T15:03:41+00:00",
+   "resolution": "BDOT10k (1:10 000 topographic database) rendered by the GUGiK map service, read at 2 m pixels",
+   "reason": "",
+   "url": "https://mapy.geoportal.gov.pl/wss/service/pub/guest/kompozycja_BDOT10k_WMS/MapServer/WMSServer"
+  },
+  {
+   "key": "satellite",
+   "label": "Zdjęcie satelitarne",
+   "provider": "Sentinel-2",
+   "gave": "",
+   "status": "copy",
+   "elapsed_s": 0.0,
+   "retrieved_at": "2026-11-21T15:03:45+00:00",
+   "resolution": "Sentinel-2 L2A: 10 m (NDVI), 20 m (NDMI, cloud mask); revisit 2-5 days, clouds permitting",
+   "reason": "",
+   "url": "https://planetarycomputer.microsoft.com/api/stac/v1/search"
+  },
+  {
+   "key": "forecast",
+   "label": "Prognoza 16 dni",
+   "provider": "Open-Meteo",
+   "gave": "",
+   "status": "copy",
+   "elapsed_s": 0.0,
+   "retrieved_at": "2026-11-21T15:03:38+00:00",
+   "resolution": "Open-Meteo best-match weather models, grid 2-25 km, daily; skill drops after about 7 days",
+   "reason": "",
+   "url": "https://api.open-meteo.com/v1/forecast?latitude=52.1&longitude=19.35&forecast_days=16&daily=precipitation_sum%2Cet0_fao_evapotranspiration&timezone=Europe%2FWarsaw"
+  }
+ ],
+ "total_s": 0.0
+}

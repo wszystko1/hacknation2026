@@ -1,0 +1,16 @@
+{
+ "bledy": [
+  {
+   "field": "dzialka",
+   "message": "Numer ma postać 040303_2.0002.189/13"
+  },
+  {
+   "field": "data",
+   "message": "Data musi być z ostatnich 10 lat, od 1.01.2016 do 21.11.2026"
+  },
+  {
+   "field": "uprawa",
+   "message": "Wybierz uprawę z listy"
+  }
+ ]
+}

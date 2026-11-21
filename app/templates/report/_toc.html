@@ -1,0 +1,10 @@
+{# "Cały raport w skrócie": the agreement frame, then rows 1-8 that jump to their sections. #}
+<nav class="toc" id="skrot" aria-label="Cały raport w skrócie">
+  <div class="agree {{ '' if report.agreement.available else 'agree--warn' }}" id="zgodnosc-ramka"><i aria-hidden="true">{{ '✓' if report.agreement.available else '…' }}</i><div>{{ report.agreement.sentence }}</div></div>
+  <h2>Cały raport w skrócie · kliknij, aby zobaczyć wykres</h2>
+  <ol>
+    {% for s in report.sections %}
+    <li><a href="#{{ s.id }}"><span class="n">{{ s.n }}</span><span class="t">{{ s.title }}</span><span class="s {{ 'is-loading' if s.state != 'ready' and not s.summary else '' }}">{% for part in s.summary %}{% if part.bold %}<b>{{ part.text }}</b>{% elif part.warn %}<span class="warn">{{ part.text }}</span>{% else %}{{ part.text }}{% endif %}{% endfor %}</span><i class="c" aria-hidden="true"></i></a></li>
+    {% endfor %}
+  </ol>
+</nav>

@@ -1,0 +1,10 @@
+{
+  "smsr": {
+    "base_rate": 0.0991,
+    "baseline_csi_always_drought": 0.0991,
+    "baseline_csi_climatology": 0.152,
+    "evaluated_on_sample": 1,
+    "n_gmina_years": 84,
+    "n_symbols": 5922
+  }
+}

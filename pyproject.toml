@@ -1,0 +1,37 @@
+[project]
+name = "product"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.32",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.12",
+    # data layer
+    "httpx>=0.27",
+    "numpy>=1.26",
+    "pyproj>=3.6",
+    "rasterio>=1.4",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.8", "httpx>=0.27", "playwright>=1.48"]
+
+[tool.ruff]
+line-length = 110
+extend-exclude = ["app/static", "docs/notes"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--import-mode=importlib"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore:Using `httpx` with `starlette.testclient`",
+    "ignore:Dataset has no geotransform",
+]
+markers = ["live: hits real public endpoints (opt-in, set GEODATA_LIVE=1)"]

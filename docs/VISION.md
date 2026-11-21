@@ -1,0 +1,328 @@
+# Bilans działki (nazwa robocza)
+
+Raport wodny dla jednej działki ewidencyjnej, daty i uprawy. Bilans wody liczymy definicją suszy z rozporządzenia MRiRW (Dz.U. 2019
+poz. 739) i stawiamy obok progu dla tej uprawy i gleby. Pod nim stoją ocena SMSR IUNG dla gminy, stan roślin z Sentinel-2 i pierwsze
+działanie retencyjne z miejscem na zdjęciu. Dalej przyczyny, miejsca zatrzymania wody z formalnością z Prawa wodnego, zabiegi w uprawie,
+decyzja o nawadnianiu, plan z terminami i prognoza przekroczenia progu do końca okresu krytycznego. Zgodność metody z SMSR i trafność
+prognozy są zmierzone i pokazane w raporcie. Raport nie jest urzędowym stwierdzeniem suszy i mówi to zdaniem pod werdyktem. Ocenę
+bieżącą liczy rachunek i reguły, bez uczenia maszynowego; prognoza w aplikacji nie ma zapisanych wag.
+
+## Użytkownik i ból
+
+- **Rolnik** z jedną lub kilkoma działkami, bez wiedzy o GIS i danych (zadanie, pkt 3.1). Mediana wieku pracującego użytkownika gospodarstwa
+  51 lat (PSR 2020). eWniosekPlus samodzielnie wypełniło 27,6% użytkowników, 26,3% z pomocą doradcy ODR (badanie „Polska wieś i rolnictwo
+  2023”), więc wielu czyta raport razem z doradcą.
+- **Doradca ODR** albo osoba techniczna obok rolnika: widok „Doradca” tego samego raportu (wskaźniki, progi, źródła, niepewność, metoda).
+- **Dziś:** SMSR IUNG ocenia suszę dla całej gminy, po zakończeniu okresu 6 dekad, w tabelach HTML, bez przyczyn i zaleceń dla działki.
+  Pogoda, gleba, rzeźba terenu i rowy leżą w kilkunastu usługach (ULDK, IMGW, SoilGrids, NMT, BDOT10k). Czasu ręcznego składania tego
+  dla jednej działki nie mierzyliśmy.
+- **Skąd błędy:** gmina ma grunty czterech kategorii gleby, a ocena gminna nie mówi, która jest na działce; zalecenia są ogólne („rozważ
+  międzyplony”), bez miejsca, terminu i formalności; rolnik nie wie, czy zastawka na rowie wymaga powiadomienia Wód Polskich.
+
+## Test poniedziałku
+
+Doradca wpisuje numer działki, datę i uprawę. Po kilku sekundach widzi bilans w mm wobec progu z rozporządzenia dla tej gleby i uprawy,
+ocenę SMSR dla gminy i działanie retencyjne nr 1 z miejscem na zdjęciu; w ciągu 30 s cały raport. PDF albo link z zapisanym planem idzie
+do rozmowy z rolnikiem, do spółki wodnej albo jako załącznik do powiadomienia Wód Polskich: art. 395a ust. 2 Prawa wodnego wymaga m.in.
+numerów działek i współrzędnych miejsca robót, a raport je podaje. Pojęcia są te same co w aplikacji suszowej (14 grup upraw, kategorie
+gleby I–IV, okres 6 dekad), ale o pomocy suszowej rozstrzyga ocena SMSR dla gminy, nie ten raport. Przy każdym działaniu retencyjnym stoi
+formalność z cytatem przepisu albo „sprawdź w Wodach Polskich”.
+
+## Złota ścieżka demo
+
+Układ ekranu: z lewej ortofotomapa z białym obrysem, przyciemnionym otoczeniem, punktem wypływu, rowem i numerami działań, nieruchoma przy
+przewijaniu, na niej ciemny pasek wyboru i karta „Skąd są dane”; z prawej biały raport, werdykt raz na górze, pod nim „Cały raport
+w skrócie”. W demo stoją liczby policzone przez aplikację. Dane demo to prawdziwe pobrania zamrożone 21.11.2026 w `demo/data/` (sceny
+nie wychodzą do sieci), w interfejsie z etykietą „kopia danych z 21.11.2026”.
+
+Działka 1: `040303_2.0002.189/13` (gm. Dobrcz, 21,53 ha, staw przy granicy), „Zboża jare”. Datę wybieramy według SMSR, nie według naszego
+wyniku: koniec okresu, w którym SMSR oznaczył w gminie Dobrcz w 2023 r. suszę dla zbóż jarych (roboczo 20.07.2023); jeśli nasz wynik
+się różni, demo to pokazuje. Działka 2: `100403_2.0011.144` (gm. Góra Świętej Małgorzaty, 2,48 ha, rów przy granicy).
+
+1. **Wejście i zdjęcie** (scena „Działka z ewidencji na zdjęciu”): numer, data, uprawa z listy alfabetycznej (14 grup, „Inna uprawa” na
+   końcu; nad nią grupa „Podpowiedź z mapy upraw JRC 2022”, gdy podpowiedź jest wiarygodna: warunek w „Modele i metody obliczeń”), „Oceń
+   działkę”. Scena wybiera „Zboża jare” jak każdy użytkownik. Najpierw zdjęcie z obrysem, nagłówek „gm. Dobrcz › obręb Dobrcz”, 21,53 ha;
+   karta źródeł wypełnia się wierszami ze stanem i czasem.
+2. **Werdykt** (scena „Werdykt: bilans wobec progu z rozporządzenia”): plakietka „Bilans poniżej progu suszy (szacunek dla działki)” albo
+   „Bilans powyżej progu suszy (szacunek dla działki)”, bilans w mm jako największy element, zdanie „W tych 60 dniach wyparowało o X mm
+   więcej wody, niż spadło. To Y mm poniżej progu suszy dla zbóż jarych na tej glebie”, pasek z kreską progu, linia „opad P − parowanie E
+   = bilans (okres nn, dd.mm–dd.mm) · próg z Dz.U. 2019 poz. 739” i stałe zdanie „To nie jest urzędowe stwierdzenie suszy; we wniosku
+   liczy się ocena SMSR IUNG dla gminy”. Pod nim wiersz „Ocena SMSR dla gminy Dobrcz w tym okresie” z symbolem dla kategorii gleby
+   działki, wiersz stanu roślin z satelity i działanie nr 1 z numerem na zdjęciu. Scena sprawdza tekst plakietki, zdanie zastrzeżenia
+   i wartość z wiersza SMSR.
+3. **Skrót** (scena „Cały raport w skrócie”): ramka zgodności („przy takiej odległości od progu metoda zgadzała się z SMSR w K na 100
+   przypadków”, z `metrics.json`), pod nią 8 wierszy z liczbą (sekcje 1–8 poniżej), każdy przewija do swojej sekcji.
+4. **Retencja i plan** (sceny „Gdzie zatrzymać wodę na działce”, „Plan działań: przełącznik „W planie””): klik w „Zatrzymanie wody”, mapa
+   pokazuje punkt wypływu, najbliższy rów i miejsca 1, 2 (od L2 także strzałki spływu i powierzchnię spływającą do punktu), sekcja ma
+   profil terenu i formalność z cytatem przepisu. Przełączenie działania na „W planie” zmienia licznik planu z N na N+1 na osi czasu
+   do następnego okna suszy; nad osią stoi zdanie prognozy przekroczenia progu z jednym zdaniem jej trafności z `metrics.json`.
+5. **Trafność i źródła** (sceny „Zgodność z oceną państwa (SMSR)”, „Źródła, czasy i braki danych”, „Widok doradcy i raport PDF”): tabela
+   2×2 z CSI, POD, FAR, liczbą gmino-lat i częstością suszy w SMSR, obok CSI strategii „zawsze susza” i klimatologii gminy; źródła
+   z godziną, czasem i stanem, braki wprost; „Doradca” odsłania wejścia i niepewność; „Raport PDF” otwiera widok do druku tego samego raportu.
+6. **Data dzisiejsza** (scena „Raport na dziś: poza okresem monitoringu suszy”): działka 2, 21.11.2026, „Rośliny strączkowe”. Raport mówi
+   „poza okresem monitoringu suszy (21.III–30.IX)”, podaje wynik sezonu 2026 i plan przed następnym sezonem (np. zastawka na rowie po roztopach).
+
+Tytuły scen w `demo/scenes.py`, dokładnie i w tej kolejności (są też w `DONE.json`):
+```
+Działka z ewidencji na zdjęciu | Werdykt: bilans wobec progu z rozporządzenia | Cały raport w skrócie | Gdzie zatrzymać wodę na działce
+Plan działań: przełącznik „W planie” | Zgodność z oceną państwa (SMSR) | Źródła, czasy i braki danych | Widok doradcy i raport PDF
+Raport na dziś: poza okresem monitoringu suszy
+```
+
+## Raport: sekcje w tej kolejności
+
+Kolejność jak w zadaniu: ocena → przyczyny → retencja → agrotechnika → nawadnianie. Każda sekcja: wykres (SVG z serwera), pod nim 2–3
+zdania (co pokazuje, dlaczego ważne, gdzie patrzeć), potem „Jak to policzono”. Tekst to stałe szablony z podstawionymi wartościami,
+zalecenia wybierają reguły na wskaźnikach, model językowy nie bierze udziału w wyniku.
+
+0. **Werdykt i ocena bieżąca.** KBW = Σ opadu − Σ ET0 (FAO-56) w każdym z 14 okresów rozporządzenia (21.III–20.V … 1.VIII–30.IX)
+   zakończonych do daty analizy. Plakietka „Bilans poniżej progu suszy (szacunek dla działki)”, gdy w którymkolwiek okresie KBW < próg dla
+   grupy uprawy i kategorii gleby; na górze okres z najmniejszym zapasem (KBW − próg). Pod plakietką stałe zdanie: „To nie jest urzędowe
+   stwierdzenie suszy; we wniosku liczy się ocena SMSR IUNG dla gminy”. Przed 20.V: bilans od 21.III do daty, „okres jeszcze trwa”, bez
+   plakietki. Od 1.X do 20.III: „poza okresem monitoringu suszy” i wynik ostatniego sezonu. „Inna uprawa” i komórki „-”, „x” tabeli: sam
+   bilans i zdanie, że rozporządzenie nie daje tu progu.
+   - **Kategoria gleby** wybiera próg (zboża jare w okresie 1: kat. I −125 mm, kat. IV −194 mm). Odczyt warstwy IUNG
+     `Susza:katgl_landuse2024` dla punktu, gdy działa; inaczej reguła z uziarnienia SoilGrids (sekcja „Modele i metody obliczeń”) ze
+     zmierzoną zgodnością z mapą IUNG (`soil.category_agreement`). Gdy uziarnienie leży blisko granicy klas, raport podaje też wynik dla
+     sąsiedniej kategorii. Doradca może kategorię poprawić.
+   - **Wiersz SMSR:** symbol SMSR dla gminy, okresu, uprawy i kategorii gleby działki z tabeli dla roku daty analizy (jedna strona,
+     ok. 0,14 s). Przed 2020 SMSR nie publikuje tabel gmin; raport to mówi.
+   - **Wiersz satelity:** „Stan roślin na działce”: NDMI z ostatniej sceny bez chmur w obrysie wobec mediany tej samej dekady z N poprzednich
+     sezonów (do 5, liczone w tle z limitem czasu; N w raporcie), czytany z fazą uprawy (spadek NDVI zbóż w lipcu to dojrzewanie, nie
+     susza). Brak sceny bez chmur w 15 dniach przed datą albo brak historii: „brak” z powodem. Rolnik widzi słowa („rośliny suchsze niż
+     zwykle w tej dekadzie”), doradca wartości NDVI i NDMI. Satelita nie zmienia bilansu ani plakietki.
+   - **Działanie nr 1:** najwyżej postawione działanie retencyjne z sekcji 4, z numerem na zdjęciu i formalnością, albo „brak miejsca na
+     działce, bo …”.
+1. **Historia 10 sezonów.** Słupek = najgorszy zapas sezonu, kreska = próg, liczba sezonów pod progiem; dla lat od 2020 znacznik oceny SMSR gminy.
+2. **Gmina i trafność metody.** Wynik SMSR gminy (symbol dla każdej kategorii gleby, udział powierzchni zagrożonej w %) obok wyniku działki,
+   z przyczyną różnicy; zgodność według odległości od progu i tabela 2×2 z `metrics.json`, z częstością suszy w SMSR.
+3. **Przyczyny.** Wykres kaskadowy: zwykły bilans tego okresu (mediana 10 sezonów) → mniej opadu → więcej parowania = wynik. Gleba słowami
+   IUNG („bardzo podatna na suszę”, kat. I), spadek terenu z NMT, przebieg NDVI i NDMI w sezonie wobec mediany poprzednich sezonów.
+4. **Zatrzymanie wody.** Miejsce każdego działania liczy aplikacja z geometrii działki; źródła (katalog NWRM, CDR 2025) dają tylko zasadę
+   słowną („pas trawy w poprzek linii spływu”, „zastawka na rowie”). Geometria: punkt wypływu (L1: najniższy punkt obrysu z siatki
+   wysokości GUGiK; od L2: kierunek spływu D8 i powierzchnia spływająca do punktu w ha i % działki), rowy, cieki i zbiorniki z BDOT10k,
+   profil terenu. Działania z numerem na zdjęciu: niecka lub oczko przy wypływie, pas trawy w poprzek spływu, uprawa w poprzek stoku,
+   zastawka na rowie, ochrona istniejącego zbiornika. Gdy żadne miejsce nie spełnia warunku: „brak miejsca na działce, bo …” (np. teren
+   płaski, rowu nie ma w 50 m). Milimetrów ani m³ wody odpływającej z działki nie podajemy: współczynnik spływu nie ma źródła.
+   Formalność z `app/advice/prawo_wodne.csv` (działanie, artykuł, cytat przepisu, strona PDF tekstu jednolitego Dz.U. 2026 poz. 1335,
+   data sprawdzenia):
+   - „nic nie trzeba”: zatrzymywanie wody w rowie i hamowanie odpływu z drenów istniejącym urządzeniem (art. 395 pkt 11, 12), gdy skutek
+     zostaje na własnym gruncie albo za pisemną zgodą sąsiadów;
+   - „powiadomienie Wód Polskich”: przebudowa rowu lub drenów w celu zatrzymania wody (art. 395 pkt 15, 16 i art. 395a);
+   - „zgłoszenie”: staw do 5000 m² i 3 m głębokości, zasilany tylko opadem, roztopami lub wodą gruntową (art. 394 ust. 1 pkt 9);
+   - „pozwolenie”: pobór ponad 5 m³/dobę średniorocznie (art. 34 pkt 12, art. 389 pkt 2);
+   - „sprawdź w Wodach Polskich”, bez numeru artykułu: działanie, dla którego tekst ustawy nie rozstrzyga formalności (nowa zastawka
+     w istniejącym rowie: art. 395 pkt 15 albo art. 389 pkt 6).
+   Przy każdym działaniu zmieniającym odpływ: art. 234 ust. 1 (bez szkody dla gruntów sąsiednich); rów poza działką: potrzebna pisemna
+   zgoda sąsiada albo spółki wodnej.
+5. **Uprawa gleby.** Wykres: w ilu z 10 sezonów każda dekada IV–IX była pod progiem, pod nim kalendarz zabiegów do następnego okna suszy.
+   Reguły: mulcz i resztki, międzyplon (na glebie bardzo lekkiej wymarzający), uprawa bez orki, w poprzek stoku, wcześniejszy siew lub forma
+   ozima, porównanie grup upraw na tej glebie („zboża jare: pod progiem w 4 z 10 lat, zboża ozime: 1 z 10”, te same dane, inne progi).
+6. **Plan i termin.** Oś czasu do następnego okna suszy (koniec ostatniego okresu z progiem dla grupy upraw) z działaniami z sekcji 4, 5
+   i 7, przełącznik „W planie” przy każdym, licznik „N z M działań w planie”, stan w linku i w PDF. Nad osią zdanie prognozy przekroczenia
+   progu do końca okresu krytycznego z jednym zdaniem trafności (sekcja „Prognoza przekroczenia progu”). Dla dat z przeszłości obok stoi,
+   co się wydarzyło w okresach kończących się po dacie oceny (bilans z archiwum).
+7. **Nawadnianie.** „Teraz tak / nie” z powodem (faza uprawy, woda w strefie korzeni wg FAO-56), dawka w mm i m³ na działkę (CDR 2025:
+   20–25 mm na glebach lekkich, 30–35 mm na średnich), źródło wody z BDOT10k, pozwolenie powyżej 5 m³/dobę średniorocznie (art. 33 ust. 4
+   pkt 1, art. 34 pkt 12).
+8. **Źródła i ograniczenia.** Źródło, co dało, godzina, czas, stan (jest / zapas / szacunek / brak / kopia z dnia), rozdzielczość; czego
+   raport nie uwzględnia (drenowanie, wody gruntowe, faktyczna data siewu); źródło kategorii gleby i jej wpływ na wynik, odległość stacji.
+
+## Modele i metody obliczeń
+
+Ocena bieżąca nie używa uczenia maszynowego: każdą liczbę daje rachunek albo reguła, więc nie ma wag do uczenia ani wycieku danych.
+- **Ocena bieżąca:** rachunek bilansu, opad minus parowanie (ET0 FAO-56) w oknie 6 dekad, i porównanie z progiem z Dz.U. 2019 poz. 739
+  dla grupy uprawy i kategorii gleby.
+- **Kategoria gleby:** reguła przypisująca uziarnienie 0–30 cm (piasek, pył, ił z SoilGrids) do kategorii I–IV, z sąsiednią kategorią
+  przy granicy klas. Mapa IUNG, gdy odpowiada dla punktu, jest odczytem, nie modelem; na niej mierzymy zgodność reguły.
+- **Roślinność:** odchylenie NDVI i NDMI od mediany tej samej dekady w poprzednich sezonach na tej samej działce (własna historia
+  działki, nie średnia regionu).
+- **Spływ:** algorytm kierunku spływu na siatce wysokości (D8: każde oczko oddaje wodę najniższemu z 8 sąsiadów); z niego punkt wypływu,
+  strzałki i powierzchnia spływająca do punktu. W L1 zamiast D8 najniższy punkt obrysu.
+- **Podpowiedź uprawy:** odczyt klas mapy upraw JRC EUCROPMAP 2022 (10 m) w obrysie. Wiarygodna, gdy jedna klasa pokrywa co najmniej
+  połowę obrysu; wtedy 1–2 grupy rozporządzenia idą nad listę jako podpowiedź, bez wyboru za użytkownika. Mapa nie dzieli zbóż na ozime
+  i jare, więc dla zbóż podpowiada obie grupy. Lista alfabetyczna pod podpowiedzią zostaje cała.
+- **Prognoza przekroczenia progu:** dopełnianie bieżącego okna przebiegami pogody z wcześniejszych lat, bez zapisanych wag (niżej).
+
+## Prognoza przekroczenia progu
+
+Pytanie: jaka jest szansa, że w którymś okresie rozporządzenia kończącym się między datą oceny a końcem okresu krytycznego (ostatni
+okres z progiem dla grupy upraw) KBW spadnie poniżej progu. Okresy zakończone przed datą oceny stoją już w werdykcie.
+1. **W aplikacji: dopełnianie przebiegami.** Bilans do dnia oceny jest znany; resztę okresu dopełniamy pogodą z tych samych dni
+   kalendarza w każdym wcześniejszym roku (20 lat ze stacji IMGW, dłużej z siatki NASA POWER), pierwsze 16 dni prognozą Open-Meteo, gdy
+   jest. Wynik = odsetek przebiegów z przekroczeniem. Liczone na bieżąco z lat przed datą, bez zapisanych wag, więc bez wycieku z definicji.
+2. **Punkt odniesienia: częstość historyczna:** odsetek wcześniejszych lat z przekroczeniem po tej dacie dla tej uprawy i gleby.
+3. **Model do porównania:** drzewa wzmacniane gradientowo (LightGBM na procesorze; zapas: regresja logistyczna) na cechach: bilans do
+   dnia oceny, dzień okna, kategoria gleby, uprawa, miesiąc, prognoza opadu na 16 dni. Zastępuje dopełnianie w aplikacji tylko, gdy na
+   odłożonych latach pobije je i częstość historyczną (BSS wyższe o co najmniej 0,02, dolna granica 95% przedziału różnicy powyżej 0);
+   inaczej porównanie trzech podejść idzie do README.
+- **Walidacja krocząca:** centroidy 200 gmin z pomiaru zgodności, pogoda 2001–2025, daty oceny 1.V, 1.VI, 1.VII, 1.VIII; lata testowe
+  2016–2025, rok Y liczony tylko z lat < Y (podział po latach, nie po oknach). Etykietę liczy ten sam kod KBW co werdykt. Gdzie nie ma
+  archiwum prognoz 16 dni, główny wynik liczymy bez tej cechy.
+- **Miara:** wynik Briera i BSS = 1 − BS / BS częstości historycznej (`forecast.brier_skill`, cel co najmniej 0,05), wykres kalibracji
+  w 10 przedziałach, przedział 95% z bootstrapu po gmino-latach. `scripts/eval_forecast.py` (część `make eval`) zapisuje `forecast.*`.
+- **W raporcie:** rolnik czyta „w k z n wcześniejszych lat dalsza pogoda doprowadziła do przekroczenia progu” i jedno zdanie trafności;
+  doradca widzi metodę, BSS i kalibrację. Po końcu okresu krytycznego: „okres krytyczny dla tej uprawy już minął”; „Inna uprawa”: brak
+  progu, więc brak prognozy.
+
+## Skąd biorą się rekomendacje
+
+Baza: 26 działań spisanych ze źródeł (11 retencji krajobrazowej, 11 glebowych i agrotechnicznych, 4 nawadniania; CDR 2025, katalog NWRM
+Komisji Europejskiej, IUNG, FAO-56, załącznik organizatora). Dla każdego źródło mówi, na jaki problem działa i w jakich warunkach ma sens.
+1. Diagnoza przyczyny z danych działki: za mało opadu, gleba słabo trzyma wodę, woda spływa z pola, uprawa wrażliwa w tej fazie.
+2. Dopasowanie: każde działanie jest przypisane do przyczyny, na którą działa (mulcz i międzyplon ograniczają parowanie i poprawiają
+   glebę; zastawka i pas przy rowie zatrzymują odpływ; nawadnianie uzupełnia brak opadu). Bez przyczyny nie ma zalecenia.
+3. Warunki stosowania: działanie odpada, gdy nie pasuje do działki (głęboszowanie tylko na glebach średnich i ciężkich; regulowany
+   odpływ tylko na gruntach zdrenowanych o spadku do 1%; zastawka tylko przy rowie).
+4. Kolejność: najpierw działania na najsilniejszą przyczynę, wykonalne w terminie od daty oceny; grupy w kolejności zadania (retencja,
+   agrotechnika, nawadnianie).
+5. Stałe zdanie z podstawionymi liczbami tej działki (powierzchnia, spadek, odległość do rowu, niedobór w mm, termin, miejsce).
+
+Progi liczbowe w warunkach (spadek w %, odległość od rowu) to propozycje zespołu, nie normy; widok doradcy tak je opisuje. Reguła
+geometryczna miejsca jest nasza, bo źródła jej nie podają; siedzi w jednym wymiennym module (`app/advice/placement.py`).
+
+## Pomiar zgodności z SMSR
+
+Liczba z walidacji: **CSI wyniku „pod progiem / nad progiem” względem symboli SMSR IUNG**, z POD, FAR i wskaźnikiem Peirce'a
+(POD − POFD); tabela 2×2 jak w weryfikacji prognoz, CSI = a/(a+b+c) pomija zgodne „brak”.
+- Przypadek: gmina × rok × okres × grupa uprawy × kategoria gleby z symbolem „+” lub „-” w tabelach SMSR („x”, „#”, „*”, „n” pomijamy).
+- Niezależność: KBW jest jeden dla gminy, roku i okresu; symbole 14 grup i 4 kategorii to ten sam bilans z różnymi progami, a kolejne
+  okresy dzielą 50 z 60 dni. Wielkość próby podajemy więc w gmino-latach testowych (`smsr.n_gmina_years`, cel co najmniej 300), liczbę
+  symboli obok, a bootstrap losuje gminy.
+- Zbiór: ok. 200 gmin losowanych warstwowo po 16 województwach, lata 2020–2026 (`scripts/fetch_smsr.py` → `data/raw/smsr/`, ok. 16 min).
+  Podział z góry: 50 gmin do wyboru wzoru ET0, 150 do testu liczonego raz. Nasz wynik liczy ten sam kod co aplikacja (`fetch_weather`
+  dla centroidu gminy, KBW, progi z rozporządzenia), z tą samą kolejnością źródeł pogody.
+- Linie odniesienia: „zawsze brak” (CSI 0); „zawsze susza” (CSI równe częstości „+”, w latach takich jak 2026 wysokie); klimatologia
+  gminy (susza, gdy w pozostałych latach 2020–2026 ta sama gmina, uprawa, kategoria i okres miały „+” w co najmniej połowie lat; widzi też
+  lata późniejsze, więc sprzyja linii odniesienia); ten sam kod na samej siatce NASA POWER zamiast stacji IMGW.
+- Dowód, że metoda odróżnia się od odpowiedzi trywialnej: `smsr.csi_gain_vs_baseline` = CSI metody − większe z CSI „zawsze susza”
+  i klimatologii gminy, cel co najmniej 0,10. Częstość „+” (`smsr.base_rate`) stoi w raporcie i README obok CSI.
+- Do tego przedział 95% z bootstrapu po gminach, zgodność w koszykach odległości od progu (0–10, 10–25, 25–50, >50 mm; z nich zdanie
+  w ramce zgodności). `scripts/eval_smsr.py` (`make eval`) zapisuje klucze `smsr.*` w `metrics.json`.
+- Pomocnicze: `soil.category_agreement` (reguła gleby wobec mapy IUNG w ok. 100 punktach); z testu 50 losowych działek z 16 województw
+  (daty historyczne, poza sezonem i dzisiejsza): `retention.place_or_reason_share`, `retention.with_place_share` (działanie retencyjne
+  z miejscem albo jawne „brak miejsca, bo …”), `robustness.report_ok_under_30s_share`, `robustness.p50_s`, `robustness.p95_s`.
+
+## Odrębność
+
+Typowe rozwiązanie tego zadania, jakiego się spodziewamy: mapa, NDVI, semafor „ryzyko wysokie” z własnego indeksu, porady z modelu językowego
+albo z szablonu bez warunku, bez walidacji. Forma jest podobna (mapa + raport), różnica jest sprawdzalna: bilans definicją prawną suszy
+w mm wobec progu, który zna każdy, kto składał wniosek suszowy, obok oceny SMSR dla gminy; zmierzona zgodność z oceną państwa na co
+najmniej 300 gmino-latach, porównana z odpowiedziami trywialnymi; prognoza przekroczenia progu sprawdzona na odłożonych latach wobec
+częstości historycznej; zalecenie z przyczyny i warunku, retencyjne z miejscem na zdjęciu
+i formalnością z cytatem przepisu; ten sam numer i data dają zawsze ten sam raport; braki danych wprost; działanie sprawdzone na 50
+losowych działkach, także z datą listopadową.
+
+## Dane
+
+Źródła, licencje, rozmiary i daty: `docs/DANE.md`. Pobieranie dla działki jest napisane i zmierzone (10 źródeł, każde ze stanem, czasem
+i adresem; 10 działek: 6,1 s typowo, 8,7 s najgorzej, 10 ms z pamięci podręcznej) i leży w `app/geodata` z testami. Pogoda: Open-Meteo,
+a gdy odmawia, posterunki IMGW + ET0 FAO-56 ze stacji synoptycznej, luki z NASA POWER. Dochodzą: tabele gmin SMSR IUNG (wiersz gminy na
+żywo, archiwum do pomiaru), kategoria gleby z warstwy IUNG, progi z Dz.U. 2019 poz. 739 w CSV z testem, katalog działań (CDR 2025, NWRM),
+formalności Prawa wodnego w CSV z cytatami, pogoda 2001–2026 dla centroidów 200 gmin (2020–2026 do pomiaru zgodności, 2001–2025 do
+walidacji prognozy), prognoza 16 dni Open-Meteo, mapa upraw JRC EUCROPMAP 2022 czytana oknem w obrysie. Danych syntetycznych
+w produkcie nie ma; dane demo to prawdziwe pobrania z datą, oznaczone w interfejsie.
+
+## Czego NIE budujemy
+
+1. Modelu językowego piszącego raport lub zalecenia; czatu z „agronomem AI”.
+2. Logowania, kont, danych osobowych (numer działki z ULDK nie wskazuje właściciela).
+3. Rozpoznawania uprawy siecią neuronową (zostaje podpowiedź z mapy JRC) ani „działki bliźniaka” z zabiegów sąsiadów (brak danych).
+4. Kroku „sprawdź dane przed zapisem”, osobnej aplikacji mobilnej, PDF składanego w LaTeX (PDF to wydruk strony).
+5. Mapy kafelkowej z biblioteką (Leaflet, WMTS w przeglądarce): mapa to zdjęcie działki z serwera z nakładką SVG.
+6. Własnego indeksu suszy, kosztorysów bez źródła cen, prognozy sezonowej Open-Meteo (183 dni) w widoku rolnika, uczenia maszynowego
+   w ocenie bieżącej, sieci neuronowych (PyTorch) do prognozy.
+7. Plakietki „Susza rolnicza” ani zastosowania raportu jako dowodu we wniosku suszowym.
+8. Milimetrów ani m³ wody odpływającej z działki; zostaje miejsce, kierunek spływu i udział powierzchni (otwarta decyzja).
+9. Niczego innego z listy „Otwarte decyzje”, dopóki nie zapadnie decyzja.
+
+## Moduły krytyczne dla jury
+
+Małe, typowane, z testami i opisem w `docs/PYTANIA_JURY.md`:
+1. `app/drought/kbw.py` + `app/drought/progi_dz_u_2019_739.csv`: 14 okresów, KBW, próg, wynik, stany „poza okresem” i „brak progu”;
+   test porównuje CSV (14 grup × 4 kategorie × 14 okresów) z rozporządzeniem.
+2. `app/advice/rules.py` + `app/advice/prawo_wodne.csv`: reguła = przyczyna i warunek na wskaźnikach → szablon zdania, liczby, termin,
+   źródło, formalność. Test: każde działanie ma w CSV artykuł, cytat, stronę PDF i datę sprawdzenia albo „sprawdź w Wodach Polskich”
+   bez numeru artykułu. Progi reguł w widoku doradcy opisane jako propozycje zespołu.
+3. `app/advice/placement.py`: miejsce działania z geometrii działki (punkt wypływu, rów, linia spływu) albo „brak miejsca, bo …”. Jedna
+   funkcja z typowanym wejściem (obrys, siatka wysokości, wody z BDOT10k) i wyjściem (lista miejsc z rodzajem, położeniem i powodem);
+   regułę da się wymienić bez zmian w reszcie raportu.
+4. `app/validation/agreement.py`: tabela 2×2, CSI, POD, FAR, Peirce, linie odniesienia, bootstrap po gminach; wołany przez `scripts/eval_smsr.py`.
+5. `app/forecast/exceedance.py`: częstość historyczna, dopełnianie przebiegami i model za jednym typowanym interfejsem, stany „ok”,
+   „okres minął”, „brak progu”; podział po latach i miary (Brier, BSS, kalibracja) w `scripts/eval_forecast.py`; test, że rok Y nie
+   widzi lat ≥ Y.
+
+## Stos
+
+Szablon bez zmian: FastAPI + Jinja + HTMX, Python 3.12, uv; z warstwy danych httpx, numpy, pyproj, rasterio (gotowe pakiety dla Windows);
+do porównania prognozy LightGBM (gotowe pakiety dla Windows, procesor).
+Wykresy i mapa to SVG z serwera, bez bibliotek JS i CDN. Części raportu dochodzą przez odpytywanie HTMX (co ok. 1 s) o fragmenty liczone,
+gdy ich źródło jest gotowe; pobrane dane w pamięci podręcznej na dysku. Uruchomienie bez `make`: `uv run python -m app` (port `HN_PORT`,
+domyślnie 8000), także w Windows. PDF: styl do druku; przykładowe raporty do zgłoszenia robi `scripts/export_reports.py` (Playwright,
+`page.pdf`). Bez PyTorcha i karty graficznej.
+
+## Ryzyka i plan B
+
+| Ryzyko | Plan B |
+|---|---|
+| Referencja jury nie jest liczona metodą IUNG | pytanie do mentorów jako pierwsze; rdzeń `kbw.py` wymienny, reszta raportu bez zmian |
+| Urzędnik czyta wynik jako urzędowe stwierdzenie suszy | plakietka „Bilans poniżej progu suszy (szacunek dla działki)”, stałe zdanie o SMSR, wiersz SMSR gminy tuż pod spodem |
+| Kategoria gleby z SoilGrids rozjeżdża się z mapą IUNG | warstwa IUNG pierwsza; zgodność reguły zmierzona; wynik dla sąsiedniej kategorii; doradca poprawia |
+| Warstwa IUNG nie odpowiada dla punktu | kategoria z obrazu mapy WMS (kolor legendy) w 100 punktach do pomiaru zgodności; w aplikacji reguła z SoilGrids |
+| IUNG liczy ewapotranspirację innym wzorem niż FAO-56 | wzór wybieramy na 50 gminach rozwojowych; różnicę opisujemy w ograniczeniach |
+| Opad ze stacji i z siatki różni się w oknie 60 dni typowo o 29 mm | pytanie do mentora; kolejność źródeł bez zmian do odpowiedzi; CSI na samej siatce jako linia odniesienia |
+| Błędny numer artykułu Prawa wodnego | CSV z cytatem, stroną i datą sprawdzenia; test; bez potwierdzonego przepisu „sprawdź w Wodach Polskich” |
+| Open-Meteo archiwum odrzuca limitem dziennym | łańcuch IMGW + NASA POWER, pamięć podręczna, dostawca i odległość stacji w raporcie |
+| SMSR ogranicza pobieranie archiwum | przerwy 0,5 s, mniejsza próba z podanym N; 84 strony już sparsowane |
+| Satelita lub NMT przekracza limit czasu | nie blokują bilansu; wiersz mówi „brak” i dlaczego; historia satelity dociąga się w tle |
+| Prognoza nie bije punktów odniesienia | model nie wchodzi do aplikacji (porównanie w README); gdy i dopełnianie przegrywa z częstością historyczną, raport podaje samą częstość i mówi to wprost |
+| Mapa JRC myli uprawę na działce | podpowiedź tylko przy pokryciu ≥ 50% obrysu, nigdy wybór za użytkownika; pierwsza do cięcia |
+| L1 nie stoi o 20:00 | kolejność cięcia z „Drabiny cięć”; lista „Nigdy nie tniemy” zostaje |
+| Jury poda numer w innym formacie | pełny identyfikator, obręb + numer (ULDK GetParcelByIdOrNr z listą), współrzędne, klik na zdjęciu |
+
+## Otwarte decyzje
+
+Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki decyzja nie zapadnie.
+- **Milimetry wody odpływającej z działki** (jako przedział albo wcale). Raport podaje miejsce, kierunek spływu i udział powierzchni.
+- **Jedna liczba na slajd:** zgodność z SMSR, czas odpowiedzi czy trafność prognozy. Mierzymy i pokazujemy w raporcie wszystkie trzy.
+- **Wariant ekranu z drugiej rundy makiet;** do decyzji obowiązuje kierunek wizualny z `docs/DESIGN.md`.
+- **Hosting:** publiczny link (konto w usłudze hostingowej, ok. 7 USD miesięcznie, do 3 godzin pracy) czy tylko instrukcja w README.
+- **Źródło opadu:** stacja czy siatka (różnica w oknie 60 dni typowo 29 mm, najwięcej 139 mm, może zmienić werdykt); pytanie do mentora.
+- **Progi reguł rekomendacji** (spadek w %, odległość od rowu): do potwierdzenia u mentorów; do tego czasu propozycje zespołu.
+- Czym jest referencja jury i w jakim formacie poda numer działki (pytania do mentorów); nazwa produktu.
+
+## Drabina cięć
+
+- **L0:** opis, zrzuty, tabela progów i metoda w README.
+- **Szkielet (sob 16:30):** `app/geodata` z testami; `app/drought/kbw.py` z CSV progów; wynik i widok do druku dla dowolnej działki
+  i daty. W tle od razu: `scripts/fetch_smsr.py` (ok. 16 min) i pogoda 2001–2026 dla 200 gmin. Pierwsze 20 min: odczyt warstwy IUNG
+  `Susza:katgl_landuse2024` dla 10 działek z pomiaru czasu.
+- **L1 (sob 20:00):** dowolna działka i data, także listopadowa: wejście, zdjęcie z obrysem, werdykt z wykresem bilansu, plakietką
+  i zastrzeżeniem, wiersz SMSR gminy dla daty analizy, wiersz stanu roślin z satelity, działanie retencyjne nr 1 (najniższy punkt obrysu
+  z siatki wysokości + najbliższy rów z BDOT10k + formalność z CSV), agrotechnika i nawadnianie jako zdania z reguł, skrót, źródła
+  i braki, widok do druku.
+- **L2 (ndz 02:00):** `smsr.*` w `metrics.json` i sekcja gminy, 10 sezonów i przyczyny, spływ D8 ze strzałkami i udziałem powierzchni,
+  wykresy agrotechniki i nawadniania, plan z przełącznikami i osią czasu, `soil.category_agreement`, test 50 działek z `retention.*`
+  i `robustness.*`, przełącznik Rolnik / Doradca, prognoza dopełnianiem przebiegami nad osią planu z `forecast.*` z walidacji kroczącej.
+- **L3 (ndz 09:00, potem bez nowych funkcji):** model prognozy w aplikacji, jeśli wygrał; podpowiedź uprawy z mapy JRC; pełny widok
+  doradcy; bilans FAO-56 w nawadnianiu; układ na telefon; wyszukiwanie po nazwie obrębu; dopracowanie wyglądu.
+- **Kolejność cięcia:** podpowiedź uprawy → model prognozy w aplikacji (zostaje dopełnianie, porównanie w README) → bilans FAO-56
+  w nawadnianiu (zostaje prosta decyzja) → wykres gminy w sekcji 2 (wiersz SMSR zostaje) → stan planu w linku i PDF (przełącznik
+  w raporcie należy do złotej ścieżki i zostaje).
+- **Nigdy nie tniemy:** złotej ścieżki, liczby zgodności z SMSR, wiersza SMSR gminy i zdania zastrzeżenia pod werdyktem, działania
+  retencyjnego nr 1 z miejscem, daty poza okresem monitoringu, jawnych braków danych, działania dla dowolnej działki.
+
+## Historia zmian
+
+- K0 (krytyka wizji): krok „Szkielet”; miary `smsr.csi_gain_vs_baseline ≥ 0,10` i `smsr.n_gmina_years ≥ 300`; warstwa IUNG przed
+  regułą z SoilGrids; plakietka „(szacunek dla działki)” ze zdaniem o SMSR; działanie nr 1 na pierwszym ekranie; wiersz stanu roślin;
+  `prawo_wodne.csv` z cytatami; bez objętości odpływu, awatara i liczb agronomicznych bez źródła.
+- sob 16:15, W01: realizujemy tylko punkty ustalone i nieoznaczone, więc prognoza przekroczenia progu z miarami i modułem
+  `app/forecast/exceedance.py`, podpowiedź JRC na liście upraw, milimetry odpływu, wybór liczby na slajd, kolejność cięć i hosting
+  przeszły do „Otwarte decyzje”, a rozdziały „Modele i metody obliczeń” i „Skąd biorą się rekomendacje” opisują ocenę bez uczenia
+  maszynowego i 5 kroków od bazy 26 działań do zdania; żaden test akceptacyjny nie został usunięty (powód: nie podany).
+- sob 16:24, W02 (zastępuje W01): do otwartych decyzji przechodzi tylko punkt o milimetrach wody odpływającej z działki, a wracają
+  i obowiązują prognoza przekroczenia progu dopełnianiem przebiegami (bez zapisanych wag, walidacja krocząca po latach, Brier i BSS
+  wobec częstości historycznej, model tylko po wygranej), podpowiedź uprawy z mapy JRC nad listą alfabetyczną i kolejność cięć; K3
+  znów ma czek `forecast.brier_skill ≥ 0,05`, doszedł test `tests/acceptance/test_exceedance_forecast.py` (xfail do zbudowania), żaden
+  test nie został usunięty (powód: W01 objęła za dużo, właściciel miał na myśli tylko punkt o spływie).

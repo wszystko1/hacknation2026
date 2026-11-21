@@ -1,0 +1,15 @@
+{# Report header: breadcrumb, data-copy badge, title, Rolnik | Doradca, "Raport PDF". #}
+{% set p = report.parcel %}
+{% set base_q = 'dzialka=' ~ (report.request.parcel_id | urlencode) ~ '&data=' ~ report.request.day.isoformat() ~ '&uprawa=' ~ report.request.crop.value ~ ('&plan=' ~ (report.request.plan | join(',')) if report.request.plan else '') %}
+<header class="report-head">
+  <div class="crumb">gm. {{ p.commune }} › obręb {{ p.precinct }}{% if report.data_copy %} <span class="demo-data">{{ report.data_copy }}</span>{% endif %}</div>
+  <div class="hrow">
+    <h1>Działka {{ p.number }}</h1>
+    <nav class="seg" aria-label="Widok">
+      <a href="/raport?{{ base_q }}&amp;widok=rolnik" {% if report.request.view == 'rolnik' %}class="is-on" aria-current="page"{% endif %}>Rolnik</a>
+      <a href="/raport?{{ base_q }}&amp;widok=doradca" {% if report.request.view == 'doradca' %}class="is-on" aria-current="page"{% endif %}>Doradca</a>
+    </nav>
+    <a class="btn" id="pdf" href="/raport/druk?{{ base_q }}" data-base="/raport/druk?{{ base_q }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11 M7 10l5 5 5-5 M5 20h14"/></svg>Raport PDF</a>
+  </div>
+  <div class="sub">{{ p.area_ha | ha }} · {{ report.soil.words }} · {{ report.request.crop.value | crop_label }} · ocena na {{ report.request.day | day }}</div>
+</header>

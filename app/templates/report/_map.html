@@ -1,0 +1,46 @@
+{# Left column: the parcel photo with the overlay, the selection bar, the legend and "Skąd są dane". #}
+{% set m = report.map %}
+<div class="mapcol">
+  <div class="map">
+    {% if m %}
+    <img src="{{ m.image_url }}" width="{{ m.width }}" height="{{ m.height }}" alt="Ortofotomapa działki {{ report.parcel.number }}">
+    <svg viewBox="0 0 {{ m.width }} {{ m.height }}" preserveAspectRatio="xMidYMid slice" role="img"
+         aria-label="Obrys działki {{ report.parcel.number }}{% if m.markers %} i miejsca działań {{ m.markers | map(attribute='n') | join(', ') }}{% endif %}">
+      {% set ring = m.outline_px[0] %}
+      {% set pts = ring | map('join', ',') | join(' ') %}
+      <path class="mo-scrim" d="M0 0H{{ m.width }}V{{ m.height }}H0Z M{{ ring | map('join', ' ') | join(' L') }}Z"/>
+      <polygon class="mo-casing" points="{{ pts }}"/>
+      <polygon class="mo-outline" points="{{ pts }}"/>
+      {% if m.outlet_px %}<circle class="mo-outlet" cx="{{ m.outlet_px[0] }}" cy="{{ m.outlet_px[1] }}" r="7"/>{% endif %}
+      {% for k in m.markers %}
+      <circle class="mo-marker" cx="{{ k.x }}" cy="{{ k.y }}" r="15"/>
+      <text class="mo-marker-text" x="{{ k.x }}" y="{{ k.y + 6 }}">{{ k.n }}</text>
+      {% endfor %}
+    </svg>
+    {% else %}
+    <div class="empty">Brak zdjęcia działki: ortofotomapa GUGiK nie odpowiedziała.</div>
+    {% endif %}
+  </div>
+  <div class="map-ui">
+    {% include "report/_pick.html" %}
+    {% if m %}
+    <div class="mlegend">
+      <b>Warstwa na mapie</b>
+      <div><span class="nb nb--off">&nbsp;</span>obrys działki {{ m.label }}</div>
+      {% for k in m.markers %}<div><span class="nb">{{ k.n }}</span>{{ k.kind }}</div>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <section class="ledger" aria-label="Skąd są dane">
+    <header><b>Skąd są dane</b><span>{% if report.data_copy %}{{ report.data_copy }}{% else %}pobrane dla tej działki{% endif %}</span><span class="t">razem {{ report.total_s | seconds }}</span></header>
+    <ul class="sources">
+      {% for r in report.sources %}
+      <li class="is-{{ {'ok': 'done', 'copy': 'done', 'fallback': 'fallback', 'missing': 'missing', 'waiting': 'waiting'}[r.status] }}">
+        <i class="mark" aria-hidden="true">{{ {'ok': '✓', 'copy': '✓', 'fallback': '~', 'missing': '!', 'waiting': '…'}[r.status] }}</i>
+        <span><b>{{ r.label }}</b><small>{{ r.provider }}</small>{% if r.status == 'missing' %}: {{ r.reason }}{% endif %}</span>
+        <em>{{ r.elapsed_s | seconds }}</em>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>

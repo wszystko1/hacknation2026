@@ -1,0 +1,161 @@
+"""fetch_all: parcel first, then every other source in parallel, within per-source and total time limits."""
+
+from __future__ import annotations
+
+import threading
+import time
+from collections.abc import Callable
+from datetime import date
+from typing import Any
+
+from . import config
+from .crop_hint import fetch_crop_hint
+from .errors import CacheMiss, InvalidParcelId
+from .forecast import fetch_forecast, fetch_seasonal
+from .models import FetchResult, SourceResult, now_iso
+from .ortho import fetch_ortho
+from .parcel import fetch_parcel, fetch_parcel_by_lonlat, normalize_parcel_id
+from .satellite import fetch_satellite
+from .soil import fetch_soil
+from .terrain import fetch_terrain
+from .water import fetch_water
+from .weather import fetch_weather
+
+ALL_SOURCES = (
+    "parcel", "weather", "ortho", "soil", "satellite", "terrain", "water", "forecast", "seasonal", "crop_hint",
+)  # fmt: skip
+CORE_SOURCES = ("parcel", "weather")
+DEFAULT_URLS = {
+    "parcel": config.ULDK_URL, "weather": config.OPEN_METEO_ARCHIVE_URL, "ortho": config.ORTHO_WMS_URL,
+    "soil": config.SOILGRIDS_URL, "satellite": config.stac_search_url(), "terrain": config.NMT_POINTS_URL,
+    "water": config.BDOT_WMS_URL, "forecast": config.OPEN_METEO_FORECAST_URL,
+    "seasonal": config.OPEN_METEO_SEASONAL_URL, "crop_hint": config.EUCROPMAP_URL,
+}  # fmt: skip
+
+
+class _Task:
+    """One source running in a daemon thread, so a hung request can never block the caller or the exit."""
+
+    def __init__(self, name: str, fn: Callable[[], SourceResult[Any]]):
+        self.name, self.fn = name, fn
+        self.result: SourceResult[Any] | None = None
+        self.error: BaseException | None = None
+        self.started = time.monotonic()
+        self.elapsed_ms = 0
+        self.thread = threading.Thread(target=self._run, name=f"geodata-{name}", daemon=True)
+        self.thread.start()
+
+    def _run(self) -> None:
+        try:
+            self.result = self.fn()
+        except BaseException as exc:  # noqa: BLE001 - reported as the source status
+            self.error = exc
+        self.elapsed_ms = int((time.monotonic() - self.started) * 1000)
+
+    def collect(self, deadline: float) -> SourceResult[Any]:
+        self.thread.join(max(0.0, deadline - time.monotonic()))
+        if self.thread.is_alive():
+            limit = deadline - self.started
+            return _empty(self.name, "timeout", int(limit * 1000), f"no answer within {limit:.1f} s")
+        if self.error is not None:
+            if isinstance(self.error, CacheMiss):
+                status = "error" if self.name in CORE_SOURCES else "skipped"
+                return _empty(
+                    self.name, status, self.elapsed_ms, str(self.error), note="offline: not in cache"
+                )
+            return _empty(self.name, "error", self.elapsed_ms, f"{type(self.error).__name__}: {self.error}")
+        assert self.result is not None
+        self.result.elapsed_ms = self.elapsed_ms
+        return self.result
+
+
+def _empty(name: str, status: str, elapsed_ms: int, error: str = "", note: str = "") -> SourceResult[Any]:
+    return SourceResult(
+        name, status, None, elapsed_ms=elapsed_ms, source_url=DEFAULT_URLS[name], retrieved_at=now_iso(),  # type: ignore[arg-type]
+        notes=[note] if note else [], error=error,
+    )  # fmt: skip
+
+
+def fetch_all(
+    parcel_id: str | None,
+    date: date | str,  # noqa: A002 - public parameter name
+    *,
+    budget_s: float = 25.0,
+    lonlat: tuple[float, float] | None = None,
+    sources: tuple[str, ...] | None = None,
+    offline: bool | None = None,
+    ortho_m_per_px: float | None = None,
+    ortho_max_px: int = 1024,
+    history_years: int = 3,
+) -> FetchResult:
+    """Fetch everything known about a parcel for a date. Never raises for data or network problems.
+
+    parcel_id: cadastral identifier, e.g. "040303_2.0004.121/7" (or None with `lonlat=(lon, lat)`).
+    date: day of the analysis (datetime.date or "YYYY-MM-DD"), today or earlier.
+    budget_s: total wall-clock limit; sources still running at that moment get status `timeout`
+        (their downloads finish in the background and land in the cache for the next call).
+    sources: subset of ALL_SOURCES to run; the rest get status `skipped`. Parcel always runs.
+    offline: serve only from the cache (None = follow GEODATA_OFFLINE).
+    Raises only InvalidParcelId / ValueError for malformed input.
+    """
+    from datetime import date as _date
+
+    started = time.monotonic()
+    total_deadline = started + budget_s
+    target = _date.fromisoformat(date) if isinstance(date, str) else date
+    if parcel_id is None and lonlat is None:
+        raise InvalidParcelId("give a parcel identifier or lonlat=(lon, lat)")
+    pid = normalize_parcel_id(parcel_id) if parcel_id is not None else ""
+    wanted = set(sources or ALL_SOURCES) | {"parcel"}
+    previous = config._offline_override
+    if offline is not None:
+        config.set_offline(offline)
+    try:
+        if parcel_id is not None:
+            parcel_task = _Task("parcel", lambda: fetch_parcel(pid, deadline=total_deadline))
+        else:
+            parcel_task = _Task(
+                "parcel", lambda: fetch_parcel_by_lonlat(lonlat[0], lonlat[1], deadline=total_deadline)
+            )
+        parcel_res = parcel_task.collect(min(total_deadline, started + config.TIMEOUTS["parcel"]))
+        results: dict[str, SourceResult[Any]] = {"parcel": parcel_res}
+        others = [n for n in ALL_SOURCES if n != "parcel"]
+        if not parcel_res.usable:
+            for name in others:
+                results[name] = _empty(name, "skipped", 0, note="parcel unavailable")
+        else:
+            parcel = parcel_res.data
+            lon, lat = parcel.centroid_4326
+            now = time.monotonic()
+            limits = {n: min(total_deadline, now + config.TIMEOUTS[n]) for n in others}
+            calls: dict[str, Callable[[], SourceResult[Any]]] = {
+                "weather": lambda: fetch_weather(lat, lon, target, deadline=limits["weather"]),
+                "ortho": lambda: fetch_ortho(
+                    parcel, m_per_px=ortho_m_per_px, max_px=ortho_max_px, deadline=limits["ortho"]
+                ),
+                "soil": lambda: fetch_soil(lat, lon, deadline=limits["soil"]),
+                "satellite": lambda: fetch_satellite(
+                    parcel, target, history_years=history_years, deadline=limits["satellite"]
+                ),
+                "terrain": lambda: fetch_terrain(parcel, deadline=limits["terrain"]),
+                "water": lambda: fetch_water(parcel, deadline=limits["water"]),
+                "forecast": lambda: fetch_forecast(lat, lon, deadline=limits["forecast"]),
+                "seasonal": lambda: fetch_seasonal(lat, lon, deadline=limits["seasonal"]),
+                "crop_hint": lambda: fetch_crop_hint(parcel, deadline=limits["crop_hint"]),
+            }
+            tasks = {n: _Task(n, calls[n]) for n in others if n in wanted}
+            for name in others:
+                if name in tasks:
+                    results[name] = tasks[name].collect(limits[name])
+                else:
+                    results[name] = _empty(name, "skipped", 0, note="not requested")
+    finally:
+        if offline is not None:
+            config.set_offline(previous)
+    return FetchResult(
+        parcel_id=parcel_res.data.id if parcel_res.usable else pid,
+        date=target.isoformat(),
+        total_ms=int((time.monotonic() - started) * 1000),
+        budget_s=budget_s,
+        **results,
+    )

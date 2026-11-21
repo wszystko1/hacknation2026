@@ -1,0 +1,9 @@
+{# One action with its "W planie" switch. Expects `a` (Action). #}
+<li id="dzialanie-{{ a.n }}" class="{{ 'is-planned' if a.in_plan else '' }}">
+  <span class="nb {{ '' if a.place else 'nb--off' }}">{{ a.n }}</span><span class="title">{{ a.title }}</span>
+  <label class="sw"><input type="checkbox" name="plan" value="{{ a.n }}" data-plan-switch {{ 'checked' if a.in_plan else '' }} aria-label="Działanie {{ a.n }} w planie"><span></span></label>
+  <p>{{ a.sentence }}{% if a.when %} Termin: {{ a.when }}.{% endif %}</p>
+  {% if a.place %}<span class="src">miejsce: {{ a.place.description }}</span>{% elif a.no_place_reason %}<span class="src">{{ a.no_place_reason }}</span>{% endif %}
+  {% if a.legal %}<span class="law"><b>{{ a.legal.formality }}</b>{% if a.legal.article %}: {{ a.legal.act }}, {{ a.legal.article }}{% endif %}</span>{% endif %}
+  <span class="src">przyczyna: {{ a.cause }} · źródło: {{ a.source }}</span>
+</li>

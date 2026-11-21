@@ -1,0 +1,11 @@
+{# Section 6: the forecast sentence, the plan counter and the timeline; switches live next to each action. #}
+<section id="plan" aria-labelledby="h-plan">
+  <h2 class="sec-h" id="h-plan"><span class="n">{{ s.n }}</span>{{ s.heading }}{% if s.chip %}<span class="chip">{{ s.chip }}</span>{% endif %}</h2>
+  <p class="forecast" id="prognoza">{{ report.forecast.sentence }}</p>
+  <p class="cnt" id="licznik-planu"><b data-plan-count>{{ report.plan_count }}</b><span>z {{ report.actions | length }} działań w planie</span></p>
+  <ol class="tl">
+    {% for a in report.actions %}
+    <li class="{{ 'is-planned' if a.in_plan else '' }}" data-plan-item="{{ a.n }}"><span>{{ a.when }}</span>{{ a.n }}. {{ a.title }}<em></em></li>
+    {% endfor %}
+  </ol>
+</section>

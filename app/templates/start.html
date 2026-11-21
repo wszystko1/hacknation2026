@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block main %}
+<main id="tresc" class="mapcol">
+  <div class="map" aria-hidden="true"></div>
+  <div class="start">
+    <h1 class="vh">Ocena działki</h1>
+    {% include "report/_pick.html" %}
+    <div class="examples">
+      <b>Przykładowe działki</b> <span class="demo-data">kopia danych z 21.11.2026</span>
+      <ul>
+        {% for e in examples %}
+        <li><a href="/raport?dzialka={{ e.dzialka | urlencode }}&amp;data={{ e.data }}&amp;uprawa={{ e.uprawa }}"><b>{{ e.label }}</b><span class="muted">{{ e.note }}</span></a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</main>
+{% endblock %}

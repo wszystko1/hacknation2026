@@ -1,0 +1,16 @@
+{# Section 8: sources with time, duration and state; gaps as rows with the reason. #}
+<section id="zrodla" aria-labelledby="h-zrodla">
+  <h2 class="sec-h" id="h-zrodla"><span class="n">{{ s.n }}</span>{{ s.heading }}{% if s.chip %}<span class="chip">{{ s.chip }}</span>{% endif %}</h2>
+  <div class="scroll">
+    <table id="tabela-zrodel">
+      <thead><tr><th>Źródło</th><th>Co dało</th><th>Pobrano</th><th class="num">Czas</th><th>Stan</th></tr></thead>
+      <tbody>
+        {% for r in report.sources %}
+        <tr><td>{{ r.label }}<br><span class="muted">{{ r.provider }}</span></td><td>{{ r.gave or '–' }}</td><td class="mono">{{ r.retrieved_at[:16] | replace('T', ' ') if r.retrieved_at else '–' }}</td><td class="num">{{ r.elapsed_s | seconds }}</td>
+          <td class="{{ {'ok': 'st-ok', 'copy': 'st-ok', 'fallback': 'st-warn', 'missing': 'st-no', 'waiting': 'st-warn'}[r.status] }}">{{ {'ok': 'jest', 'copy': 'kopia', 'fallback': 'zapas', 'missing': 'brak', 'waiting': 'czekam'}[r.status] }}{% if r.reason %}: {{ r.reason }}{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% for sentence in s.sentences %}<p>{{ sentence }}</p>{% endfor %}
+</section>

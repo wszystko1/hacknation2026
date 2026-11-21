@@ -1,0 +1,28 @@
+{# Section 0: the verdict, stated once (hero), then the SMSR row, plants from satellite and action no. 1. #}
+{% set v = report.verdict %}
+<section class="verdict" id="werdykt" aria-label="Wynik">
+  {% if v.state == 'out_of_season' %}
+  <p class="banner" id="poza-sezonem"><i aria-hidden="true">i</i>{{ out_of_season }}</p>
+  {% endif %}
+  <div class="vrow">
+    {% if v.badge %}<span class="badge {{ {'below': 'badge--dry', 'above': 'badge--ok', 'out_of_season': 'badge--neutral'}.get(v.state, 'badge--neutral') }}" id="plakietka">{{ v.badge }}</span>{% endif %}
+    <span class="law">definicja i próg: rozporządzenie MRiRW, Dz.U. 2019 poz. 739</span>
+  </div>
+  {% if v.kbw_mm is not none %}
+  <div class="big-number {{ 'big-number--dry' if v.state == 'below' else '' }}">
+    <b>{{ v.kbw_mm | dec }}<small>mm</small></b>
+    <div class="cap">bilans wody w 60 dniach<br><strong>{{ v.period.start | day_month }}–{{ v.period.end | day }}</strong>{% if v.threshold_mm is not none %}, próg suszy <strong>{{ v.threshold_mm | mm }}</strong>{% endif %}{% if v.note %}<br>{{ v.note }}{% endif %}</div>
+  </div>
+  {% endif %}
+  <p class="verdict-sentence {{ 'verdict-sentence--ok' if v.state == 'above' else '' }}">{{ v.sentence }}</p>
+  {{ hbar(v) | safe }}
+  {% if v.how %}<p class="how">{{ v.how }}</p>{% endif %}
+  <p class="disclaimer" id="zastrzezenie">{{ v.disclaimer }}.</p>
+  <dl class="facts">
+    <div id="wiersz-smsr"><dt>Ocena SMSR dla gminy {{ report.smsr.commune }} w tym okresie</dt>
+      <dd>{% if report.smsr.state == 'ok' %}<b>{{ report.smsr.words }}</b>{% if report.smsr.soil_category %} (gleba kat. {{ report.smsr.soil_category }}){% endif %}{% else %}{{ report.smsr.reason }}{% endif %}</dd></div>
+    <div id="wiersz-satelita"><dt>Stan roślin na działce</dt><dd>{{ report.crop_condition.words }}</dd></div>
+    <div id="dzialanie-1"><dt>Działanie nr 1</dt>
+      <dd>{% if report.action_1 %}<span class="nb">{{ report.action_1.n }}</span> <b>{{ report.action_1.title }}</b>{% if report.action_1.place %}: {{ report.action_1.place.description }}{% else %}: {{ report.action_1.no_place_reason }}{% endif %}{% if report.action_1.legal %} · <span class="muted">{{ report.action_1.legal.formality }}</span>{% endif %}{% else %}{{ report.action_1_reason }}{% endif %}</dd></div>
+  </dl>
+</section>

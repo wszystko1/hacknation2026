@@ -1,0 +1,70 @@
+{
+  "task": "KOWR: Zatrzymaj wodę, chroń plony. Raport wodny dla działki ewidencyjnej, daty i uprawy",
+  "criteria": [
+    {
+      "id": "K1",
+      "name": "Wartość praktyczna dla użytkownika",
+      "weight": 25,
+      "required": true,
+      "evidence": "Dla działki i daty jurora raport mówi, jak bilans wody ma się do progu suszy z rozporządzenia (plakietka „Bilans poniżej progu suszy (szacunek dla działki)” albo „powyżej”, stałe zdanie, że to nie jest urzędowe stwierdzenie suszy i że we wniosku liczy się ocena SMSR dla gminy), dlaczego, gdzie na działce zatrzymać wodę (działanie nr 1 już na pierwszym ekranie; miejsce z numerem na zdjęciu liczone z geometrii działki: punkt wypływu z siatki wysokości, rów z BDOT10k; albo jawne „brak miejsca na działce, bo …”; formalność z artykułem i cytatem Prawa wodnego albo „sprawdź w Wodach Polskich”), co zmienić w uprawie z terminem i czy teraz nawadniać (dawka w mm i m³). Zalecenia wynikają z diagnozy przyczyny i nie powstają bez niej. Plan działań z przełącznikami „W planie” trafia do linku i PDF. Milimetrów odpływu raport nie podaje.",
+      "checks": [
+        {"kind": "test", "target": "tests/acceptance/test_recommendations.py"},
+        {"kind": "test", "target": "tests/acceptance/test_water_law.py"},
+        {"kind": "metric", "target": "retention.place_or_reason_share", "min": 0.95},
+        {"kind": "scene", "target": "Gdzie zatrzymać wodę na działce"},
+        {"kind": "scene", "target": "Plan działań: przełącznik „W planie”"}
+      ]
+    },
+    {
+      "id": "K2",
+      "name": "Wykorzystanie danych i wiarygodność rekomendacji",
+      "weight": 25,
+      "required": true,
+      "evidence": "Bilans liczony definicją suszy z Dz.U. 2019 poz. 739 (KBW w 14 okresach, próg dla grupy uprawy i kategorii gleby) z danych pobranych dla działki: pogoda 10 lat, kategoria gleby (warstwa IUNG Susza:katgl_landuse2024, zapasowo SoilGrids ze zmierzoną zgodnością z mapą IUNG i wynikiem dla sąsiedniej kategorii przy granicy klas), rzeźba terenu, rowy i cieki. Pod bilansem wiersz oceny SMSR dla gminy i wiersz stanu roślin z Sentinel-2 (NDMI wobec mediany tej samej dekady z N poprzednich sezonów, czytany z fazą uprawy) albo jawny brak z powodem. Zgodność z SMSR IUNG zmierzona na gminach testowych i wyższa od strategii „zawsze susza” i klimatologii gminy; częstość suszy w SMSR podana obok. Tabela źródeł z godziną, czasem i stanem; braki danych i niepewność napisane wprost.",
+      "checks": [
+        {"kind": "test", "target": "tests/acceptance/test_drought_assessment.py"},
+        {"kind": "test", "target": "tests/acceptance/test_crop_condition.py"},
+        {"kind": "metric", "target": "smsr.csi_gain_vs_baseline", "min": 0.10},
+        {"kind": "metric", "target": "soil.category_agreement"},
+        {"kind": "scene", "target": "Źródła, czasy i braki danych"}
+      ]
+    },
+    {
+      "id": "K3",
+      "name": "Innowacyjność i potencjał rozwojowy",
+      "weight": 20,
+      "required": true,
+      "evidence": "Metoda urzędowa policzona dla jednej działki i sprawdzona względem oceny państwa na co najmniej 300 gmino-latach testowych (tabela 2×2, CSI, POD, FAR, Peirce, przedział z bootstrapu po gminach, częstość „+”, linie odniesienia: zawsze brak, zawsze susza, klimatologia gminy, sama siatka NASA POWER). Ocena bieżąca bez uczenia maszynowego, każda liczba z rachunku albo reguły: bilans i próg z rozporządzenia, kategoria gleby regułą z uziarnienia, roślinność jako odchylenie od własnej historii działki, spływ algorytmem kierunku spływu na siatce wysokości; rekomendacje z bazy 26 działań ze źródeł, każde przypisane do przyczyny z diagnozy działki i do warunków stosowania. Prognoza przekroczenia progu do końca okresu krytycznego metodą bez zapisanych wag (bilans do dnia oceny dopełniony pogodą tych samych dni z każdego wcześniejszego roku), sprawdzona walidacją kroczącą po latach (rok Y liczony tylko z lat wcześniejszych) wynikiem Briera względem częstości historycznej i wykresem kalibracji; model (drzewa wzmacniane gradientowo na procesorze) zastępuje ją tylko, gdy na odłożonych latach pobije ją i częstość historyczną, inaczej porównanie trafia do README. Wynik w pojęciach aplikacji suszowej (grupy upraw, kategorie gleby), więc łączy się z istniejącym obiegiem.",
+      "checks": [
+        {"kind": "metric", "target": "smsr.n_gmina_years", "min": 300},
+        {"kind": "metric", "target": "forecast.brier_skill", "min": 0.05},
+        {"kind": "test", "target": "tests/acceptance/test_exceedance_forecast.py"},
+        {"kind": "scene", "target": "Zgodność z oceną państwa (SMSR)"}
+      ]
+    },
+    {
+      "id": "K4",
+      "name": "Prostota obsługi",
+      "weight": 15,
+      "required": true,
+      "evidence": "Trzy pola (działka, data, uprawa z alfabetycznej listy 14 grup i „Inna uprawa”; nad nią podpowiedź z mapy upraw JRC 2022, gdy jedna klasa mapy pokrywa co najmniej połowę obrysu), zdjęcie działki z obrysem do potwierdzenia, wynik jednym zdaniem z liczbą, tekst co najmniej 16 px (raport 18 px), widok rolnika bez żargonu (KBW, ewapotranspiracja, NDVI, NDMI, BSS tylko w widoku doradcy), błędy wejścia opisane przy polu po polsku.",
+      "checks": [
+        {"kind": "scene", "target": "Działka z ewidencji na zdjęciu"},
+        {"kind": "scene", "target": "Werdykt: bilans wobec progu z rozporządzenia"},
+        {"kind": "test", "target": "tests/acceptance/test_plain_language.py"}
+      ]
+    },
+    {
+      "id": "K5",
+      "name": "Działający prototyp i jakość techniczna",
+      "weight": 15,
+      "required": true,
+      "evidence": "Raport dla dowolnej działki w Polsce i dowolnej daty z ostatnich 10 lat, także dzisiejszej (poza okresem monitoringu), w ≤ 30 s; widok do druku i PDF; jawny błąd dla złego numeru; działanie bez sieci z pamięci podręcznej; README z uruchomieniem w Windows bez make, źródłami, licencjami i ograniczeniami.",
+      "checks": [
+        {"kind": "test", "target": "tests/acceptance/test_report_flow.py"},
+        {"kind": "metric", "target": "robustness.report_ok_under_30s_share", "min": 0.95},
+        {"kind": "scene", "target": "Raport na dziś: poza okresem monitoringu suszy"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body_class %}{% if report.request.view == "doradca" %}view-doradca{% endif %}{% endblock %}
+{% block main %}
+<main id="tresc" class="split">
+  {% include "report/_map.html" %}
+  <div class="report">
+    {% include "report/_head.html" %}
+    {% include "report/_verdict.html" %}
+    {% include "report/_toc.html" %}
+    {% for s in report.sections %}{% include "sections/" ~ s.id ~ ".html" %}{% endfor %}
+    <footer class="foot">Bilans działki · dane: ULDK, GUGiK, IMGW, Open-Meteo, IUNG-PIB, Copernicus · {{ report.verdict.disclaimer }}.</footer>
+  </div>
+</main>
+<script src="/static/plan.js" defer></script>
+{% endblock %}

@@ -1,0 +1,24 @@
+{# The dark selection bar: three fields and "Oceń działkę". Used on the start screen and over the map. #}
+<form class="pick" action="/raport" method="get" aria-label="Wybór działki, daty i uprawy">
+  <div class="field">
+    <label for="f-dzialka">Działka</label>
+    <input id="f-dzialka" name="dzialka" value="{{ q.get('dzialka', '') }}" placeholder="040303_2.0002.189/13"
+           autocomplete="off" {% if errors and errors.dzialka %}aria-invalid="true" aria-describedby="e-dzialka"{% endif %}>
+    {% if errors and errors.dzialka %}<span class="field-error" id="e-dzialka">{{ errors.dzialka }}</span>{% endif %}
+  </div>
+  <div class="field">
+    <label for="f-data">Data oceny</label>
+    <input id="f-data" name="data" type="date" value="{{ q.get('data', '') }}"
+           {% if errors and errors.data %}aria-invalid="true" aria-describedby="e-data"{% endif %}>
+    {% if errors and errors.data %}<span class="field-error" id="e-data">{{ errors.data }}</span>{% endif %}
+  </div>
+  <div class="field">
+    <label for="f-uprawa">Uprawa</label>
+    <select id="f-uprawa" name="uprawa" {% if errors and errors.uprawa %}aria-invalid="true" aria-describedby="e-uprawa"{% endif %}>
+      <option value="">wybierz…</option>
+      {% for code, label in crops %}<option value="{{ code }}" {% if q.get('uprawa') == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    {% if errors and errors.uprawa %}<span class="field-error" id="e-uprawa">{{ errors.uprawa }}</span>{% endif %}
+  </div>
+  <button type="submit">Oceń działkę</button>
+</form>

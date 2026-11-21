@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block body_class %}view-doradca print-view{% endblock %}
+{% block main %}
+<main id="tresc" class="page">
+  <p class="banner banner--info no-print" id="druk-info"><i aria-hidden="true">i</i>Widok do druku: ten sam raport w jednej kolumnie. <button type="button" class="btn btn--ghost" id="drukuj">Drukuj lub zapisz PDF</button></p>
+  <div class="report">
+    {% include "report/_head.html" %}
+    {% include "report/_verdict.html" %}
+    {% include "report/_toc.html" %}
+    {% for s in report.sections %}{% include "sections/" ~ s.id ~ ".html" %}{% endfor %}
+  </div>
+</main>
+<script src="/static/plan.js" defer></script>
+{% endblock %}

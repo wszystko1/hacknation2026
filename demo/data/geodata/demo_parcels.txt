@@ -1,0 +1,4 @@
+# parcel_id;date - parcels frozen as offline samples in this directory
+040303_2.0002.189/13;2025-07-15
+100403_2.0011.144;2024-06-20
+100403_2.0011.144;2026-11-21
