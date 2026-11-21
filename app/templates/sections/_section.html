@@ -7,7 +7,7 @@
   {% elif s.state == 'missing' %}
   <p class="empty">{{ s.reason }}</p>
   {% endif %}
-  {% if s.chart_svg %}<div class="chart">{{ s.chart_svg | safe }}</div>{% endif %}
+  {% if s.chart_svg %}<div class="chart" tabindex="0" role="group" aria-label="Wykres: {{ s.title }}">{{ s.chart_svg | safe }}</div>{% endif %}
   {% for sentence in s.sentences %}<p>{{ sentence }}</p>{% endfor %}
   {% block extra %}{% endblock %}
   {% if s.actions %}

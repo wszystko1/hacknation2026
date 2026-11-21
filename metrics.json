@@ -6,5 +6,11 @@
     "evaluated_on_sample": 1,
     "n_gmina_years": 84,
     "n_symbols": 5922
+  },
+  "soil": {
+    "agreement_with_neighbour": 0.625,
+    "agreement_within_one": 0.8958,
+    "category_agreement": 0.375,
+    "n_points": 96
   }
 }

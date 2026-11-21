@@ -424,7 +424,7 @@ details.calc pre, details.calc code { font-family: var(--font-mono); font-size: 
 .view-doradca .advisor { display: block; }
 .advisor h4, .advisor > b { display: block; margin: 0 0 var(--s1); font-size: var(--fs-sm); font-weight: 650; color: var(--muted); }
 .kv { display: grid; grid-template-columns: auto minmax(0, 1fr); margin: 0; font-size: var(--fs-sm); }
-.kv dt, .kv dd { margin: 0; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.kv dt, .kv dd { overflow-wrap: anywhere; margin: 0; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .kv dt { font-family: var(--font-mono); color: var(--muted); padding-right: var(--s4); }
 .kv dd:last-child, .kv dt:nth-last-child(2) { border-bottom: 0; }
 .foot { padding: var(--s5) var(--s6) var(--s7); border-top: 1px solid var(--line); font-size: var(--fs-sm); color: var(--muted); }
@@ -455,13 +455,19 @@ details.calc pre, details.calc code { font-family: var(--font-mono); font-size: 
   .ledger > header { flex-wrap: wrap; row-gap: 0; }
   .ledger > header .t { margin-left: 0; }
   .hbar text { font-size: 28px; }
-  .chart > .ch, .scroll > .ch { min-width: 520px; }
   .ch text { font-size: 19px; }
   .pick { flex-wrap: wrap; }
   .pick > div, .pick .field { flex: 1 1 45%; border-left: 0; padding: 6px var(--s3); }
   .pick input, .pick select { min-height: 44px; }
   .pick button { flex: 1 1 100%; }
   .mlegend, .map-attr { display: none; }
+  .sources li > span { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+  .sources li small { display: block; }
+  .sources li small::before { content: none; }
+  .scroll table, .scroll thead, .scroll tbody, .scroll tr, .scroll th, .scroll td { display: block; width: 100%; }
+  .scroll thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .scroll tr { border-bottom: 1px solid var(--line); padding: var(--s2) 0; }
+  .scroll td { border-bottom: 0; padding: 2px 0; overflow-wrap: anywhere; }
   .ledger { position: static; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--line); }
   .sources { grid-template-columns: 1fr; }
   .report { border-left: 0; }

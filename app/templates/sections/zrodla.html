@@ -1,7 +1,7 @@
 {# Section 8: sources with time, duration and state; gaps as rows with the reason. #}
 <section id="zrodla" aria-labelledby="h-zrodla">
   <h2 class="sec-h" id="h-zrodla"><span class="n">{{ s.n }}</span>{{ s.heading }}{% if s.chip %}<span class="chip">{{ s.chip }}</span>{% endif %}</h2>
-  <div class="scroll">
+  <div class="scroll" tabindex="0" role="region" aria-label="Tabela źródeł">
     <table id="tabela-zrodel">
       <thead><tr><th>Źródło</th><th>Co dało</th><th>Pobrano</th><th class="num">Czas</th><th>Stan</th></tr></thead>
       <tbody>
