@@ -246,7 +246,7 @@ def test_search_card_is_a_grey_square_panel_with_a_blue_button_and_readable_text
         " r2: s.borderTopRightRadius, w: s.borderTopWidth}; }"
     )
     channels = [float(v) for v in re.findall(r"[\d.]+", style["bg"])[:3]]
-    assert max(channels) - min(channels) <= 16 and 200 <= min(channels) < 245, style  # neutral grey, not white
+    assert max(channels) - min(channels) <= 32 and 15 <= min(channels) < 80, style  # dark slate of the report menu (#1c2633)
     assert style["r"] == "0px" and style["r2"] == "0px" and style["w"] == "1px", style
     button = browser_page.get_by_role("button", name="Oceń działkę")
     bg = [float(v) for v in re.findall(r"[\d.]+", button.evaluate("e => getComputedStyle(e).backgroundColor"))[:3]]

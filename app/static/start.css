@@ -1,3 +1,4 @@
+:root { --sd-1: #1c2633; --sd-2: #243142; --sd-3: #1f2a38; --sd-4: #e8edf4; --sd-5: #b3bdcb; --sd-6: rgba(255, 255, 255, .16); --sd-7: rgba(28, 38, 51, .94); --sd-8: rgba(42, 98, 201, .28); --sd-9: #a9c4f5; --sd-10: rgba(42, 98, 201, .18); --sd-11: rgba(176, 63, 24, .25); --sd-12: rgba(0, 0, 0, .35); --sd-13: rgba(0, 0, 0, .45); }
 /* Start screen: the map fills the window, a floating square card "Znajdź działkę" sits on the left, a one-line footer.
    Loaded after app.css; every rule is scoped to main.pickmap / body:has(main.pickmap) so the report screens are untouched.
    Colours come from the tokens of app.css and the few below (the check-ui gate wants literals only in :root). */
@@ -116,3 +117,16 @@ main.pickmap .examples a { gap: var(--s2); padding: var(--s2) 0; }
 /* the photo only loads from zoom 9; until a tile arrives the map shows a neutral light ground, never black or white */
 main.pickmap .pm-map { background: var(--track); }
 main.pickmap .pm-map { position: absolute; inset: 0; height: auto; }
+
+/* dark theme of the start screen: the same shade as the report menu rail (var(--sd-1)) */
+body:has(main.pickmap) {
+  --bg: var(--sd-1); --surface: var(--sd-2); --surface-2: var(--sd-3); --text: var(--sd-4); --muted: var(--sd-5); --line: var(--sd-6);
+  --st-panel: var(--sd-1); --st-panel-line: var(--sd-6); --st-glass: var(--sd-7);
+  --accent-soft: var(--sd-8); --accent-ink: var(--sd-9); --accent-hover: var(--sd-10);
+  --danger-soft: var(--sd-11);
+  --st-shadow: 0 2px 4px var(--sd-12), 0 10px 28px var(--sd-13);
+  background: var(--sd-1); color: var(--text);
+}
+body:has(main.pickmap) .top { background: var(--sd-1); color: var(--text); border-bottom: 1px solid var(--line); }
+body:has(main.pickmap) .start-foot { background: var(--sd-1); color: var(--muted); }
+body:has(main.pickmap) .start-foot a { color: var(--accent-ink); }

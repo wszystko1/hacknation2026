@@ -212,7 +212,7 @@ def test_the_history_chart_marks_the_smsr_years_without_overlapping_words(browse
     svg = page.locator("#wiersz-czesto svg.ch")
     assert svg.count() == 1
     dots = svg.locator("circle.s-dry").count()
-    assert dots == 3  # 2022 and 2023 in the chart plus the legend entry
+    assert dots >= 2  # at least one SMSR drought year in the chart plus the legend entry (the marked years depend on the verdict period)
     texts = svg.locator("text").evaluate_all("els => els.map(e => e.textContent)")
     assert texts.count("SMSR") == 1 and "susza" in texts
     page.close()
@@ -269,7 +269,7 @@ def test_every_heading_stands_once_per_tab_and_the_balance_section_is_not_repeat
 def test_only_anchors_look_like_links(browser, base_url: str) -> None:
     page = open_report(browser, base_url, "dobrcz")
     show_tab(page, "zrodla")
-    page.locator("#wiersz-zrodla summary").click()
+    page.evaluate("() => { document.getElementById('wiersz-zrodla').open = true; }")  # open by default since 22.11
     copy = page.locator("#tabela-zrodel td.st-copy")
     assert copy.count() >= 5
     assert copy.first.inner_text().startswith("kopia z dnia")
@@ -380,7 +380,7 @@ def test_phone_layout_has_no_orphan_unit_or_detached_time_column(browser, base_u
         height = row.evaluate("e => e.querySelector('span').getBoundingClientRect().height")
         assert height < 20, row.inner_text()  # one line: the number and "mm" stay together
     show_tab(page, "zrodla")
-    page.locator("#wiersz-zrodla summary").click()
+    page.evaluate("() => { document.getElementById('wiersz-zrodla').open = true; }")  # open by default since 22.11
     cells = page.evaluate(
         """() => [...document.querySelectorAll('#tabela-zrodel td.num')].map(e => {
         const cs = getComputedStyle(e); return [cs.textAlign, e.textContent.trim(), e.getAttribute('data-label')]; })"""

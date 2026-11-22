@@ -105,7 +105,7 @@
     {% endfor %}{% endif %}
     {% if gid == 'jak' and chart_schema is defined %}<div class="b-sub visual chart" tabindex="0" role="group" aria-label="Wykres: schemat Jak liczymy">{{ chart_schema() | safe }}</div>{% endif %}
     {% if gid == 'jak' %}{% for s in report.sections if s.id == 'zrodla' %}
-    <details class="b-row b-nested" id="wiersz-zrodla"><summary>Źródła danych i czasy pobrania</summary><div class="b-body">{% include "sections/zrodla.html" %}</div></details>
+    <details class="b-row b-nested" id="wiersz-zrodla" open><summary>Źródła danych i czasy pobrania</summary><div class="b-body">{% include "sections/zrodla.html" %}</div></details>
     {% endfor %}{% endif %}
     </div>
   </section>
