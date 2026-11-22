@@ -44,7 +44,10 @@ NAME_FIELDS = "id,voivodeship,county,commune,region,parcel"
 _DATE_RE = re.compile(r"^(\d{1,2})\.(\d{1,2})\.(\d{4})$")
 _NUMBER = r"-?\d+(?:[.,]\d+)?"
 _PAIR_RE = re.compile(rf"^({_NUMBER})\s*(?:;|,\s|\s)\s*({_NUMBER})$")
-_NAME_RE = re.compile(r"^(?P<precinct>[^\d\s][^\d]*?)[\s,]+(?P<number>\d[0-9A-Za-z/_.\-]*)$")
+_NUMBER_TAIL_RE = re.compile(r"^\d[0-9A-Za-z/_.\-]*$")
+MAX_FIELD_LENGTH = 80
+LENGTH_ERROR = f"Pole może mieć najwyżej {MAX_FIELD_LENGTH} znaków"
+DATE_RANGE_ERROR = "Data musi być z ostatnich 10 lat, od 1.01.2016 do {today:%d.%m.%Y}"
 _to_wgs = Transformer.from_crs(2180, 4326, always_xy=True)
 
 
@@ -74,6 +77,31 @@ def parse_date(text: str) -> date:
         d, mo, y = (int(g) for g in m.groups())
         return date(y, mo, d)
     return date.fromisoformat(text)
+
+
+def date_error(day: date, today: date | None = None) -> str | None:
+    """The sentence for a date outside the range the data cover (from 1.01.2016 to today), or None."""
+    today = today or date.today()
+    return None if FIRST_DAY <= day <= today else DATE_RANGE_ERROR.format(today=today)
+
+
+def too_long(q: Mapping[str, str]) -> list[FieldError]:
+    """One error per parameter longer than MAX_FIELD_LENGTH; checked before any parsing, so long input costs nothing."""
+    return [FieldError(field=k, message=LENGTH_ERROR) for k, v in q.items() if len(v or "") > MAX_FIELD_LENGTH]
+
+
+def split_name(text: str) -> tuple[str, str] | None:
+    """("precinct", "number") from "Dobrcz 189/13" or "Dobrcz, 189/13"; linear in the length of the text."""
+    first = re.search(r"\d", text)
+    if first is None or first.start() == 0:
+        return None
+    head, number = text[: first.start()], text[first.start() :]
+    if not _NUMBER_TAIL_RE.match(number) or not (head[-1].isspace() or head[-1] == ","):
+        return None
+    precinct = head.rstrip(" \t\r\n\f\v,")
+    if not precinct or precinct[0].isspace():
+        return None
+    return precinct, number
 
 
 def display_date(text: str) -> str:
@@ -221,6 +249,8 @@ def _by_name(precinct: str, number: str) -> list[ParcelChoice]:
 def resolve_parcel(text: str) -> str:
     """The full identifier for what the user typed. Raises ParcelLookupError (with a list when several parcels fit)."""
     text = (text or "").strip()
+    if len(text) > MAX_FIELD_LENGTH:
+        raise ParcelLookupError(LENGTH_ERROR)
     try:
         return normalize_parcel_id(text)
     except (InvalidParcelId, ValueError):
@@ -232,10 +262,10 @@ def resolve_parcel(text: str) -> str:
         raise ParcelLookupError(
             "Współrzędne leżą poza Polską. Wpisz je jako szerokość i długość, np. 53,2705 18,1353"
         )
-    m = _NAME_RE.match(text)
-    if not m:
+    name = split_name(text)
+    if name is None:
         raise ParcelLookupError(FORMAT_ERROR)
-    choices = _by_name(m.group("precinct").strip(), m.group("number"))
+    choices = _by_name(*name)
     if len(choices) == 1:
         return choices[0].id
     raise ParcelLookupError(f"Obręb i numer pasują do {len(choices)} działek. Wybierz jedną z listy", choices)
@@ -253,6 +283,8 @@ def parse_request(
     q: Mapping[str, str], today: date | None = None
 ) -> tuple[ReportRequest | None, list[FieldError]]:
     today = today or date.today()
+    if long := too_long(q):
+        return None, long
     errors: list[FieldError] = []
     raw_id = (q.get("dzialka") or "").strip()
     parcel_id = ""
@@ -272,12 +304,8 @@ def parse_request(
         errors.append(
             FieldError(field="data", message="Wpisz datę oceny w postaci dd.mm.rrrr, np. 20.07.2023")
         )
-    if day is not None and not (FIRST_DAY <= day <= today):
-        errors.append(
-            FieldError(
-                field="data", message=f"Data musi być z ostatnich 10 lat, od 1.01.2016 do {today:%d.%m.%Y}"
-            )
-        )
+    if day is not None and (message := date_error(day, today)):
+        errors.append(FieldError(field="data", message=message))
     crop = None
     try:
         crop = CropGroup((q.get("uprawa") or "").strip())

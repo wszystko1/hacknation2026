@@ -1,0 +1,886 @@
+{
+ "_opis": "Oczekiwania eksperckie dla zlotych lokalizacji. Zrodlo oczekiwan: progi z Dz.U. 2019 poz. 739, strona SMSR gminy w zamrozonych danych, opady i parowanie z IMGW, klasy spadku IUNG (do 5% erozja slaba) i FAO; NIE obecny wynik aplikacji. Przedzialy sa szerokie, bo dane zywe sie zmieniaja. Wady znane: lista known_defects (xfail, strict=False).",
+ "defaults": {
+  "max_actions": 8,
+  "forbidden_words": [
+   "nasz",
+   "zespołu",
+   "wniosk",
+   "dopłat",
+   "widok doradcy",
+   "kody przyczyn",
+   "malo_opadu",
+   "duze_parowanie",
+   "gleba_lekka",
+   "faza_wrazliwa",
+   "TODO",
+   "undefined",
+   "NaN",
+   "None",
+   "[object"
+  ],
+  "forbidden_word_regex": [
+   "\\bmy\\b",
+   "\\b(farmer|advisor|loading|season|balance|threshold)\\b"
+  ],
+  "forbidden_action_ids": [
+   "dreny-regulowany-odplyw"
+  ],
+  "max_report_cold_s": 30,
+  "max_report_warm_s": 5,
+  "max_print_s": 15,
+  "max_offline_build_s": 5,
+  "max_window_lag_days": 10
+ },
+ "locations": [
+  {
+   "id": "dobrcz",
+   "frozen": "dobrcz",
+   "parcel_id": "040303_2.0002.189/13",
+   "day": "2023-07-20",
+   "crop": "zboza_jare",
+   "voivodeship": "kujawsko-pomorskie",
+   "why": "Plaska dzialka (spadek 1,4%, dopasowana plaszczyzna 0,5%) z drenami, 21,5 ha, gleba kat. II (piasek 68%), lipiec 2023 z sucha wiosna: wzorzec suszy w sezonie. Dzialka demo.",
+   "expert_basis": "Opad 69 mm przy normie 130 mm to 53% normy (skala IMGW: bardzo suchy 50-74%). SMSR gminy Dobrcz 2023, okres 7: susza (+), 96% powierzchni. Gleba kat. II to gleba podatna na susze.",
+   "verdict": {
+    "direction": "susza",
+    "margin_range": [
+     -80,
+     -1
+    ],
+    "kbw_range": [
+     -270,
+     -140
+    ],
+    "smsr": "zgodne",
+    "smsr_why": "SMSR: susza w okresie 7 w kat. II, bilans dzialki ponizej progu"
+   },
+   "causes": {
+    "required": [
+     "malo_opadu",
+     "gleba_lekka"
+    ],
+    "forbidden": [
+     "splyw"
+    ],
+    "forbidden_why": {
+     "splyw": "spadek 1,4% (< 5%: erozja slaba wg klas IUNG), dzialka plaska"
+    }
+   },
+   "actions": {
+    "required": [
+     {
+      "any": [
+       "nawadnianie-uzupelniajace"
+      ],
+      "title_re": "^Teraz tak",
+      "why": "bilans ponizej progu w fazie wrazliwej: nawodnienie 'Teraz tak'"
+     },
+     {
+      "any": [
+       "mulczowanie",
+       "miedzyplon",
+       "uprawa-uproszczona"
+      ],
+      "why": "gleba lekka kat. II i duze parowanie: zabieg zatrzymujacy wode w glebie"
+     },
+     {
+      "any": [
+       "dreny-regulowany-odplyw"
+      ],
+      "why": "plaska dzialka z drenami: regulator odplywu z drenow (wiedza wlasciciela; aplikacja nie ma rejestru drenow)",
+      "known": true
+     }
+    ],
+    "allow_ids": [
+     "dreny-regulowany-odplyw"
+    ],
+    "forbidden": [],
+    "max": 8
+   },
+   "retention": {
+    "kind": "flat",
+    "slope_range": [
+     0,
+     2.5
+    ]
+   },
+   "negative": null
+  },
+  {
+   "id": "gsm-20200720",
+   "frozen": null,
+   "parcel_id": "100403_2.0011.144",
+   "day": "2020-07-20",
+   "crop": "zboza_jare",
+   "voivodeship": "łódzkie",
+   "why": "Wąska dzialka (2,5 ha) na stoku 2,9% z rowem przy granicy (0,7 m): wzorzec dla pasa trawy lub miedzy. Brak zamrozonej kopii dla tej daty: tylko tryb --base-url.",
+   "expert_basis": "Rów przy dolnej granicy i spadek 2-3% pozwalaja na pas trawy przy rowie albo miedze w poprzek stoku. Spadek < 5% to wg klas IUNG erozja slaba, wiec przyczyna 'splyw' jest dopuszczalna, ale niewymagana.",
+   "verdict": {
+    "direction": "any",
+    "smsr": "any"
+   },
+   "causes": {
+    "required": [],
+    "forbidden": []
+   },
+   "actions": {
+    "required": [
+     {
+      "any": [
+       "pas-trawy",
+       "miedza",
+       "pas-buforowy"
+      ],
+      "why": "stok z rowem: pas trawy lub miedza"
+     }
+    ],
+    "forbidden": [],
+    "max": 8
+   },
+   "retention": {
+    "kind": "slope",
+    "min_candidates": 1,
+    "required_any": [
+     "pas-trawy",
+     "miedza",
+     "pas-buforowy",
+     "niecka"
+    ],
+    "slope_range": [
+     1.5,
+     4.5
+    ]
+   },
+   "negative": null
+  },
+  {
+   "id": "gsm-poza-sezonem",
+   "frozen": "gora-sw-malgorzaty",
+   "parcel_id": "100403_2.0011.144",
+   "day": "2026-11-22",
+   "crop": "rosliny_straczkowe",
+   "voivodeship": "łódzkie",
+   "why": "Ta sama wąska dzialka ze stokiem i rowem, ale data poza sezonem wegetacji (22.11): komunikat zamiast pozornie dokladnego werdyktu; sprzecznosc 'spadek nie jest wyznaczony' z 'teren jest nachylony'.",
+   "expert_basis": "Monitoring suszy rolniczej obejmuje 21.III-30.IX, listopad jest poza okresem. Ostatni okres sezonu 2026: bilans -172 mm, 10 mm powyzej progu: wynik na granicy. Opad od 1.X 58 mm przy normie 83 mm to 70% normy. SMSR gminy za 2026: brak suszy (-): zgodne z bilansem powyzej progu.",
+   "verdict": {
+    "direction": "poza_sezonem",
+    "margin_range": [
+     -15,
+     40
+    ],
+    "kbw_range": [
+     -230,
+     -120
+    ],
+    "smsr": "zgodne",
+    "smsr_why": "SMSR 2026 okres 5: brak suszy; bilans dzialki nieznacznie powyzej progu"
+   },
+   "causes": {
+    "required": [
+     "malo_opadu",
+     "gleba_lekka"
+    ],
+    "forbidden": []
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [],
+    "max": 8
+   },
+   "retention": {
+    "kind": "slope",
+    "min_candidates": 1,
+    "required_any": [
+     "pas-trawy",
+     "miedza",
+     "pas-buforowy",
+     "niecka"
+    ],
+    "slope_range": [
+     1.5,
+     4.5
+    ]
+   },
+   "negative": "out_of_season"
+  },
+  {
+   "id": "kietrz",
+   "frozen": "kietrz",
+   "parcel_id": "160204_5.0001.101",
+   "day": "2022-07-20",
+   "crop": "rzepak",
+   "voivodeship": "opolskie",
+   "why": "Przy granicy zasiegu NMT: dawniej blad spadku 148,9%, naprawiony (brak sensownego NMT, wysokosci z zapasowego zrodla). Gleba ciezka kat. IV, rzepak (inne progi). Strona SMSR gminy w ukladzie, ktorego aplikacja nie czyta.",
+   "expert_basis": "Rzepak na glebie kat. IV w maju-lipcu 2022: bilans -129 mm, prog -220 mm. Spadek wiarygodny to kilka procent (granica klas IUNG 5%), nigdy > 40%. Kat. IV (ciezka) to nie 'gleba lekka'. Brak SMSR gminy: aplikacja ma to powiedziec wprost, a nie zgadywac zgodnosci.",
+   "verdict": {
+    "direction": "brak",
+    "margin_range": [
+     30,
+     160
+    ],
+    "kbw_range": [
+     -220,
+     -70
+    ],
+    "smsr": "brak"
+   },
+   "causes": {
+    "required": [],
+    "forbidden": [
+     "gleba_lekka"
+    ],
+    "forbidden_why": {
+     "gleba_lekka": "kat. IV"
+    }
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [
+     {
+      "id_re": "^gleboszowanie",
+      "why": "brak pomiaru zageszczenia gleby w danych: zabieg kosztowny i bez dowodu",
+      "known": true
+     }
+    ],
+    "max": 8
+   },
+   "retention": {
+    "kind": "slope",
+    "min_candidates": 1,
+    "required_any": [
+     "pas-trawy",
+     "miedza",
+     "pas-buforowy",
+     "niecka"
+    ],
+    "slope_range": [
+     2,
+     12
+    ],
+    "slope_max_sane": 40
+   },
+   "negative": null
+  },
+  {
+   "id": "slaskie-spadek",
+   "frozen": "slaskie-poza-sezonem",
+   "parcel_id": "241504_1.0006.6673",
+   "day": "2026-11-22",
+   "crop": "kukurydza_ziarno",
+   "voivodeship": "śląskie",
+   "why": "Dzialka ze spadkiem srednim 6,1% (> 5%), maly obrys 0,17 ha w miescie, rów w 121 m, gleba kat. IV, kukurydza, data poza sezonem.",
+   "expert_basis": "Wg klas IUNG spadek > 5% to juz klasa 5-10%: spływ jest realna przyczyna. Kat. IV: bez 'gleby lekkiej'. Poza sezonem wegetacji: bez werdyktu 'susza tak/nie'.",
+   "verdict": {
+    "direction": "poza_sezonem",
+    "margin_range": [
+     20,
+     170
+    ],
+    "kbw_range": [
+     -230,
+     -90
+    ],
+    "smsr": "zgodne",
+    "smsr_why": "SMSR 2026: brak suszy, bilans 96 mm powyzej progu"
+   },
+   "causes": {
+    "required": [
+     "splyw"
+    ],
+    "forbidden": [
+     "gleba_lekka",
+     "malo_opadu"
+    ],
+    "forbidden_why": {
+     "malo_opadu": "opad 136 mm w okresie, brak deficytu opadu wg normy",
+     "gleba_lekka": "kat. IV"
+    }
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [],
+    "max": 8
+   },
+   "retention": {
+    "kind": "slope",
+    "min_candidates": 0,
+    "candidate_or_reason": true,
+    "slope_range": [
+     1,
+     9
+    ],
+    "slope_note": "slope_pct w raporcie to nachylenie dopasowanej plaszczyzny (2,1%), a nie srednia z siatki (6,1%): obie wartosci sa w przedziale"
+   },
+   "negative": "out_of_season"
+  },
+  {
+   "id": "lubuskie-gleba-lekka",
+   "frozen": "lubuskie-poza-sezonem",
+   "parcel_id": "080901_5.0005.1299/61",
+   "day": "2026-11-22",
+   "crop": "drzewa_owocowe",
+   "voivodeship": "lubuskie",
+   "why": "Gleba bardzo lekka kat. I (piasek 76%), 87 ha, plasko (0,4%), sad, poza sezonem. Opad w okresie 34 mm przy normie 78 mm.",
+   "expert_basis": "34 z 78 mm to 44% normy: skrajnie sucho wg skali IMGW (< 50%), a gleba kat. I to najbardziej podatna. Spadek 0,4% wyklucza spływ. Okres na granicy progu (margines kilkanascie mm).",
+   "verdict": {
+    "direction": "poza_sezonem",
+    "margin_range": [
+     -20,
+     40
+    ],
+    "kbw_range": [
+     -230,
+     -100
+    ],
+    "smsr": "brak"
+   },
+   "causes": {
+    "required": [
+     "malo_opadu",
+     "gleba_lekka"
+    ],
+    "forbidden": [
+     "splyw"
+    ],
+    "forbidden_why": {
+     "splyw": "spadek 0,4%"
+    }
+   },
+   "actions": {
+    "required": [
+     {
+      "any": [
+       "mulczowanie",
+       "zielona-okrywa-miedzyrzedzi"
+      ],
+      "why": "sad na glebie lekkiej: okrywa lub mulcz"
+     }
+    ],
+    "forbidden": [],
+    "max": 8
+   },
+   "retention": {
+    "kind": "flat",
+    "slope_range": [
+     0,
+     1.5
+    ]
+   },
+   "negative": "out_of_season"
+  },
+  {
+   "id": "pomorskie-rok-mokry",
+   "frozen": "pomorskie-rzepak",
+   "parcel_id": "220908_2.0001.100/2",
+   "day": "2024-08-01",
+   "crop": "rzepak",
+   "voivodeship": "pomorskie",
+   "why": "Rok mokry: opad 138 mm w okresie, bilans 115 mm powyzej progu, gleba ciezka kat. IV, plasko (0,9%), SMSR 'brak suszy'. Kontrola negatywna: zadnego alarmu suszy i rady 'nawadniaj'.",
+   "expert_basis": "Bilans -105 mm przy progu -220 mm (margines +115 mm), SMSR gminy Stare Pole 2024: brak suszy (0,18% powierzchni). Kat. IV: bez gleby lekkiej. Brak deficytu: bez przyczyn 'za malo opadu' i 'duze parowanie' jako wyjasnienia suszy.",
+   "verdict": {
+    "direction": "brak",
+    "margin_range": [
+     60,
+     180
+    ],
+    "kbw_range": [
+     -170,
+     -40
+    ],
+    "smsr": "zgodne",
+    "smsr_why": "SMSR: brak suszy; bilans powyzej progu",
+    "max_lag_days": 25,
+    "max_lag_why": "rzepak: tabela Dz.U. ma progi tylko do okresu 6 (zbior w lipcu), wiec ostatni okres z progiem konczy sie 10.07, a nie w ostatniej pelnej dekadzie przed 1.08"
+   },
+   "causes": {
+    "required": [],
+    "forbidden": [
+     "malo_opadu",
+     "gleba_lekka",
+     "splyw"
+    ],
+    "forbidden_why": {
+     "splyw": "spadek 0,9%",
+     "malo_opadu": "rok mokry"
+    }
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [
+     {
+      "title_re": "^Teraz tak",
+      "why": "nie nawadniaj przy marginesie dodatnim"
+     },
+     {
+      "id_re": "^(pobor-wody|nawadnianie-dawka)",
+      "why": "dawki i pobor wody bez potrzeby nawadniania"
+     }
+    ],
+    "max": 6
+   },
+   "retention": {
+    "kind": "flat",
+    "slope_range": [
+     0,
+     2.5
+    ]
+   },
+   "negative": "wet_year"
+  },
+  {
+   "id": "lubelskie-kukurydza",
+   "frozen": "lubelskie-susza",
+   "parcel_id": "062009_2.0007.30/2",
+   "day": "2022-07-30",
+   "crop": "kukurydza_ziarno",
+   "voivodeship": "lubelskie",
+   "why": "Kukurydza na ziarno (inne progi niz zboza: wyzszy deficyt dopuszczony w lipcu), bez rowu, spadek 3,6%, gleba kat. III, koniec lipca.",
+   "expert_basis": "Prog kukurydzy w okresie 7 (21.05-20.07) to ok. -221 mm, nizszy niz -188 mm dla zboz jarych w Dobrczu. SMSR gminy Sitno 2022 okres 7: brak suszy (0% powierzchni). Bilans -139 mm: powyzej progu.",
+   "verdict": {
+    "direction": "brak",
+    "margin_range": [
+     30,
+     140
+    ],
+    "kbw_range": [
+     -190,
+     -90
+    ],
+    "smsr": "zgodne",
+    "smsr_why": "SMSR: brak suszy, bilans powyzej progu",
+    "threshold_range": [
+     -300,
+     -170
+    ]
+   },
+   "causes": {
+    "required": [],
+    "forbidden": [
+     "gleba_lekka"
+    ],
+    "forbidden_why": {
+     "gleba_lekka": "kat. III"
+    }
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [
+     {
+      "title_re": "^Teraz tak",
+      "why": "margines dodatni"
+     },
+     {
+      "id_re": "^(zastawka|dreny-regulowany)",
+      "why": "brak rowu i drenow w danych"
+     }
+    ],
+    "max": 8
+   },
+   "retention": {
+    "kind": "slope",
+    "min_candidates": 0,
+    "candidate_or_reason": true,
+    "slope_range": [
+     2,
+     6
+    ]
+   },
+   "negative": "wet_year"
+  },
+  {
+   "id": "malopolska-bez-rowu",
+   "frozen": "malopolska-wyzyna",
+   "parcel_id": "120806_2.0001.234/1",
+   "day": "2020-06-04",
+   "crop": "zboza_ozime",
+   "voivodeship": "małopolskie",
+   "why": "Wyzyna, spadek 3,5%, bez rowu w poblizu, zboza ozime, poczatek czerwca 2020. Kontrola: brak zastawki i regulatora przy braku wody powierzchniowej.",
+   "expert_basis": "Bilans -59 mm przy progu -132 mm w okresie 2 (1.IV-31.V): wyraznie powyzej progu; SMSR gminy Raclawice 2020: brak suszy (0%).",
+   "verdict": {
+    "direction": "brak",
+    "margin_range": [
+     30,
+     140
+    ],
+    "kbw_range": [
+     -120,
+     -10
+    ],
+    "smsr": "zgodne",
+    "smsr_why": "SMSR: brak suszy"
+   },
+   "causes": {
+    "required": [],
+    "forbidden": [
+     "malo_opadu"
+    ],
+    "forbidden_why": {
+     "malo_opadu": "opad 112 mm w okresie, brak deficytu wzgledem progu"
+    }
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [
+     {
+      "title_re": "^Teraz tak",
+      "why": "margines dodatni"
+     },
+     {
+      "id_re": "^(zastawka|dreny-regulowany|przebudowa-rowu|pas-buforowy-wzdluz-rowu)",
+      "why": "brak rowu"
+     }
+    ],
+    "max": 8
+   },
+   "retention": {
+    "kind": "slope",
+    "min_candidates": 0,
+    "candidate_or_reason": true,
+    "slope_range": [
+     2,
+     6
+    ]
+   },
+   "negative": "wet_year"
+  },
+  {
+   "id": "podkarpackie-okres-w-toku",
+   "frozen": "podkarpackie-podgorze",
+   "parcel_id": "180411_2.0004.536",
+   "day": "2021-05-04",
+   "crop": "zboza_jare",
+   "voivodeship": "podkarpackie",
+   "why": "Pierwszy okres 60 dni jeszcze trwa (41 z 61 dni): komunikat zamiast werdyktu. Plasko (0,8%), dzialka 0,24 ha, brak SMSR (wykaz IUNG nie odpowiedzial).",
+   "expert_basis": "Rozporzadzenie ocenia okresy 60-dniowe; do konca okresu nie ma jeszcze bilansu wobec progu, wiec werdykt 'tak/nie' bylby zgadywaniem.",
+   "verdict": {
+    "direction": "running",
+    "smsr": "brak",
+    "kbw_range": [
+     -60,
+     60
+    ]
+   },
+   "causes": {
+    "required": [],
+    "forbidden": [
+     "splyw"
+    ],
+    "forbidden_why": {
+     "splyw": "spadek 0,8%"
+    }
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [
+     {
+      "title_re": "^Teraz tak",
+      "why": "okres jeszcze trwa, brak werdyktu"
+     }
+    ],
+    "max": 6
+   },
+   "retention": {
+    "kind": "flat",
+    "slope_range": [
+     0,
+     2
+    ]
+   },
+   "negative": "running"
+  },
+  {
+   "id": "podlaskie-malo-opadu",
+   "frozen": "podlaskie-chmiel",
+   "parcel_id": "201303_5.0012.41/2",
+   "day": "2023-04-27",
+   "crop": "chmiel",
+   "voivodeship": "podlaskie",
+   "why": "Poczatek sezonu (27.IV), okres w toku, bardzo maly opad (31 mm wobec 50 mm normy), gleba ciezka kat. IV, chmiel, rów blisko.",
+   "expert_basis": "31 z 50 mm to 62% normy (skala IMGW: bardzo suchy 50-74%): 'za malo opadu' tak. Kat. IV: bez 'gleby lekkiej'. Okres trwa: bez werdyktu i bez 'nawadniaj teraz'.",
+   "verdict": {
+    "direction": "running",
+    "smsr": "brak",
+    "kbw_range": [
+     -60,
+     20
+    ]
+   },
+   "causes": {
+    "required": [
+     "malo_opadu"
+    ],
+    "forbidden": [
+     "gleba_lekka"
+    ],
+    "forbidden_why": {
+     "gleba_lekka": "kat. IV"
+    }
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [
+     {
+      "title_re": "^Teraz tak",
+      "why": "okres jeszcze trwa"
+     }
+    ],
+    "max": 6
+   },
+   "retention": {
+    "kind": "slope",
+    "min_candidates": 0,
+    "candidate_or_reason": true,
+    "slope_range": [
+     0.5,
+     4
+    ]
+   },
+   "negative": "running"
+  },
+  {
+   "id": "dolnoslaskie-bez-progu",
+   "frozen": "dolnoslaskie-tyton",
+   "parcel_id": "021803_5.0024.445",
+   "day": "2019-06-11",
+   "crop": "tyton",
+   "voivodeship": "dolnośląskie",
+   "why": "Tyton: tabela Dz.U. 2019 poz. 739 ma 'x' (susza nie obniza plonu), wiec nie ma progu; rok 2019 przed SMSR (od 2020). Spadek sredni 6,1%, ale dopasowana plaszczyzna 0,4%.",
+   "expert_basis": "Bez progu nie ma werdyktu tak/nie ani marginesu; aplikacja pokazuje sam bilans i mowi dlaczego. SMSR 2019 nie istnieje: brak porownania.",
+   "verdict": {
+    "direction": "no_threshold",
+    "smsr": "brak",
+    "kbw_range": [
+     -200,
+     -40
+    ]
+   },
+   "causes": {
+    "required": [],
+    "forbidden": [],
+    "forbidden_why": {}
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [
+     {
+      "title_re": "^Teraz tak",
+      "why": "bez progu nie wolno twierdzic, ze trzeba nawadniac"
+     }
+    ],
+    "max": 8
+   },
+   "retention": {
+    "kind": "slope",
+    "min_candidates": 0,
+    "candidate_or_reason": true,
+    "slope_range": [
+     0,
+     8
+    ]
+   },
+   "negative": "no_threshold"
+  },
+  {
+   "id": "zachodniopomorskie-gleba-zapasowa",
+   "frozen": "zachodniopomorskie",
+   "parcel_id": "321205_5.0002.193",
+   "day": "2023-05-21",
+   "crop": "ziemniak",
+   "voivodeship": "zachodniopomorskie",
+   "why": "Najbardziej plaska (0,3%), duza (174 ha), gleba tylko z zapasowego zrodla (brak kategorii), ziemniak bez progu w tym okresie.",
+   "expert_basis": "Bez kategorii gleby SMSR nie da sie porownac (wynik jest osobno dla kat.), wiec 'brak'. Spadek 0,3% wyklucza spływ; bez kategorii gleby nie wolno twierdzic 'gleba lekka'.",
+   "verdict": {
+    "direction": "no_threshold",
+    "smsr": "brak",
+    "kbw_range": [
+     -160,
+     0
+    ]
+   },
+   "causes": {
+    "required": [],
+    "forbidden": [
+     "splyw",
+     "gleba_lekka"
+    ],
+    "forbidden_why": {
+     "splyw": "spadek 0,3%",
+     "gleba_lekka": "nieznana kategoria gleby"
+    }
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [
+     {
+      "title_re": "^Teraz tak",
+      "why": "bez progu"
+     }
+    ],
+    "max": 8
+   },
+   "retention": {
+    "kind": "flat",
+    "slope_range": [
+     0,
+     1.5
+    ]
+   },
+   "negative": "no_threshold"
+  },
+  {
+   "id": "kujawsko-xy-ozime-2022",
+   "frozen": null,
+   "parcel_id": null,
+   "xy": [
+    18.59684,
+    52.63602
+   ],
+   "day": "2022-06-24",
+   "crop": "zboza_ozime",
+   "voivodeship": "kujawsko-pomorskie",
+   "why": "Dodatkowa lokalizacja z parcels50.csv (punkt, bez zamrozonej kopii): zboza ozime w czerwcu 2022, tylko tryb --base-url; numer dzialki ustalany przez ULDK po wspolrzednych.",
+   "expert_basis": "Tylko kontrole ogolne (werdykt istnieje, spojnosc, teksty, czas): brak recznie ustalonego kierunku.",
+   "verdict": {
+    "direction": "any",
+    "smsr": "any"
+   },
+   "causes": {
+    "required": [],
+    "forbidden": []
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [],
+    "max": 8
+   },
+   "retention": {
+    "kind": "any"
+   },
+   "negative": null
+  },
+  {
+   "id": "mazowieckie-xy-zima",
+   "frozen": null,
+   "parcel_id": null,
+   "xy": [
+    20.71509,
+    52.82493
+   ],
+   "day": "2023-01-28",
+   "crop": "kukurydza_kiszonka",
+   "voivodeship": "mazowieckie",
+   "why": "Dodatkowa lokalizacja z parcels50.csv: styczen (gleboko poza sezonem), kukurydza na kiszonke; tylko tryb --base-url.",
+   "expert_basis": "Styczen jest poza okresem monitoringu (21.III-30.IX): komunikat o sezonie, a nie werdykt.",
+   "verdict": {
+    "direction": "poza_sezonem",
+    "smsr": "any"
+   },
+   "causes": {
+    "required": [],
+    "forbidden": []
+   },
+   "actions": {
+    "required": [],
+    "forbidden": [
+     {
+      "title_re": "^Teraz tak",
+      "why": "zima, brak okresu"
+     }
+    ],
+    "max": 8
+   },
+   "retention": {
+    "kind": "any"
+   },
+   "negative": "out_of_season"
+  }
+ ],
+ "known_defects": [
+  {
+   "check": "retention.flat",
+   "loc": "*",
+   "owner": "p56",
+   "priority": "P1",
+   "reason": "plaska dzialka dostaje pinezke 'punkt wypływu' i brak zdania, ze woda nie splywa i retencje robi sie w glebie i drenach (krytyka-wizualna-retencji.md, pkt 8 i 10)"
+  },
+  {
+   "check": "retention.candidates",
+   "loc": [
+    "gsm-20200720",
+    "gsm-poza-sezonem",
+    "kietrz"
+   ],
+   "owner": "p55",
+   "priority": "P1",
+   "reason": "brak kandydatow retencji z geometria (lancuch p55 nie scalony): stok z rowem nie dostaje pasa trawy ani miedzy"
+  },
+  {
+   "check": "actions.cause_link",
+   "loc": "*",
+   "owner": "p55",
+   "priority": "P1",
+   "reason": "dzialanie nr 1 (niecka przy punkcie wyplywu) nie ma zadnej rozpoznanej przyczyny (cause_codes i causes puste)"
+  },
+  {
+   "check": "text.due_dates",
+   "loc": "*",
+   "owner": "p55",
+   "priority": "P1",
+   "reason": "dzialanie nr 1 ma w polu terminu komunikat «Brak: termin, bo terminow dzialan jeszcze nie wyliczamy»"
+  },
+  {
+   "check": "text.source",
+   "loc": "*",
+   "owner": "p67",
+   "priority": "P2",
+   "reason": "zrodlo bez strony i rodzaju dowodu: «katalog NWRM N01 · CDR 2025», «Prawo wodne · opinia ekspercka», «propozycja zespołu»"
+  },
+  {
+   "check": "text.risk",
+   "loc": "*",
+   "owner": "p67",
+   "priority": "P1",
+   "reason": "dzialania nie maja linii «Ryzyko:» i «Nie stosuj, gdy» (dane sa w ryzyka-dzialan.csv, nie wchodza do raportu)"
+  },
+  {
+   "check": "text.forbidden_words",
+   "loc": "*",
+   "owner": "p85",
+   "priority": "P1",
+   "reason": "druk i widok doradcy pokazuja «propozycja zespołu», «widok doradcy» i kody przyczyn (malo_opadu ...); progi z literatury (p85) usuwaja «propozycje zespołu», kody w widoku doradcy: do decyzji"
+  },
+  {
+   "check": "text.contradictions",
+   "loc": "*",
+   "owner": "p73",
+   "priority": "P1",
+   "reason": "komunikat «spadek działki nie jest wyznaczony» w kodzie mapy mimo znanego spadku (przy GSM i Kietrzu widoczny razem z «Teren jest nachylony»); dawka «19 mm» poza «20–25 mm»; «niedobór N mm» dla bilansu powyzej progu"
+  },
+  {
+   "check": "text.one_number",
+   "loc": [
+    "gsm-poza-sezonem",
+    "lubuskie-gleba-lekka",
+    "slaskie-spadek"
+   ],
+   "owner": "p73",
+   "priority": "P2",
+   "reason": "klimatologia liczona z 11 lat, podatnosc z 10 sezonow: dwie liczby N dla tego samego"
+  },
+  {
+   "check": "actions.required",
+   "loc": "dobrcz",
+   "owner": "do decyzji",
+   "priority": "P2",
+   "reason": "plaska dzialka z drenami nie dostaje rady «regulator odplywu z drenow»: aplikacja nie ma danych o drenach (raport sam pisze, ze nie uwzglednia drenowania)"
+  },
+  {
+   "check": "actions.forbidden",
+   "loc": "kietrz",
+   "owner": "p73",
+   "priority": "P2",
+   "reason": "«Głęboszowanie gleby zagęszczonej» bez pomiaru zageszczenia i przy bilansie powyzej progu (ocena-odpowiedzi-rolnik.md, S4)"
+  }
+ ]
+}

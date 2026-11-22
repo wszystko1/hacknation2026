@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse, Response
 
 from app.geodata import config, fetch_parcel_by_lonlat
 from app.geodata.errors import GeodataError, ParcelNotFound
+from app.models import FieldError
 from app.picker import frozen, tiles
 
 router = APIRouter()
@@ -86,3 +87,21 @@ def map_tile(layer: str, z: int, x: int, y: int) -> Response:
     image, real = tiles.get_tile(layer, z, x, y)
     cache = "public, max-age=86400" if real else "no-store"
     return Response(image, media_type="image/jpeg", headers={"Cache-Control": cache})
+
+
+@router.get("/raport/zdjecie")
+def parcel_photo(dzialka: str, data: str) -> Response:
+    """The orthophoto of the report; the same date and length checks as /raport, then the photo itself."""
+    from app.inputs import date_error, parse_date, too_long
+    from app.main import parcel_photo as photo
+
+    errors = too_long({"dzialka": dzialka, "data": data})
+    if not errors:
+        try:
+            if message := date_error(parse_date(data)):
+                errors = [FieldError(field="data", message=message)]
+        except ValueError:
+            errors = [FieldError(field="data", message="Wpisz datę w postaci rrrr-mm-dd")]
+    if errors:
+        return JSONResponse({"bledy": [e.model_dump() for e in errors]}, status_code=422)
+    return photo(dzialka, data)
