@@ -22,7 +22,8 @@
   </table>
   <p>Zmierzone na {{ a.n_gmina_years | dec }} gmino-latach testowych; susza w SMSR wystąpiła w {{ a.base_rate | pct(1) }} przypadków.</p>
   {% if s.advisor %}
-  <div class="advisor"><b>Widok doradcy: miary zgodności wobec „zawsze susza” i klimatologii gminy</b><dl class="kv">{% set own = {'CSI': a.csi, 'POD': a.pod, 'FAR': a.far, 'Peirce': a.peirce} %}{% for kv in s.advisor %}<dt><b>{{ own[kv.key] | dec(2) }}</b><span>{{ kv.key }}</span></dt><dd>{{ kv.value }}</dd>{% endfor %}</dl></div>
+  <div class="advisor"><b>Widok doradcy: miary zgodności wobec „zawsze susza” i klimatologii gminy</b><dl class="kv">{% set own = {'CSI': a.csi, 'POD': a.pod, 'FAR': a.far, 'Peirce': a.peirce} %}{% for kv in s.advisor if kv.key in own %}<dt><b>{{ own[kv.key] | dec(2) }}</b><span>{{ kv.key }}</span></dt><dd>{{ kv.value }}</dd>{% endfor %}</dl></div>
+  {% include "sections/_calibration.html" %}
   {% endif %}
   {% endif %}
 </section>

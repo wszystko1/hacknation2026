@@ -22,7 +22,7 @@ import numpy as np
 from app.drought.evaporation import etp_dg_daily
 from app.drought.thresholds import threshold_mm
 from app.smsr.parser import SmsrPageError, parse_commune_page
-from app.validation import measure
+from app.validation import calibration, measure
 from app.validation.agreement import scores
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -159,6 +159,61 @@ def shift_keys(v_all: measure.View, ratio_low: float, ratio_high: float) -> dict
     return out
 
 
+def calibration_keys(v: measure.View, communes: list[str]) -> dict:
+    """The "+" share of SMSR by the margin class, both evaporation variants, with 95% intervals by commune."""
+    out: dict = {}
+    for variant in SUFFIXED:
+        margin = v.margin[variant]
+        counts = calibration.class_counts(margin, v.observed)
+        per_commune = calibration.per_commune_class_counts(margin, v.observed, v.commune, communes)
+        intervals = calibration.bootstrap_plus_share(per_commune)
+        for cls, (n, _plus), share, ci in zip(
+            calibration.CLASSES, counts.tolist(), calibration.plus_share(counts), intervals, strict=True
+        ):
+            base = f"smsr.calibration.{variant}.{cls.key}"
+            out[f"{base}.n"] = int(n)
+            _put(out, f"{base}.plus_share", share)
+            if ci is not None:
+                _put(out, f"{base}.ci_low", ci[0])
+                _put(out, f"{base}.ci_high", ci[1])
+    # the scalar of the report: the variant of the report (FAO-56), margin of -25 mm and below
+    counts = calibration.class_counts(v.margin["fao56"], v.observed)
+    share, n = calibration.confirm_share(counts)
+    _put(out, "smsr.confirm_share_margin_le_minus25", share)
+    out["smsr.confirm_n_margin_le_minus25"] = n
+    per_commune = calibration.per_commune_class_counts(v.margin["fao56"], v.observed, v.commune, communes)
+    pooled = per_commune[:, :2, :].sum(axis=1)  # (communes, 2): symbols, "+"
+    rng = np.random.default_rng(2026)
+    draw = rng.integers(0, len(communes), size=(2000, len(communes)))
+    sums = pooled[draw].sum(axis=1)
+    ok = sums[:, 0] > 0
+    if ok.any():
+        lo, hi = np.percentile(sums[ok, 1] / sums[ok, 0], [2.5, 97.5])
+        _put(out, "smsr.confirm_share_margin_le_minus25_ci_low", lo)
+        _put(out, "smsr.confirm_share_margin_le_minus25_ci_high", hi)
+    return out
+
+
+def by_year_keys(v: measure.View, communes: list[str]) -> dict:
+    """CSI and the number of "+" symbols per year (variant of the report), CSI interval by commune."""
+    out: dict = {}
+    for year in YEARS:
+        sub = v.where(v.year == year)
+        usable = ~np.isnan(sub.margin["fao56"])
+        if not usable.any():
+            continue
+        table, s = measure.evaluate(sub, "fao56")
+        base = f"smsr.by_year.{year}"
+        out[f"{base}.n"] = int(usable.sum())
+        out[f"{base}.plus_count"] = int(sub.observed[usable].sum())
+        _put(out, f"{base}.csi", s["csi"])
+        counts = measure.per_commune_counts(sub, sub.margin["fao56"] < 0, usable, communes)
+        ci = measure.bootstrap_by_commune(counts, ["csi"])["csi"]
+        _put(out, f"{base}.csi_ci_low", ci[0])
+        _put(out, f"{base}.csi_ci_high", ci[1])
+    return out
+
+
 def weather_shares(snaps: list[dict]) -> dict:
     out: dict = {}
     for kind, field in (("precipitation", "precipitation_sources"), ("et0", "et0_sources")):
@@ -200,6 +255,9 @@ def run() -> dict[str, float | int]:
     out["smsr.method_beats_climatology"] = int(out["smsr.csi"] > out["smsr.baseline_csi_climatology"])
     for bucket, share in measure.agreement_by_distance(test, "fao56").items():
         _put(out, f"smsr.agreement_by_distance.{bucket}", share)
+
+    out.update(calibration_keys(test, test_communes))
+    out.update(by_year_keys(test, test_communes))
 
     for variant in SUFFIXED:  # the choice of the formula, on the development communes only
         _put(

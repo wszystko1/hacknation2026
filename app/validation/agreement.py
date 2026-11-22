@@ -13,6 +13,7 @@ from typing import Any
 
 from app.fmt import dec
 from app.models import Agreement, ConfusionTable
+from app.validation import calibration
 
 
 def confusion(pairs: Iterable[tuple[bool, bool]]) -> ConfusionTable:
@@ -78,17 +79,18 @@ def agreement_frame(metrics: dict[str, Any], margin_mm: float | None) -> Agreeme
             n_gmina_years=metrics.get("smsr.n_gmina_years"),
         )
     bucket = bucket_of(margin_mm) if margin_mm is not None else ""
-    share = metrics.get(f"smsr.agreement_by_distance.{bucket}") if bucket else None
+    share = None
+    if margin_mm is None:
+        sentence = f"Metoda zgadzała się z SMSR: CSI {csi:.2f}."
+    else:
+        cls = calibration.class_of(margin_mm)
+        share = metrics.get(f"smsr.calibration.fao56.{cls.key}.plus_share")
+        sentence = _calibration_sentence(cls, share, calibration.is_uncertain(margin_mm))
     k = round(100 * share) if share is not None else None
-    sentence = (
-        f"Przy takiej odległości od progu metoda zgadzała się z SMSR w {k} na 100 przypadków."
-        if k is not None
-        else f"Metoda zgadzała się z SMSR: CSI {csi:.2f}."
-    )
     table = _table_from(metrics)
     baselines = {name: metrics[key] for name, key in BASELINE_KEYS.items() if metrics.get(key) is not None}
     clim = baselines.get("klimatologia gminy")
-    if clim is not None and csi <= clim:
+    if clim is not None and csi <= clim and (margin_mm is None or share is not None):
         sentence += (
             f" Uwaga: sama klimatologia gminy zgadza się z SMSR nie gorzej (CSI {dec(clim, 2)} wobec {dec(csi, 2)}),"
             " więc metoda nie dodaje tu nic ponad dawne wyniki gminy."
@@ -114,6 +116,23 @@ def agreement_frame(metrics: dict[str, Any], margin_mm: float | None) -> Agreeme
         precision=metrics.get("smsr.precision"),
         accuracy_majority=metrics.get("smsr.accuracy_majority"),
     )
+
+
+def _calibration_sentence(cls: calibration.MarginClass, share: float | None, uncertain: bool) -> str:
+    """The sentence of the frame: the "+" share of SMSR in the margin class of the parcel, from the curve."""
+    if share is None:
+        return (
+            "Brak: zgodności z SMSR dla takiego marginesu bilansu, bo jej nie zmierzyliśmy (nie zmierzone)."
+        )
+    k = round(100 * share)
+    if uncertain:
+        return (
+            f"Bilans działki jest blisko progu (w granicach 10 mm): SMSR oznacza tu suszę w {k} na 100 przypadków,"
+            " więc wynik jest niepewny."
+        )
+    below = cls.key in {"le_m50", "m50_m25", "m25_m10"}
+    verb = "potwierdza suszę" if below else "mimo to oznacza suszę"
+    return f"Gdy bilans jest {cls.phrase}, SMSR {verb} w {k} na 100 przypadków."
 
 
 # reference line -> key in metrics.json (CSI of the line)

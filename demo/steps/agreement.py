@@ -1,4 +1,5 @@
-"""Scene "Zgodność z oceną państwa (SMSR)": accuracy beside the answer "always the more frequent one"."""
+"""Scene "Zgodność z oceną państwa (SMSR)": accuracy beside the answer "always the more frequent one", then the
+calibration curve of the advisor view with the parcel's mark and the frame sentence read from the curve."""
 
 import json
 from pathlib import Path
@@ -21,3 +22,17 @@ def scene(page, base_url: str) -> None:
     assert "zawsze częstsza odpowiedź" in text
     assert "–" not in text.replace("−", "")
     page.wait_for_timeout(PAUSE)
+
+    page.locator("#pokaz-doradcy").click()
+    page.wait_for_selector("#krzywa-kalibracji", timeout=30000)
+    marker = page.locator("#krzywa-kalibracji [data-marker]")
+    key = marker.get_attribute("data-marker")
+    share = SMSR["calibration"]["fao56"][key]["plus_share"]
+    frame = page.locator("#zgodnosc-ramka").inner_text()
+    assert f"w {round(100 * share)} na 100 przypadków" in frame
+    assert len(page.locator("#po-latach tbody tr").all()) == 7
+    page.locator("#krzywa-kalibracji").scroll_into_view_if_needed()
+    page.wait_for_timeout(PAUSE)
+    # the next scene starts on the farmer screen (it clicks "Pokaż doradcy" itself): leave the advisor view
+    page.go_back()
+    page.wait_for_selector("#pokaz-doradcy")

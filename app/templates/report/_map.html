@@ -19,6 +19,7 @@
   .nb-actions a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 650; }
 </style>
 <div class="mapcol">
+  <div class="mapstage">
   <div class="map"{% if m %} data-neighbour data-parcel="{{ report.parcel.id }}" data-day="{{ report.request.day.isoformat() }}" data-crop="{{ report.request.crop.value }}"
        data-width="{{ m.width }}" data-height="{{ m.height }}" data-m-per-px="{{ m.m_per_px }}"
        data-origin-2180="{{ m.origin_2180 | join(',') }}" data-corners-4326="{{ m.corners_4326 | map('join', ',') | join(' ') }}"{% endif %}>
@@ -70,17 +71,15 @@
   <div class="map-ui">
     {% include "report/_pick.html" %}
     {% if m %}<div class="nb-card" data-nb-card role="status" aria-live="polite" hidden></div>{% endif %}
-    {% if m %}
-    <div class="mlegend">
-      <b>Warstwa na mapie</b>
-      {% for r in m.legend %}
-      <div>{% if r.symbol == 'number' %}<span class="nb">{{ r.n }}</span>{% elif r.symbol in ('flow', 'line', 'slope', 'edge') %}<span class="ar"></span>{% else %}<span class="nb nb--off">&nbsp;</span>{% endif %}{{ r.text }}</div>
-      {% endfor %}
-    </div>
-    {% endif %}
   </div>
-  <section class="ledger" aria-label="Skąd są dane">
-    <header><b>Skąd są dane</b><span>{% if report.data_copy %}{{ report.data_copy }}; pobranie trwało {{ report.data_copy_took_s | seconds }}{% else %}pobrane dla tej działki{% endif %}</span><span class="t">razem {{ report.total_s | seconds }}</span></header>
+  </div>
+  {% set n_ok = report.sources | selectattr('status', 'in', ['ok', 'copy', 'fallback']) | list | length %}
+  {% set n_missing = report.sources | selectattr('status', 'equalto', 'missing') | list | length %}
+  <div class="mapdock">
+  <details class="ledger{% if n_missing %} ledger--missing{% endif %}" aria-label="Skąd są dane">
+    <summary><i class="mark {% if n_missing %}mark--no{% else %}mark--ok{% endif %}" aria-hidden="true">{% if n_missing %}!{% else %}✓{% endif %}</i><span class="ledger-line"><b>Skąd są dane:</b> {{ n_ok }} z {{ report.sources | length }} źródeł{% if report.data_copy %} · {{ report.data_copy | replace('kopia danych z', 'kopia z') }}{% endif %}</span><span class="ledger-more">Szczegóły</span></summary>
+    <div class="ledger-body">
+    <p class="ledger-meta">{% if report.data_copy %}{{ report.data_copy }}; pobranie trwało {{ report.data_copy_took_s | seconds }}{% else %}pobrane dla tej działki{% endif %}<span class="t">razem {{ report.total_s | seconds }}</span></p>
     <ul class="sources">
       {% for r in report.sources %}
       <li class="is-{{ {'ok': 'done', 'copy': 'done', 'fallback': 'fallback', 'missing': 'missing', 'waiting': 'waiting'}[r.status] }}">
@@ -90,6 +89,16 @@
       </li>
       {% endfor %}
     </ul>
-  </section>
+    </div>
+  </details>
+  {% if m %}
+    <div class="mlegend">
+      <b>Warstwa na mapie</b>
+      {% for r in m.legend %}
+      <div>{% if r.symbol == 'number' %}<span class="nb">{{ r.n }}</span>{% elif r.symbol in ('flow', 'line', 'slope', 'edge') %}<span class="ar"></span>{% else %}<span class="nb nb--off">&nbsp;</span>{% endif %}{{ r.text }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
 </div>
 {% if m %}<script src="/static/neighbour.js" defer></script>{% endif %}

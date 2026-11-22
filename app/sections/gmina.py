@@ -7,6 +7,7 @@ metrics.json through `ctx.agreement`. The section states "not loaded" only when 
 
 from __future__ import annotations
 
+from app.charts.calibration import calibration_svg
 from app.context import ReportContext
 from app.fmt import dec
 from app.models import SOIL_CATEGORIES, Agreement, ConfusionTable, KeyValue, Section, SmsrRow, TextPart
@@ -132,6 +133,22 @@ def _advisor(a: Agreement) -> list[KeyValue]:
     ]
 
 
+def _by_year(ctx: ReportContext) -> list[KeyValue]:
+    """One row per year 2020-2026: CSI with its 95% interval and the number of "+" symbols, from metrics.json."""
+    rows = []
+    for year in range(2020, 2027):
+        base = f"smsr.by_year.{year}"
+        csi = ctx.metrics.get(f"{base}.csi")
+        if csi is None:
+            continue
+        lo, hi = ctx.metrics.get(f"{base}.csi_ci_low"), ctx.metrics.get(f"{base}.csi_ci_high")
+        interval = f" (przedział 95%: {dec(lo, 2)}–{dec(hi, 2)})" if lo is not None and hi is not None else ""
+        plus = ctx.metrics.get(f"{base}.plus_count")
+        count = f"{dec(plus)}" if plus is not None else "brak"
+        rows.append(KeyValue(key=str(year), value=f"CSI {dec(csi, 2)}{interval}|{count}"))
+    return rows
+
+
 def frame_sentence(a: Agreement) -> str:
     """The frame under "Cały raport w skrócie": the method's score and the trivial answer's, per 100 cases."""
     if not a.available or a.k_per_100 is None or a.accuracy_majority is None:
@@ -182,4 +199,9 @@ def build(ctx: ReportContext) -> Section:
         how or "Zgodność mierzymy na gminach testowych, które metoda widziała dopiero po dostrojeniu."
     )
     section.advisor = _advisor(a)
+    section.advisor += _by_year(ctx)
+    margin = ctx.verdict.margin_mm if ctx.verdict else None
+    section.chart_svg = calibration_svg(
+        ctx.metrics, margin, "Krzywa kalibracji: odsetek „+” w SMSR według marginesu bilansu od progu"
+    )
     return section

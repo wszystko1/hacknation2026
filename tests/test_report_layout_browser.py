@@ -115,3 +115,28 @@ def test_map_stays_while_the_report_scrolls(page: Page, base_url: str) -> None:
     assert page.evaluate("window.scrollY") > 0
     assert abs(page.evaluate("document.querySelector('.mapcol').getBoundingClientRect().top")) < 1
     assert abs(page.evaluate("document.querySelector('nav.rail').getBoundingClientRect().top")) < 1
+
+
+def test_report_fills_the_rest_of_the_width_at_1920(page: Page, base_url: str) -> None:
+    open_report(page, base_url, 1920, 1080)
+    rest = 1920 - 56 - 560
+    assert width_of(page, "main.report") >= 0.8 * rest
+    # the last content block reaches the right edge of the report: no empty column on its right
+    right = page.evaluate(
+        "(() => { const r = document.querySelector('main.report'); const kids = [...r.children].filter(e => e.getBoundingClientRect().width);"
+        " return Math.max(...kids.map(e => e.getBoundingClientRect().right)) - r.getBoundingClientRect().right; })()"
+    )
+    assert abs(right) <= 1
+
+
+def test_sources_panel_is_collapsed_and_does_not_cover_the_parcel(page: Page, base_url: str) -> None:
+    open_report(page, base_url, 1280, 800)
+    assert page.evaluate("document.querySelector('details.ledger').open") is False
+    stage = page.evaluate("(() => { const r = document.querySelector('.mapstage').getBoundingClientRect(); return [r.top, r.bottom]; })()")
+    dock = page.evaluate("document.querySelector('.mapdock').getBoundingClientRect().top")
+    assert dock >= stage[1] - 1, "the dock sits under the map, not over it"
+    assert stage[1] - stage[0] > 0.6 * 800
+    assert not page.locator(".ledger-body").is_visible()
+    page.locator(".ledger > summary").click()
+    assert page.locator(".ledger-body").is_visible()
+    assert page.evaluate("document.querySelector('.mapdock').getBoundingClientRect().top") >= stage[1] - 400
