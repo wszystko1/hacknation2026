@@ -32,11 +32,52 @@ def _fresh(path: Path, ttl: float | None) -> bool:
     return ttl is None or (time.time() - path.stat().st_mtime) < ttl
 
 
+_PRUNE_EVERY = 64
+_writes = 0
+
+
+def prune(root: Path, max_bytes: int) -> int:
+    """Delete the oldest files under `root` until it holds at most 90 % of `max_bytes`. Returns files removed."""
+    files: list[tuple[float, int, Path]] = []
+    total = 0
+    for path in root.rglob("*"):
+        try:
+            if path.is_file():
+                st = path.stat()
+                files.append((st.st_mtime, st.st_size, path))
+                total += st.st_size
+        except OSError:
+            continue
+    if total <= max_bytes:
+        return 0
+    removed = 0
+    target = int(max_bytes * 0.9)
+    for _, size, path in sorted(files):
+        if total <= target:
+            break
+        try:
+            path.unlink()
+            total -= size
+            removed += 1
+        except OSError:
+            continue
+    return removed
+
+
+def note_write(root: Path, max_bytes: int, *, every: int | None = None) -> None:
+    """Count a write; every `every` writes check the size of `root` (a full scan is too slow per write)."""
+    global _writes
+    _writes += 1
+    if _writes % (every or _PRUNE_EVERY) == 0:
+        prune(root, max_bytes)
+
+
 def _atomic_write(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{time.monotonic_ns()}.tmp")
     tmp.write_bytes(data)
     os.replace(tmp, path)  # atomic on both POSIX and Windows
+    note_write(config.cache_dir(), config.GEODATA_CACHE_MAX_BYTES)
 
 
 def get_json(namespace: str, key: str, ttl: float | None = None) -> Any | None:

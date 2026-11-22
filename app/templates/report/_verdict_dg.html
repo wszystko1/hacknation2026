@@ -1,6 +1,6 @@
 {# Advisor view: the second variant of the verdict (evaporation by Doroszewski-Górski), from `report.verdict_dg`. #}
 {% set d = report.verdict_dg %}
-{% if report.request.view == 'doradca' or request.url.path == '/raport/druk' or farmer_extra %}
+{% if report.request.view == 'doradca' or (request is defined and request.url.path == '/raport/druk') or farmer_extra %}
 <h4>Werdykt z parowaniem wg Doroszewskiego–Górskiego</h4>
 {% if d.badge %}<span class="badge {{ {'below': 'badge--dry', 'above': 'badge--ok'}.get(d.state, 'badge--neutral') }}" id="plakietka-dg">{{ d.badge }}</span>{% endif %}
 {% if d.kbw_mm is not none %}

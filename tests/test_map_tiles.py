@@ -55,7 +55,9 @@ def test_every_tile_of_the_zoom_path_is_served_offline(offline, tmp_path, monkey
 
 def test_a_tile_outside_the_copy_offline_is_a_grey_tile_not_a_404(offline, tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("GEODATA_CACHE_DIR", str(tmp_path))
-    r = client.get(url("orto", 17, 1, 1))
+    x, y = lonlat_to_tile(15.0, 50.0, 17)  # inside the frame of Poland, far from the frozen path
+    assert not tiles.frozen_path("orto", 17, x, y).is_file()
+    r = client.get(url("orto", 17, x, y))
     assert r.status_code == 200
     assert r.headers["content-type"] == "image/jpeg"
     assert r.content == tiles.placeholder() and r.content.startswith(b"\xff\xd8")

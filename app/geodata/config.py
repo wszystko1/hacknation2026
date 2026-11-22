@@ -103,3 +103,8 @@ TIMEOUTS.update({"water": 10.0, "forecast": 6.0, "seasonal": 6.0, "crop_hint": 8
 # others have answered; they keep running up to BACKGROUND_S and land in the cache for the next request.
 BACKGROUND_GRACE_S = 2.0
 BACKGROUND_S = 60.0
+
+# A host that timed out is skipped this long; the geodata cache and the map tile cache are capped on disk.
+HOST_FAILURE_TTL_S = 300.0
+GEODATA_CACHE_MAX_BYTES = 2 * 1024**3
+TILE_CACHE_MAX_BYTES = 500 * 1024**2
