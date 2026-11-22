@@ -30,7 +30,7 @@ from app.models import (
 VERDICT_PERIOD_ENV = (
     "CHRONPLON_VERDICT_PERIOD"  # "current" (default): the period ending on the last full dekad
 )
-VERDICT_ET_ENV = "CHRONPLON_VERDICT_ET"  # "fao56" (default) or "dg"; the verdict still computes with FAO-56
+VERDICT_ET_ENV = "CHRONPLON_VERDICT_ET"  # "dg" (default) or "fao56": the evaporation formula of the verdict
 
 
 def verdict_period_mode() -> Literal["current", "worst"]:
@@ -39,8 +39,8 @@ def verdict_period_mode() -> Literal["current", "worst"]:
 
 
 def verdict_et_method() -> Literal["fao56", "dg"]:
-    """Evaporation formula named by the switch; any other value means FAO-56."""
-    return "dg" if os.environ.get(VERDICT_ET_ENV, "").strip().lower() == "dg" else "fao56"
+    """Evaporation formula of the verdict: Doroszewski-Górski unless the switch says "fao56"."""
+    return "fao56" if os.environ.get(VERDICT_ET_ENV, "").strip().lower() == "fao56" else "dg"
 
 
 # A period with more than this share of days without precipitation or ET0 does not enter the verdict.
@@ -348,7 +348,8 @@ def main_verdict(
     *,
     neighbour: SoilCategory | None = None,
 ) -> PeriodVerdict:
-    """The verdict the report and the waiting page show: one call for both paths, period chosen by the switch."""
+    """The FAO-56 verdict, period chosen by the switch. The report and the waiting page take their verdict from
+    `app.drought.variants.main_verdict`, which uses this one as the fallback and as the second variant."""
     return assess(
         dates,
         precip,

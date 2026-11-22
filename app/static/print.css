@@ -21,7 +21,8 @@
 .pr-n { display: inline-block; min-width: 1.4em; text-align: center; font-weight: 700; color: var(--accent-ink); }
 .pr-muted { color: var(--muted); }
 .pr-chart { max-width: 100%; overflow: hidden; }
-.pr-chart svg { width: 100%; height: auto; max-height: 48mm; }
+.pr-chart svg { width: 100%; height: auto; max-height: 40mm; }
+#strona-2 .pr-list { gap: var(--s1); }
 .pr-src { width: 100%; border-collapse: collapse; font-size: 9pt; }
 .pr-src th, .pr-src td { text-align: left; vertical-align: top; padding: 2pt 6pt 2pt 0; border-bottom: 1px solid var(--line); }
 .pr p, .pr li, .pr-box, .pr-bar, .pr-chart, .pr-src tr, .pr-verdict, .pr-photo { break-inside: avoid; page-break-inside: avoid; }

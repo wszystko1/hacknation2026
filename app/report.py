@@ -16,8 +16,8 @@ from app.advice.rules import field_actions
 from app.context import ReportContext
 from app.crop_condition import assess_crop_condition
 from app.crop_condition.reading import read_together
-from app.drought.kbw import main_verdict, season_of
-from app.drought.variants import verdict_dg
+from app.drought.kbw import season_of
+from app.drought.variants import main_verdict
 from app.forecast.exceedance import forecast_exceedance
 from app.geodata import FetchResult
 from app.mapview import map_view
@@ -127,21 +127,13 @@ def build_report(req: ReportRequest) -> Report:
     ctx.soil = _safe(
         "soil", lambda: assess_soil(ctx), SoilInfo(category=None, source="brak", words="brak danych o glebie")
     )
-    w = ctx.data.weather.data if ctx.data.weather.usable else None
-    ctx.verdict = _safe(
-        "verdict",
-        lambda: main_verdict(
-            w.dates if w else [],
-            w.precipitation_mm if w else [],
-            w.et0_mm if w else [],
-            req.day,
-            req.crop,
-            ctx.soil.category,
-        ),
-        Verdict(state="no_data", badge="", kbw_mm=None, threshold_mm=None, margin_mm=None, period=None,
-                sentence="Nie udało się policzyć bilansu.", how=""),
+    no_verdict = Verdict(
+        state="no_data", badge="", kbw_mm=None, threshold_mm=None, margin_mm=None, period=None,
+        sentence="Nie udało się policzyć bilansu.", how="",
     )  # fmt: skip
-    ctx.verdict_dg = _safe("verdict_dg", lambda: verdict_dg(ctx), None)
+    ctx.verdict, other = _safe("verdict", lambda: main_verdict(ctx), (no_verdict, None))
+    # `verdict_dg` is the Doroszewski-Górski variant: the verdict itself, or the other one when FAO-56 is chosen.
+    ctx.verdict_dg = ctx.verdict if ctx.verdict.et_method == "dg" else other
     ctx.smsr = _safe("smsr", lambda: smsr_row(ctx), SmsrRow(state="missing", commune=ctx.parcel.commune))
     if ctx.verdict.state == "out_of_season":
         ctx.crop_condition = not_applicable()
@@ -166,7 +158,7 @@ def build_report(req: ReportRequest) -> Report:
     ctx.forecast = _safe("forecast", lambda: forecast_exceedance(ctx), ExceedanceForecast(state="missing"))
     ctx.agreement = _safe(
         "agreement",
-        lambda: agreement_frame(ctx.metrics, ctx.verdict.margin_mm),
+        lambda: agreement_frame(ctx.metrics, ctx.verdict.margin_mm, ctx.verdict.et_method),
         Agreement(available=False, sentence=""),
     )
     sections = [

@@ -21,7 +21,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app import datasource, fmt
 from app.context import ReportContext
 from app.drought.chart import hbar_svg
-from app.drought.kbw import main_verdict
+from app.drought.variants import main_verdict
 from app.farmer_view import plain as plain_words
 from app.geodata import InvalidParcelId, fetch_all
 from app.inputs import FORMAT_ERROR, parse_request
@@ -234,11 +234,7 @@ def _first_look(req: ReportRequest) -> dict:
         raise TimeoutError("ULDK did not answer in time")  # the page waits for the report without the photo
     ctx = ReportContext(request=req, data=data, parcel=parcel_info(data))
     ctx.soil = assess_soil(ctx)
-    w = data.weather.data if data.weather.usable else None
-    verdict = main_verdict(
-        w.dates if w else [], w.precipitation_mm if w else [], w.et0_mm if w else [], req.day, req.crop,
-        ctx.soil.category,
-    )  # fmt: skip
+    verdict, _ = main_verdict(ctx)
     return {"parcel": ctx.parcel, "soil": ctx.soil, "map": map_view(ctx), "verdict": verdict}
 
 

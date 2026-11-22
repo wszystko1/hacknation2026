@@ -82,8 +82,9 @@ def test_header_has_the_date_in_words_and_the_soil_without_a_category_code() -> 
 def test_balance_and_threshold_stand_in_one_row_of_level_b() -> None:
     page = html(DOBRCZ)
     balance = next(r for r in rows_of(page) if 'id="wiersz-bilans"' in r)
-    # the period ending on the last full dekad (21.V-20.VII), not the worst of the season (21.IV-20.VI: −201 and −154)
-    assert "−203" in text_of(balance) and "−188 mm" in text_of(balance)
+    # the period ending on the last full dekad (21.V-20.VII) with Doroszewski-Górski evaporation: −204 and −188
+    # (the worst of the season with FAO-56 was 21.IV-20.VI: −201 and −154)
+    assert "−204" in text_of(balance) and "−188 mm" in text_of(balance)
     assert "od 21 maja 2023 do 20 lipca 2023" in text_of(balance)
     assert "Najgorszy okres sezonu do tej pory: 21 kwietnia 2023–20 czerwca 2023" in text_of(balance)
 

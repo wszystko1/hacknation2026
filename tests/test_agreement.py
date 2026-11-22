@@ -142,7 +142,7 @@ METRICS = {
     "smsr.accuracy": 0.96, "smsr.balanced_accuracy": 0.71, "smsr.recall": 0.44, "smsr.precision": 0.74,
     "smsr.accuracy_majority": 0.95, "smsr.baseline_csi_climatology": 0.05,
     "smsr.baseline_csi_always_drought": 0.05, "smsr.baseline_csi_nasa_power_grid": 0.19,
-    "smsr.agreement_by_distance.10–25 mm": 0.71, "smsr.calibration.fao56.m25_m10.plus_share": 0.71,
+    "smsr.agreement_by_distance.10–25 mm": 0.71, "smsr.calibration.dg.m25_m10.plus_share": 0.71,
 }  # fmt: skip
 
 

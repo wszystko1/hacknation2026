@@ -68,7 +68,7 @@ def bucket_of(margin_mm: float) -> str:
     return next(name for name, lo, hi in BUCKETS if lo <= distance < hi)
 
 
-def agreement_frame(metrics: dict[str, Any], margin_mm: float | None) -> Agreement:
+def agreement_frame(metrics: dict[str, Any], margin_mm: float | None, variant: str = "dg") -> Agreement:
     """The agreement frame of the report, from metrics.json; "available" is False until `make eval` ran."""
     csi = metrics.get("smsr.csi")
     if csi is None:
@@ -84,7 +84,7 @@ def agreement_frame(metrics: dict[str, Any], margin_mm: float | None) -> Agreeme
         sentence = f"Metoda zgadzała się z SMSR: CSI {csi:.2f}."
     else:
         cls = calibration.class_of(margin_mm)
-        share = metrics.get(f"smsr.calibration.fao56.{cls.key}.plus_share")
+        share = metrics.get(f"smsr.calibration.{variant}.{cls.key}.plus_share")
         sentence = _calibration_sentence(cls, share, calibration.is_uncertain(margin_mm))
     k = round(100 * share) if share is not None else None
     table = _table_from(metrics)

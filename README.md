@@ -104,7 +104,7 @@ Aplikacja nie ma bazy danych ani kont użytkowników: stan to pamięć podręczn
 | Krok | Co się dzieje | Gdzie |
 |---|---|---|
 | Dane | obrys działki (ULDK), pogoda 10 lat (Open-Meteo, zapas IMGW i NASA POWER), gleba (mapa IUNG, zapas SoilGrids), teren (NMT GUGiK), rowy (BDOT10k), zdjęcia Sentinel-2 | `app/geodata/` |
-| Bilans | opad minus parowanie (FAO-56; drugi wariant: Doroszewski–Górski) w oknie 6 dekad kończącym się na ostatniej pełnej dekadzie | `app/drought/` |
+| Bilans | opad minus parowanie (wzór Doroszewskiego–Górskiego jak w IUNG; FAO-56 do nawadniania i jako zapas bez temperatury lub usłonecznienia) w oknie 6 dekad kończącym się na ostatniej pełnej dekadzie | `app/drought/` |
 | Próg | próg z Dz.U. 2019 poz. 739: 14 grup upraw, kategorie gleby I–IV, 14 okresów | `app/drought/progi_dz_u_2019_739.csv` |
 | Trzy odpowiedzi | werdykt (bilans wobec progu), stan roślin (NDVI działki wobec jej własnych sezonów), podatność (ile z 10 sezonów byłoby pod progiem); bez jednej sklejonej liczby | `app/drought/`, `app/crop_condition/`, `app/vulnerability/` |
 | Przyczyny | przyczyna z osią i dowodem liczbowym (pogoda z rankingiem w mm; miejsce i uprawa bez rankingu) | `app/advice/diagnosis.py` |
@@ -127,10 +127,10 @@ Próba: 149 gmin, 1017 gmino-lat (2020–2026), 566130 symboli „+” lub „-�
 |---|---|---|---|
 | zmierzone | krzywa kalibracji: bilans ≥ 25 mm pod progiem | 92,3% potwierdzeń SMSR (88,5–95,1%) | `smsr.confirm_share_margin_le_minus25`, `smsr.calibration` |
 | zmierzone | zgodność przy marginesie 0–10 mm | 55,2% | `smsr.agreement_by_distance` |
-| zmierzone | CSI wobec linii bazowych | 0,3699 (FAO-56) i 0,4599 (D–G) wobec klimatologii 0,0694 i NASA POWER 0,147 | `smsr.csi_*`, `smsr.baseline_csi_*` |
-| zmierzone | trafność zrównoważona | 0,7039 (FAO-56), 0,7555 (D–G), klimatologia 0,5377 | `smsr.balanced_accuracy_*` |
+| zmierzone | CSI wobec linii bazowych | 0,4599 (D–G, werdykt) i 0,3699 (FAO-56) wobec klimatologii 0,0694 i NASA POWER 0,147 | `smsr.csi_*`, `smsr.baseline_csi_*` |
+| zmierzone | trafność zrównoważona | 0,7555 (D–G, werdykt), 0,7039 (FAO-56), klimatologia 0,5377 | `smsr.balanced_accuracy_*` |
 | zmierzone | BSS prognozy przekroczenia progu | 0,2081 wobec częstości historycznej (0,1826–0,2329; 8000 przypadków) | `forecast.brier_skill` |
-| zmierzone, słabe | czułość (POD): ile susz SMSR wskazano | 0,4133 (FAO-56), 0,5166 (D–G); precyzja alarmów 0,7789 | `smsr.pod`, `smsr.precision` |
+| zmierzone, słabe | czułość (POD): ile susz SMSR wskazano | 0,5166 (D–G), 0,4133 (FAO-56); precyzja alarmów 0,7789 | `smsr.pod`, `smsr.precision` |
 | zmierzone, słabe | kategoria gleby z SoilGrids wobec mapy IUNG | 0,375; w granicach jednej kategorii 0,8958 (96 punktów) | `soil.category_agreement` |
 | zmierzone, słabe | zgodność zależy od roku | CSI od 0,1103 (2025) do 0,4758 (2022) | `smsr.by_year` |
 | zmierzone, słabe | przesunięcie progu o 53 mm | trafność zrównoważona 2026: 0,7727 → 0,9094; dopasowane do ocen IUNG, w werdykcie nieużyte | `smsr.balanced_accuracy_2026_shifted` |
@@ -142,15 +142,15 @@ Próba: 149 gmin, 1017 gmino-lat (2020–2026), 566130 symboli „+” lub „-�
 Sama trafność nie jest miarą: susza to 4,5% przypadków, więc odpowiedź „zawsze bez suszy” trafia w 0,955. Dlatego liczą się krzywa
 kalibracji, CSI i trafność zrównoważona, każda obok linii bazowej.
 
-**Dwa warianty parowania** (te same gminy testowe; w werdykcie stoi FAO-56, bo wzór D–G pochodzi z postaci miesięcznej w publikacji IUNG 2023):
+**Dwa warianty parowania** (te same gminy testowe; w werdykcie stoi wzór D–G, bo daje wyższe CSI i niższy odsetek fałszywych alarmów; FAO-56 liczy dawki i terminy nawadniania):
 
-| Miara | FAO-56 | Doroszewski–Górski |
+| Miara | Doroszewski–Górski (werdykt) | FAO-56 |
 |---|---|---|
-| CSI | 0,3699 | 0,4599 |
-| POD (czułość) | 0,4133 | 0,5166 |
-| FAR | 0,2211 | 0,1929 |
-| Peirce | 0,4077 | 0,511 |
-| trafność zrównoważona | 0,7039 | 0,7555 |
+| CSI | 0,4599 | 0,3699 |
+| POD (czułość) | 0,5166 | 0,4133 |
+| FAR | 0,1929 | 0,2211 |
+| Peirce | 0,511 | 0,4077 |
+| trafność zrównoważona | 0,7555 | 0,7039 |
 
 **Miary jednym zdaniem**
 

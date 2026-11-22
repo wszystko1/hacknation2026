@@ -53,8 +53,8 @@ def test_plus_share_per_class_on_twelve_symbols() -> None:
 
 SAMPLE = {
     "smsr.csi": 0.4, "smsr.baseline_csi_climatology": 0.1,
-    "smsr.calibration.fao56.le_m50.plus_share": 0.98,
-    "smsr.calibration.fao56.0_10.plus_share": 0.52,
+    "smsr.calibration.dg.le_m50.plus_share": 0.98,
+    "smsr.calibration.dg.0_10.plus_share": 0.52,
 }  # fmt: skip
 
 

@@ -1,4 +1,4 @@
-"""The second variant of the verdict: Doroszewski-Górski evaporation in the advisor view."""
+"""The verdict by the Doroszewski-Górski formula, also shown with its source in the advisor view."""
 
 from __future__ import annotations
 
@@ -25,10 +25,11 @@ def test_demo_copy_has_frozen_temperature_and_sunshine() -> None:
     assert inputs_file("040303_2.0002.189/13", "2023-07-20").is_file()
 
 
-def test_both_variants_are_tagged_and_the_verdict_stays_on_fao56() -> None:
+def test_the_verdict_is_the_doroszewski_gorski_variant() -> None:
     r = _report()
-    assert r.verdict.et_method == "fao56"
+    assert r.verdict.et_method == "dg"
     assert r.verdict_dg is not None and r.verdict_dg.et_method == "dg"
+    assert r.verdict_dg.kbw_mm == r.verdict.kbw_mm
     assert r.verdict_dg.period is not None and r.verdict_dg.period.end <= date(2023, 7, 20)
     assert r.verdict_dg.state in {"below", "above"}
 

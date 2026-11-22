@@ -1,4 +1,7 @@
-"""The second variant of the verdict: evaporation by the Doroszewski-Górski formula, shown in the advisor view."""
+"""The verdict with evaporation by the Doroszewski-Górski formula (the formula of the Polish SMSR IUNG).
+
+`main_verdict` picks the verdict of the report: Doroszewski-Górski by default, FAO-56 when the point has no
+temperature or sunshine or when `CHRONPLON_VERDICT_ET=fao56`. Irrigation doses and dates stay on FAO-56."""
 
 from __future__ import annotations
 
@@ -7,7 +10,8 @@ from pathlib import Path
 
 from app.context import ReportContext
 from app.drought.evaporation import etp_dg_daily
-from app.drought.kbw import assess
+from app.drought.kbw import assess, verdict_et_method, verdict_period_mode
+from app.drought.kbw import main_verdict as fao56_verdict
 from app.geodata.samples import sample_stem
 from app.models import Verdict
 
@@ -42,6 +46,40 @@ def verdict_dg(ctx: ReportContext) -> Verdict | None:
         return None
     et = etp_dg_daily(w.dates, tmean, sun, w.latitude)
     verdict = assess(
-        w.dates, w.precipitation_mm, et, ctx.request.day, ctx.request.crop, ctx.soil.category, et_method="dg"
+        w.dates,
+        w.precipitation_mm,
+        et,
+        ctx.request.day,
+        ctx.request.crop,
+        ctx.soil.category,
+        et_method="dg",
+        period=verdict_period_mode(),
     )
     return None if verdict.state == "no_data" else verdict
+
+
+FALLBACK_NOTE = "Parowanie liczone wzorem FAO-56, bo brak temperatury lub usłonecznienia do wzoru Doroszewskiego–Górskiego."
+
+
+def main_verdict(ctx: ReportContext) -> tuple[Verdict, Verdict | None]:
+    """The verdict of the report and the other formula's verdict (None when it cannot be computed).
+
+    Needs `ctx.soil` and the weather in `ctx.data`. Doroszewski-Górski is the verdict unless the switch asks for
+    FAO-56; without temperature or sunshine the verdict falls back to FAO-56 and says so in `how`.
+    """
+    w = ctx.data.weather.data if ctx.data.weather.usable else None
+    fao = fao56_verdict(
+        w.dates if w else [],
+        w.precipitation_mm if w else [],
+        w.et0_mm if w else [],
+        ctx.request.day,
+        ctx.request.crop,
+        ctx.soil.category,
+    )
+    if verdict_et_method() == "fao56" or fao.state == "no_data":
+        return fao, verdict_dg(ctx) if fao.state != "no_data" else None
+    dg = verdict_dg(ctx)
+    if dg is not None:
+        return dg, fao
+    how = f"{fao.how} · {FALLBACK_NOTE}" if fao.how else FALLBACK_NOTE
+    return fao.model_copy(update={"how": how}), None

@@ -7,7 +7,7 @@ from datetime import date, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from app.drought.kbw import VERDICT_PERIOD_ENV, assess, main_verdict
+from app.drought.kbw import VERDICT_ET_ENV, VERDICT_PERIOD_ENV, assess, main_verdict
 from app.main import app
 from app.models import CropGroup, ReportRequest
 from app.report import build_report
@@ -42,6 +42,7 @@ def test_dobrcz_verdict_is_period_7_and_the_worst_period_is_4(monkeypatch: pytes
 
 def test_switch_worst_restores_the_earlier_result(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(VERDICT_PERIOD_ENV, "worst")
+    monkeypatch.setenv(VERDICT_ET_ENV, "fao56")
     v = dobrcz().verdict
     assert v.period is not None and v.period.n == 4
     assert v.margin_mm == -46.7 and v.kbw_mm == -200.7 and v.threshold_mm == -154.0
