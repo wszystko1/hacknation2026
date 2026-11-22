@@ -20,6 +20,8 @@ To nie jest urzędowe stwierdzenie suszy. Urzędową ocenę suszy w gminie publi
 
 **Film demonstracyjny (1 min 20 s):** [docs/film/chronplon-demo.mp4](docs/film/chronplon-demo.mp4): ocena działki Dobrcz (werdykt, przyczyny, rady z terminem, źródłem, ryzykiem i formalnością, wiarygodność), retencja na mapie Góry Świętej Małgorzaty, źródła danych i raport do wydruku.
 
+**Prezentacja (10 slajdów):** [docs/prezentacja.pdf](docs/prezentacja.pdf).
+
 
 Instrukcja krok po kroku dla osoby bez doświadczenia (Windows: dwa kliknięcia na `deploy\windows\start.bat`; Linux i macOS: `./start.sh`): [docs/URUCHOMIENIE.md](docs/URUCHOMIENIE.md).
 
