@@ -269,11 +269,12 @@ class Row:
     title: str
     paragraphs: list[str] = field(default_factory=list)
     lines: list[Line] = field(default_factory=list)
-    kind: Literal["text", "balance", "plan", "gmina"] = "text"
+    kind: Literal["text", "balance", "plan", "gmina", "plants"] = "text"
+    failed: bool = False  # kind "plants": the fetch failed for good (still listed in "Nie ujęto w raporcie")
 
     @property
     def present(self) -> bool:
-        return self.kind in ("balance", "gmina") or bool(self.paragraphs or self.lines)
+        return self.kind in ("balance", "gmina", "plants") or bool(self.paragraphs or self.lines)
 
 
 _DOSE = re.compile(r"\s*\(([^()]*m³[^()]*)\)")
@@ -374,7 +375,8 @@ def _evaporation_row(report: Report) -> Row:
     return Row("parowanie", "Parowanie", paragraphs=[text])
 
 
-def _plants_row(report: Report) -> Row:
+def plants_paragraphs(report: Report) -> list[str]:
+    """The sentences of the plants row once the picture has been read."""
     c = report.crop_condition
     paragraphs: list[str] = []
     if c.state in ("ok", "not_applicable") and c.words:
@@ -383,7 +385,18 @@ def _plants_row(report: Report) -> Row:
             paragraphs.append(f"Zdjęcie satelitarne z {date_words(c.scene_date)}.")
         if report.reading:
             paragraphs.append(plain(report.reading))
-    return Row("rosliny", "Stan roślin ze zdjęcia satelitarnego", paragraphs=paragraphs)
+    return paragraphs
+
+
+def _plants_row(report: Report) -> Row:
+    """While the picture is fetched (or after a failed fetch) the row is the block of app/crop_condition/view.py;
+    it polls for itself and swaps itself for the finished sentences."""
+    from app.crop_condition.view import from_condition
+
+    block = from_condition(report.crop_condition, report.request, "wiersz")
+    if block is not None:
+        return Row("rosliny", "Stan roślin ze zdjęcia satelitarnego", kind="plants", failed=block["state"] == "failed")
+    return Row("rosliny", "Stan roślin ze zdjęcia satelitarnego", paragraphs=plants_paragraphs(report))
 
 
 def _plan_row(report: Report) -> Row:
@@ -467,7 +480,8 @@ def rows(report: Report) -> list[Row]:
 
 def not_counted(all_rows: list[Row]) -> str:
     """ "Nie ujęto w raporcie: …" with the names of the rows that have nothing to show; "" when none is empty."""
-    names = [row.title.lower() for row in all_rows if not row.present]
+    # a plants row that is still being fetched is not "not counted" yet; one that failed for good is
+    names = [row.title.lower() for row in all_rows if not row.present or row.id == "rosliny" and row.failed]
     return f"Nie ujęto w raporcie: {', '.join(names)}." if names else ""
 
 
@@ -488,6 +502,7 @@ class FarmerView:
     advisor_query: str
     commune_measures: dict[str, str]
     balance_caption: str
+    plants_pending: bool = False  # the satellite picture is still being fetched (the PDF says so)
 
 
 def _query(report: Report) -> str:
@@ -548,4 +563,5 @@ def build(report: Report) -> FarmerView:
         advisor_query=f"{query}&widok=doradca",
         commune_measures=commune_measures(report),
         balance_caption=balance_caption(report),
+        plants_pending=any(r.kind == "plants" and not r.failed for r in all_rows),
     )

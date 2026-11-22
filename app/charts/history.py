@@ -23,6 +23,11 @@ def _bar_class(s: SeasonWorst) -> str:
     return "s-warn" if (s.period.margin_mm or 0.0) < NEAR_MM else "s-neu"
 
 
+def _dot(cx: float, cy: float, filled: bool) -> str:
+    cls = "s-dry" if filled else "s-ring"
+    return f'<circle class="{cls}" cx="{cx:.1f}" cy="{cy:.1f}" r="6"/>'
+
+
 def history_svg(seasons: Sequence[SeasonWorst], smsr: Mapping[int, str], label: str) -> str:
     """Bars show the shortfall (minus the balance) in mm; every bar carries its value, so colour is not the only cue."""
     if not seasons:
@@ -49,9 +54,9 @@ def history_svg(seasons: Sequence[SeasonWorst], smsr: Mapping[int, str], label: 
             top = min(top, ty)
         body.append(svg.text(cx, top - 8, dec(s.period.kbw_mm), "lbl-dry" if s.below else "lbl", "middle"))
         body.append(svg.text(cx, BASE + 22, str(s.year), "", "middle"))
-        mark = SMSR_WORDS.get(smsr.get(s.year, ""))
-        if mark:
-            body.append(svg.text(cx, BASE + 46, mark, "lbl-dry" if smsr[s.year] == "+" else "", "middle"))
+        verdict = smsr.get(s.year)
+        if verdict in SMSR_WORDS:  # a dot under the year: filled = SMSR says drought, ring = it does not
+            body.append(_dot(cx, BASE + 41, verdict == "+"))
     if smsr:
         body.append(svg.text(0, BASE + 46, "SMSR", "lbl-acc"))
     body.append(svg.text(0, BASE + 22, "sezon", ""))
@@ -62,6 +67,11 @@ def history_svg(seasons: Sequence[SeasonWorst], smsr: Mapping[int, str], label: 
     ):
         body.append(svg.rect(x, y - 13, 14, 14, cls))
         body.append(svg.text(x + 22, y, words, ""))
+    if smsr:
+        body.append(_dot(LEFT + 170 + 7, HEIGHT - 42, True))
+        body.append(svg.text(LEFT + 170 + 22, HEIGHT - 36, SMSR_WORDS["+"], ""))
+        body.append(_dot(LEFT + 170 + 107, HEIGHT - 42, False))
+        body.append(svg.text(LEFT + 170 + 122, HEIGHT - 36, SMSR_WORDS["-"], ""))
     body.append(svg.line(LEFT, HEIGHT - 12, LEFT + 36, HEIGHT - 12, "s-thr"))
     body.append(svg.text(LEFT + 44, HEIGHT - 6, "próg suszy z rozporządzenia", ""))
     return svg.svg(HEIGHT, label, body, desc=label, title="Niedobór wody w najgorszym okresie sezonu, mm")

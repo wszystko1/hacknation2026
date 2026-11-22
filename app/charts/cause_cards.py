@@ -23,7 +23,7 @@ CAPTIONS = {
     "duze_parowanie": "Duże parowanie: parowanie do zwykłego",
     "gleba_lekka": "Gleba słabo trzyma wodę: udział piasku",
     "splyw": "Woda spływa z pola: średni spadek terenu",
-    "faza_wrazliwa": "Uprawa w wrażliwej fazie: okres z progiem",
+    "faza_wrazliwa": "Uprawa we wrażliwej fazie: okres z progiem",
 }
 ICONS = {  # 24 px outline icons drawn at (6, 6)
     "malo_opadu": "M18 6l7 11a8 8 0 1 1 -14 0z",

@@ -107,7 +107,9 @@
     </table>
     <h2 class="pr-h">Jak liczyliśmy</h2>
     {% for text in (rows['jak'].paragraphs[:3] if rows.get('jak') else []) %}<p>{{ text }}</p>{% endfor %}
-    {% if fv.missing_line %}<h2 class="pr-h">Czego nie uwzględniamy</h2><p id="k-brak">{{ fv.missing_line }}</p>{% endif %}
+    {% if fv.missing_line or fv.plants_pending %}<h2 class="pr-h">Czego nie uwzględniamy</h2>{% endif %}
+    {% if fv.missing_line %}<p id="k-brak">{{ fv.missing_line }}</p>{% endif %}
+    {% if fv.plants_pending %}<p id="k-rosliny">Stan roślin ze zdjęcia satelitarnego: zdjęcie jeszcze się pobiera, ocena nie jest ujęta w tym wydruku.</p>{% endif %}
   </section>
   <div class="pr-full no-print" id="pelny-raport">
     <h2 class="pr-h">Pełny raport na ekranie (poza wydrukiem)</h2>

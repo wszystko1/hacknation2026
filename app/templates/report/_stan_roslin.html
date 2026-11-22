@@ -1,0 +1,27 @@
+{# The plants block while the satellite picture is fetched: waiting (polls itself), failed (cause and a retry button), ready. See app/crop_condition/view.py. #}
+{% macro plants_block(sr) %}
+{%- set id = 'stan-roslin-' ~ sr.place -%}
+{%- if sr.state == 'waiting' -%}
+<div class="loading plants-fetch" id="{{ id }}" role="status" aria-live="polite"
+     hx-get="/raport/stan-roslin?{{ sr.query }}&miejsce={{ sr.place }}&proba={{ sr.polls + 1 }}"
+     hx-trigger="load delay:{{ sr.delay }}s" hx-swap="outerHTML">{% if sr.place == 'brak' %}Stan roślin ze zdjęcia satelitarnego: pobieranie zdjęcia…{% else %}Pobieranie zdjęcia satelitarnego…{% endif %}</div>
+{%- elif sr.state == 'failed' -%}
+<div class="plants-fetch plants-fetch--failed" id="{{ id }}" role="status">
+  {%- if sr.place == 'brak' -%}
+  <p class="muted">Nie ujęto w raporcie: stan roślin ze zdjęcia satelitarnego.</p>
+  {%- else -%}
+  <p>Nie udało się pobrać zdjęcia satelitarnego (przyczyna: {{ sr.cause }}). Ocena stanu roślin nie jest ujęta.</p>
+  {%- if sr.can_retry %}
+  <button type="button" class="btn--ghost" hx-post="/raport/stan-roslin/ponow?{{ sr.query }}&miejsce={{ sr.place }}"
+          hx-target="#{{ id }}" hx-swap="outerHTML" hx-disabled-elt="this">Spróbuj ponownie</button>
+  {%- endif -%}
+  {%- endif -%}
+</div>
+{%- elif sr.state == 'ready' -%}
+{%- if sr.place == 'wiersz' -%}
+<div id="{{ id }}">{% for text in sr.paragraphs %}<p>{{ text }}</p>{% endfor %}</div>
+{%- elif sr.place == 'werdykt' -%}
+<span id="{{ id }}">{{ sr.line }}</span>
+{%- endif -%}
+{%- endif -%}
+{% endmacro %}

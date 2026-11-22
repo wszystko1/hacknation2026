@@ -1,4 +1,5 @@
 {# Farmer screen, level B: one <details> per row, one arrow per row. Every number stands in one row. #}
+{% from "report/_stan_roslin.html" import plants_block %}
 {% set fv = report.farmer %}
 {% set v = report.verdict %}
 {% set farmer_extra = true %}
@@ -14,12 +15,17 @@
       <p>{{ v.sentence }}</p>
       {% endif %}
       {% for text in row.paragraphs %}<p id="opad-od-1x">{{ text }}</p>{% endfor %}
+    {% elif row.kind == 'plants' %}
+      {{ plants_block(plants_for(report, 'wiersz')) }}
     {% elif row.kind == 'gmina' %}
       <p id="wiersz-smsr">{{ fv.confidence[0] }}</p>
       {% if report.agreement.available %}
-      <div class="agree" id="zgodnosc-ramka"><i aria-hidden="true">✓</i><div>{{ report.agreement.sentence }}</div></div>
-      {% if fv.commune_measures %}<p>Trafność metody: {{ fv.commune_measures.accuracy }}; zawsze częstsza odpowiedź: {{ fv.commune_measures.majority }}.</p>{% endif %}
+      {% set c = confidence_for(report) %}
+      {% if c %}{% include "report/_confidence.html" %}
+      {% else %}<div class="agree" id="zgodnosc-ramka"><i aria-hidden="true">✓</i><div>{{ report.agreement.sentence }}</div></div>{% endif %}
       {% endif %}
+    {% elif row.id == 'jak' %}
+      <ul class="b-lines b-list">{% for text in row.paragraphs if not text.startswith('To nie jest urzędowe') %}<li>{{ text }}</li>{% endfor %}</ul>
     {% else %}
       {% for text in row.paragraphs %}<p>{{ text }}</p>{% endfor %}
       {% if row.kind == 'plan' %}<p class="cnt" id="licznik-planu"><b data-plan-count>{{ report.plan_count }}</b><span>z {{ report.actions | length }} działań w planie</span></p>{% endif %}
@@ -39,11 +45,11 @@
         {% if line.fields %}
         <li class="card">
           <div class="card-h">{% if line.n and line.pin %}<span class="pin" role="img" aria-label="Miejsce na mapie: {{ line.n }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22l-6-9V3h12v10z"/></svg><b>{{ line.n }}</b></span> {% endif %}<b>{{ line.text }}</b></div>
-          <ul class="card-l">{% for label, value in line.fields %}<li><span class="k">{{ label }}:</span> {{ value }}</li>{% endfor %}</ul>
+          <ul class="card-l">{% for label, value in line.fields if label != 'Formalność' %}<li><span class="k">{{ label }}:</span> {{ value }}</li>{% endfor %}</ul>
         </li>
         {% else %}
         <li>
-          <span>{{ line.text }}{% if line.note %} <span class="muted">{{ line.note }}</span>{% endif %}</span>
+          <span>{{ line.text | replace('w wrażliwej fazie', 'we wrażliwej fazie') }}{% if line.note %} <span class="muted">{{ line.note }}</span>{% endif %}</span>
         </li>
         {% endif %}
         {% endfor %}
@@ -53,9 +59,9 @@
 {% endmacro %}
 {# six groups of rows plus "Jak liczymy"; the first group of every tab is open #}
 {% set groups = [
-  ('bilans', 'Bilans wody i próg suszy', ['bilans'], 'podsumowanie'),
+  ('bilans', 'Okres bilansu', ['bilans'], 'podsumowanie'),
   ('skad', 'Skąd ten bilans', [], 'przyczyny'),
-  ('dlaczego', 'Dlaczego tak wyszło', ['dlaczego', 'parowanie', 'rosliny'], 'przyczyny'),
+  ('dlaczego', 'Dlaczego tak wyszło', ['dlaczego', 'rosliny'], 'przyczyny'),
   ('czesto', 'Jak często ta działka cierpi', ['czesto'], 'przyczyny'),
   ('zatrzymaj', 'Zatrzymaj wodę', ['zabiegi', 'spadek', 'formalnosci'], 'rekomendacje'),
   ('nawadnianie', 'Czy nawadniać', ['nawadnianie'], 'rekomendacje'),
@@ -73,24 +79,29 @@
   <section class="b-group" id="wiersz-{{ gid }}" data-tab="{{ tab }}" aria-labelledby="h-{{ gid }}">
     <h3 id="h-{{ gid }}">{{ title }}</h3>
     <div class="b-body">
+    {% if gid == 'czesto' %}{% for sec in report.sections if sec.id == 'historia' and sec.chart_svg %}
+    <div class="b-sub b-chart"><div class="chart" tabindex="0" role="group" aria-label="Wykres: {{ sec.title }}">{{ sec.chart_svg | safe }}</div></div>
+    {% endfor %}{% endif %}
     {% for rid in present %}{% set row = by_id[rid] %}
-    {% if present | length > 1 %}<div class="b-sub"{% if rid != gid %} id="wiersz-{{ rid }}"{% endif %}><h4>{{ row.title }}</h4>{% endif %}
+    {% if present | length > 1 %}<div class="b-sub"{% if rid != gid %} id="wiersz-{{ rid }}"{% endif %}>{% if row.title != title %}<h4>{{ row.title }}</h4>{% endif %}{% endif %}
     {{ row_body(row) }}
     {% if present | length > 1 %}</div>{% endif %}
     {% endfor %}
     {% set extra = {'skad': 'przyczyny', 'czesto': 'historia'}.get(gid) %}
     {% if extra %}{% for sec in report.sections if sec.id == extra %}
     <div class="b-sub b-chart">
-      {% if sec.chart_svg %}<div class="chart" tabindex="0" role="group" aria-label="Wykres: {{ sec.title }}">{{ sec.chart_svg | safe }}</div>{% endif %}
-      {% for t in (sec.sentences[:1] if gid == 'skad' else sec.sentences) %}<p>{{ t | plain }}</p>{% endfor %}
+      {% if sec.chart_svg and gid != 'czesto' %}<div class="chart" tabindex="0" role="group" aria-label="Wykres: {{ sec.title }}">{{ sec.chart_svg | safe }}</div>{% endif %}
+      {% for t in (sec.sentences[:1] if gid == 'skad' else sec.sentences) %}
+      {% if t.startswith('Według miesięcy') %}{% set parts = t.split(': ', 1) %}
+      <p>{{ parts[0] }}:</p>
+      <ul class="b-lines b-list">{% for m in parts[1].rstrip('.').split('; ') %}<li>{{ m }}</li>{% endfor %}</ul>
+      {% else %}<p>{{ t | plain }}</p>{% endif %}
+      {% endfor %}
     </div>
     {% if gid == 'skad' and chart_cause_cards is defined %}{% set cards = chart_cause_cards(report) %}{% set cal = chart_calendar(report) %}
     {% if cards %}<div class="b-sub visual">{{ cards | safe }}</div>{% endif %}
     {% if cal %}<div class="b-sub visual chart" tabindex="0" role="group" aria-label="Wykres: kalendarz uprawy">{{ cal | safe }}</div>{% endif %}
     {% endif %}
-    {% endfor %}{% endif %}
-    {% if gid == 'gmina' %}{% for s in report.sections if s.id == 'gmina' and s.chart_svg %}{% set calib_part = 'chart' %}
-    <div class="b-sub b-chart">{% include "sections/_calibration.html" %}<p>Wykres pokazuje, jak często państwowy system (SMSR) potwierdzał suszę przy takim bilansie jak na tej działce.</p></div>
     {% endfor %}{% endif %}
     {% if gid == 'jak' and chart_schema is defined %}<div class="b-sub visual chart" tabindex="0" role="group" aria-label="Wykres: schemat Jak liczymy">{{ chart_schema() | safe }}</div>{% endif %}
     {% if gid == 'jak' %}{% for s in report.sections if s.id == 'zrodla' %}
@@ -105,10 +116,12 @@
   <details class="b-row" id="wiersz-dla-doradcy" data-tab="wiarygodnosc">
     <summary>Szczegóły zgodności z IUNG</summary>
     <div class="b-body b-tech">
+      {% for s in gmina_sections if s.chart_svg %}{% set calib_part = 'chart' %}<div class="b-sub b-chart">{% include "sections/_calibration.html" %}<p>Wykres pokazuje, jak często państwowy system (SMSR) potwierdzał suszę przy takim bilansie jak na tej działce.</p></div>{% endfor %}
       {% set calib_part = 'years' %}{% for s in gmina_sections %}{% include "sections/gmina.html" %}{% endfor %}
       {% if report.verdict_dg %}<div class="advisor">{% include "report/_verdict_dg.html" %}</div>{% endif %}
     </div>
   </details>
   {% endif %}
   {% if fv.missing_line %}<p class="muted" id="jeszcze-nie-liczymy" data-tab="wiarygodnosc">{{ fv.missing_line }}</p>{% endif %}
+  {% if fv.plants_pending %}<div data-tab="wiarygodnosc">{{ plants_block(plants_for(report, 'brak')) }}</div>{% endif %}
 </section>

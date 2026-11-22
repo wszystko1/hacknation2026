@@ -22,6 +22,8 @@ from app.geodata.satellite import fetch_season
 SEASONS_BACK = 6  # earlier seasons read for the comparison (three comparable ones are needed)
 JOB_BUDGET_S = 600.0  # the thread gives up after this long
 RETRY_AFTER_S = 600.0  # a failed job is not started again sooner than this
+MAX_ATTEMPTS = 3  # threads started for one parcel and day (the first one and the retries the reader asks for)
+FAILED_PREFIX = "pobranie zdjęć nie powiodło się"  # the reason of a failed thread: "<prefix> (<cause>)"
 NAMESPACE = "satellite_seasons"
 
 Seasons = dict[int, list[SceneIndex]]
@@ -30,6 +32,7 @@ Status = Literal["ready", "waiting", "missing"]
 _lock = threading.Lock()
 _running: dict[str, threading.Thread] = {}
 _failed: dict[str, tuple[float, str]] = {}  # key -> (time of failure, reason)
+_attempts: dict[str, int] = {}  # key -> threads started so far
 
 
 def frozen_dir() -> Path:
@@ -90,6 +93,28 @@ def _job(parcel: Parcel, day: date, key: str) -> None:
             _running.pop(key, None)
 
 
+def failure_cause(reason: str) -> str | None:
+    """The cause inside "pobranie zdjęć nie powiodło się (<cause>)", or None when the reason is another one."""
+    if reason.startswith(FAILED_PREFIX + " (") and reason.endswith(")"):
+        return reason[len(FAILED_PREFIX) + 2 : -1]
+    return None
+
+
+def attempts_left(parcel_id: str, day: date) -> int:
+    with _lock:
+        return max(0, MAX_ATTEMPTS - _attempts.get(_key(parcel_id, day), 0))
+
+
+def _start(parcel: Parcel, day: date, key: str) -> None:
+    """Starts the thread; the caller holds the lock and has checked that none runs for this key."""
+    _attempts[key] = _attempts.get(key, 0) + 1
+    thread = threading.Thread(
+        target=_job, args=(parcel, day, key), name="crop-condition-history", daemon=True
+    )
+    _running[key] = thread
+    thread.start()
+
+
 def seasons_for(parcel: Parcel, day: date) -> tuple[Status, Seasons, str]:
     """(status, seasons, reason): the copy, the cache, or a thread started now.
 
@@ -108,11 +133,23 @@ def seasons_for(parcel: Parcel, day: date) -> tuple[Status, Seasons, str]:
         if key in _running:
             return "waiting", {}, ""
         failure = _failed.get(key)
-        if failure is not None and time.monotonic() - failure[0] < RETRY_AFTER_S:
-            return "missing", {}, f"pobranie zdjęć nie powiodło się ({failure[1]})"
-        thread = threading.Thread(
-            target=_job, args=(parcel, day, key), name="crop-condition-history", daemon=True
-        )
-        _running[key] = thread
-        thread.start()
+        if failure is not None and (
+            time.monotonic() - failure[0] < RETRY_AFTER_S or _attempts.get(key, 0) >= MAX_ATTEMPTS
+        ):
+            return "missing", {}, f"{FAILED_PREFIX} ({failure[1]})"
+        _start(parcel, day, key)
     return "waiting", {}, ""
+
+
+def retry(parcel: Parcel, day: date) -> Status:
+    """The reader asked to try again: starts the thread once more after a failure (at most MAX_ATTEMPTS threads
+    per parcel and day, so the sources are not asked without end). "waiting" when a thread runs now, "ready"
+    when the seasons turned up meanwhile, "missing" when the limit is used up or there is no network."""
+    key = _key(parcel.id, day)
+    with _lock:
+        if key in _running:
+            return "waiting"
+        if _attempts.get(key, 0) >= MAX_ATTEMPTS:
+            return "missing"
+        _failed.pop(key, None)
+    return seasons_for(parcel, day)[0]

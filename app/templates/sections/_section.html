@@ -17,6 +17,6 @@
   {% endif %}
   {% if s.how %}<details class="calc"><summary>Jak to policzono</summary><p>{{ s.how }}</p></details>{% endif %}
   {% if s.advisor %}
-  <div class="advisor"><b>Dane szczegółowe</b><dl class="kv">{% for kv in s.advisor %}<dt>{{ kv.key }}</dt><dd>{{ kv.value }}</dd>{% endfor %}</dl></div>
+  <div class="advisor"><b>Dane szczegółowe</b><dl class="kv">{% for kv in s.advisor %}<dt>{{ kv.key | replace('w wrażliwej fazie', 'we wrażliwej fazie') }}</dt><dd>{{ kv.value }}</dd>{% endfor %}</dl></div>
   {% endif %}
 </section>

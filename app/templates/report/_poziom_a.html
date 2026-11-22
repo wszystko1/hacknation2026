@@ -14,7 +14,13 @@
   <div class="a-verdict tile tile--wide" data-tab="podsumowanie" id="werdykt" data-a-item>
     <span class="badge badge--{{ {'dry': 'dry', 'ok': 'ok', 'neutral': 'neutral'}[fv.verdict.tone] }}" id="plakietka">{{ fv.verdict.word }}</span>
     <p id="zdanie-werdyktu" class="verdict-sentence {{ 'verdict-sentence--ok' if fv.verdict.tone == 'ok' else '' }}">{{ fv.verdict.sentence }}</p>
-    {% if report.verdict.kbw_mm is not none %}{{ hbar(report.verdict) | safe }}{% endif %}
+    {% if report.verdict.kbw_mm is not none %}
+    <div class="big-number {{ 'big-number--dry' if report.verdict.state == 'below' else '' }}">
+      <b>{{ report.verdict.kbw_mm | dec }}<small>mm</small></b>
+      <div class="cap">{{ fv.balance_caption }}</div>
+    </div>
+    {{ hbar(report.verdict) | safe }}
+    {% endif %}
   </div>
   {% for bar in fv.bars %}
   <div class="a-bars tile" data-tab="podsumowanie"{% if loop.first %} data-a-item{% endif %} role="img" aria-label="{{ bar.label }}: zwykle {{ bar.usual }}, teraz {{ bar.now }}">
@@ -35,11 +41,10 @@
     <p class="muted">Brak wyniku.</p>
     {% endif %}
   </div>
-  {% for sec in report.sections if sec.id == 'historia' and sec.chart_svg %}
+  {% for sec in report.sections if sec.id == 'historia' and sec.chart_svg and fv.season_line %}
   <div class="tile a-hist" data-tab="podsumowanie" data-a-item>
     <h2>Jak często ta działka cierpi</h2>
-    <div class="chart">{{ sec.chart_svg | safe }}</div>
-    {% if fv.season_line %}<p>{{ fv.season_line }}</p>{% endif %}
+    <p>{{ fv.season_line }}</p>
   </div>
   {% endfor %}
   <div class="a-conf tile" data-tab="podsumowanie" id="pewnosc" data-a-item>

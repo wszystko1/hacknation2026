@@ -28,6 +28,7 @@ def parcel():
 def fresh_state(monkeypatch):
     monkeypatch.setattr(background, "_running", {})
     monkeypatch.setattr(background, "_failed", {})
+    monkeypatch.setattr(background, "_attempts", {})
 
 
 def _reading(year: int) -> SceneIndex:

@@ -57,7 +57,7 @@ def counts_svg(counts: Sequence[DecadeCount], label: str) -> str:
     _axis(body, slot, BASE)
     _legend(
         body,
-        HEIGHT - 22,
+        HEIGHT - 30,
         (("s-dry", "co najmniej połowa sezonów"), ("s-warn", "mniej niż połowa"), ("s-neu", "ani razu")),
     )
     body.append(svg.text(LEFT, HEIGHT - 2, "„–”: w tej dekadzie nie kończy się okres z progiem", ""))

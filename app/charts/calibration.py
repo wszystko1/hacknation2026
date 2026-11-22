@@ -55,9 +55,11 @@ def calibration_svg(metrics: Mapping[str, Any], margin_mm: float | None, label: 
         if lo is not None and hi is not None:
             body.append(svg.line(cx, _y(hi), cx, _y(lo), "ax-zero"))
         body.append(svg.rect(cx - 6, _y(share) - 6, 12, 12, "s-dry"))
-        body.append(
-            svg.text(cx, _y(hi if hi is not None else share) - 10, f"{round(100 * share)}%", "lbl", "middle")
-        )
+        label_y = _y(hi if hi is not None else share) - 10
+        if i == own:  # the parcel's line runs through the class: the share stands beside it, not on it
+            body.append(svg.text(cx + 9, label_y - 22, f"{round(100 * share)}%", "lbl", "start"))
+        else:
+            body.append(svg.text(cx, label_y, f"{round(100 * share)}%", "lbl", "middle"))
     for j, cut in enumerate(calibration.CUTS):
         x = LEFT + slot * (j + 1)
         body.append(svg.text(x, BASE + 22, f"{cut:g}".replace("-", "−"), "", "middle"))

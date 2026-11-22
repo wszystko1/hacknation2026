@@ -6,7 +6,7 @@ from app.advice.diagnosis import BalanceSplit
 from app.charts import svg
 from app.fmt import dec
 
-HEIGHT = 340
+HEIGHT = 362
 LEFT, RIGHT = 20, 590
 TOP, BOTTOM = 52, 236
 LABELS = (("zwykły", "bilans"), ("mniej", "opadu"), ("więcej", "parowania"), ("bilans", "w tym okresie"))
@@ -49,7 +49,7 @@ def waterfall_svg(split: BalanceSplit, threshold_mm: float | None, label: str) -
             clear = threshold_mm is None or abs(above - 6 - y(threshold_mm)) > 22
             body.append(svg.text(cx, above if clear else below, dec(val), "lbl", "middle"))
         body.append(svg.text(cx, BOTTOM + 52, LABELS[i][0], "", "middle"))
-        body.append(svg.text(cx, BOTTOM + 74, LABELS[i][1], "", "middle"))
+        body.append(svg.text(cx, BOTTOM + 78, LABELS[i][1], "", "middle"))
     if threshold_mm is not None:
         body.append(svg.line(LEFT, y(threshold_mm), RIGHT, y(threshold_mm), "s-thr"))
         body.append(svg.line(LEFT, HEIGHT - 12, LEFT + 36, HEIGHT - 12, "s-thr"))

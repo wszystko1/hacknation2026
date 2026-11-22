@@ -25,12 +25,11 @@ def test_section_route_has_no_dash_cell_and_shows_metrics_json_numbers() -> None
     assert "zawsze częstsza odpowiedź" in section
 
 
-def test_frame_states_both_scores_per_100_cases() -> None:
+def test_frame_states_the_score_per_100_cases() -> None:
+    # p77: the old "metoda / zawsze częstsza odpowiedź" frame moved to the folded "Szczegóły zgodności z IUNG"
     page = html(DOBRCZ)
-    frame = re.search(r'id="zgodnosc-ramka".*?</div>\s*</div>', page, flags=re.S)
-    assert frame
-    text = re.sub(r"<[^>]+>", " ", frame.group(0))
-    assert re.search(r"w \d+ na 100 przypadków; odpowiedź „zawsze częstsza odpowiedź” w \d+ na 100", text)
+    bar = re.search(r'id="pasek-pewnosci".*?conf-sentence">([^<]*)<', page, flags=re.S)
+    assert bar and re.search(r"w \d+ na 100 przypadków", bar.group(1))
 
 
 def test_report_and_print_have_no_placeholder_in_section_2() -> None:

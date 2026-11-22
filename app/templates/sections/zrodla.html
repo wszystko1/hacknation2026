@@ -6,8 +6,8 @@
       <thead><tr><th>Źródło</th><th>Co dało</th><th>Pobrano</th><th class="num">Czas</th><th>Stan</th></tr></thead>
       <tbody>
         {% for r in report.sources %}
-        <tr><td>{{ r.label }}<br><span class="muted">{{ r.provider }}</span></td><td>{{ r.gave or '–' }}</td><td class="mono">{{ (r.retrieved_at[8:10] ~ '.' ~ r.retrieved_at[5:7] ~ ' ' ~ r.retrieved_at[11:16]) if r.retrieved_at else '–' }}</td><td class="num">{% if r.retrieved_at and r.elapsed_s is not none and r.elapsed_s < 0.05 %}z pamięci{% else %}{{ r.elapsed_s | seconds }}{% endif %}</td>
-          <td class="{{ {'ok': 'st-ok', 'copy': 'st-ok', 'fallback': 'st-warn', 'missing': 'st-no', 'waiting': 'st-warn'}[r.status] }}">{% if r.status == 'copy' %}kopia z dnia {{ r.retrieved_at[8:10] }}.{{ r.retrieved_at[5:7] }}.{{ r.retrieved_at[:4] }}{% else %}{{ {'ok': 'jest', 'fallback': 'zapas', 'missing': 'brak', 'waiting': 'w toku'}[r.status] }}{% endif %}{% if r.reason %}: {{ r.reason }}{% endif %}</td></tr>
+        <tr><td>{{ r.label }}<br><span class="muted">{{ r.provider }}</span></td><td>{{ r.gave or '–' }}</td><td class="mono" data-label="Pobrano">{{ (r.retrieved_at[8:10] ~ '.' ~ r.retrieved_at[5:7] ~ ' ' ~ r.retrieved_at[11:16]) if r.retrieved_at else '–' }}</td><td class="num" data-label="Czas">{% if r.retrieved_at and r.elapsed_s is not none and r.elapsed_s < 0.05 %}z pamięci{% else %}{{ r.elapsed_s | seconds }}{% endif %}</td>
+          <td data-label="Stan" class="{{ {'ok': 'st-ok', 'copy': 'st-copy', 'fallback': 'st-warn', 'missing': 'st-no', 'waiting': 'st-warn'}[r.status] }}">{% if r.status == 'copy' %}kopia z dnia {{ r.retrieved_at[8:10] }}.{{ r.retrieved_at[5:7] }}.{{ r.retrieved_at[:4] }}{% else %}{{ {'ok': 'jest', 'fallback': 'zapas', 'missing': 'brak', 'waiting': 'w toku'}[r.status] }}{% endif %}{% if r.reason %}: {{ r.reason }}{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

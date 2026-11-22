@@ -19,10 +19,14 @@ from markupsafe import Markup, escape
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import datasource, fmt
+from app.charts.confidence import confidence_for
 from app.context import ReportContext
+from app.crop_condition import background as crop_background
+from app.crop_condition import view as crop_view
 from app.drought.chart import hbar_svg
 from app.drought.variants import main_verdict
 from app.farmer_view import plain as plain_words
+from app.farmer_view import plants_paragraphs
 from app.geodata import InvalidParcelId, fetch_all
 from app.inputs import FORMAT_ERROR, parse_request
 from app.mapview import map_view
@@ -70,7 +74,13 @@ templates.env.filters.update(
     crop_label=lambda code: CROP_LABELS[CropGroup(code)].lower(),
 )
 APP_BUILD = "2026-11-22 · 80cb767"  # date of the build and a short hash
-templates.env.globals.update(hbar=hbar_svg, out_of_season=OUT_OF_SEASON, APP_BUILD=APP_BUILD)
+templates.env.globals.update(
+    confidence_for=confidence_for,
+    hbar=hbar_svg,
+    out_of_season=OUT_OF_SEASON,
+    APP_BUILD=APP_BUILD,
+    plants_for=lambda report, place: crop_view.from_condition(report.crop_condition, report.request, place),
+)
 
 # Example parcels on the start screen (frozen copies in demo/data/geodata, no network needed).
 EXAMPLES = [
@@ -331,6 +341,90 @@ def _out_of_band(html: str, opening: str, new_opening: str) -> str:
     if opening not in html:
         raise ValueError(f"report template changed: {opening!r} not found")
     return html.replace(opening, new_opening, 1)
+
+
+# ---- the plants block: the satellite picture is fetched in the background, the block asks for itself ----------
+
+
+def _plants_response(req: ReportRequest, place: str, block: dict | None) -> HTMLResponse:
+    """The block in its state; for None (the picture is ready) the finished sentences, or nothing for the
+    line of what the report does not count."""
+    if block is None:
+        if place == "brak":
+            return HTMLResponse("")
+        report = build_report(req)
+        cc = report.crop_condition
+        block = crop_view.from_condition(cc, req, place)  # a race: the thread has just ended in a failure
+        if block is None:
+            words = plain_words(cc.words) if cc.state in ("ok", "not_applicable") else cc.words
+            if cc.scene_date and cc.state == "ok":
+                words = f"{words} (zdjęcie z {fmt.day(cc.scene_date)})"
+            block = {"place": place, "state": "ready", "paragraphs": plants_paragraphs(report), "line": words}
+    html = templates.get_template("report/_stan_roslin.html").module.plants_block(block)
+    response = HTMLResponse(str(html))
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+def _plants_request(request: Request) -> tuple[ReportRequest, str, int] | None:
+    req, _ = _report_or_errors(request)
+    place = request.query_params.get("miejsce", "wiersz")
+    polls = request.query_params.get("proba", "0")
+    if req is None or place not in crop_view.PLACES:
+        return None
+    return req, place, int(polls) if polls.isdigit() else 0
+
+
+def _parcel_of(req: ReportRequest):
+    """The parcel outline alone (cached by the report that is open on the page)."""
+    data = fetch_all(req.parcel_id, req.day, sources=("parcel",), budget_s=FIRST_LOOK_WAIT_S)
+    return data.parcel.data if data.parcel.usable else None
+
+
+@app.get("/raport/stan-roslin", response_class=HTMLResponse)
+def plants_state(request: Request) -> HTMLResponse:
+    """One poll of the plants block: the finished sentences (the polling ends), or "waiting" again, or the
+    failure with its cause."""
+    asked = _plants_request(request)
+    if asked is None:
+        return HTMLResponse('<p class="error">Nie ma takiego raportu.</p>', status_code=404)
+    req, place, polls = asked
+    try:
+        parcel = _parcel_of(req)
+        if parcel is None:
+            return _plants_response(
+                req, place, crop_view.failed(req, place, "brak obrysu działki", can_retry=True)
+            )
+        status, _, reason = crop_background.seasons_for(parcel, req.day)
+        return _plants_response(req, place, crop_view.after_poll(req, place, status, reason, polls))
+    except Exception as exc:  # noqa: BLE001 - the block ends in a sentence, never a trace
+        log.error("plants block failed", exc_info=exc)
+        return _plants_response(req, place, crop_view.failed(req, place, "błąd obliczenia", can_retry=True))
+
+
+@app.post("/raport/stan-roslin/ponow", response_class=HTMLResponse)
+def plants_retry(request: Request) -> HTMLResponse:
+    """The reader asks to fetch the picture once more (at most background.MAX_ATTEMPTS threads per parcel and day)."""
+    asked = _plants_request(request)
+    if asked is None:
+        return HTMLResponse('<p class="error">Nie ma takiego raportu.</p>', status_code=404)
+    req, place, _ = asked
+    try:
+        parcel = _parcel_of(req)
+        if parcel is None:
+            return _plants_response(
+                req, place, crop_view.failed(req, place, "brak obrysu działki", can_retry=True)
+            )
+        status = crop_background.retry(parcel, req.day)
+        if status == "missing":
+            _, _, reason = crop_background.seasons_for(parcel, req.day)
+            status_reason = (status, reason)
+        else:
+            status_reason = (status, "")
+        return _plants_response(req, place, crop_view.after_poll(req, place, *status_reason, 0))
+    except Exception as exc:  # noqa: BLE001
+        log.error("plants retry failed", exc_info=exc)
+        return _plants_response(req, place, crop_view.failed(req, place, "błąd obliczenia", can_retry=True))
 
 
 @app.get("/raport/wynik", response_class=HTMLResponse)
