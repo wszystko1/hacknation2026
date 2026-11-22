@@ -17,21 +17,21 @@ def _pct(x: float) -> str:
 def scene(page, base_url: str) -> None:
     show_tab(page, "wiarygodnosc")
     open_row(page, "gmina")
-    row = page.locator("#wiersz-gmina")
-    text = row.inner_text()
+    assert "na 100 przypadków" in page.locator("#wiersz-gmina").inner_text()
+    open_row(page, "dla-doradcy")  # the folded tables of the agreement with IUNG
+    text = page.locator("#miary").inner_text()
     assert _pct(SMSR["accuracy"]) in text
     assert _pct(SMSR["accuracy_majority"]) in text
     assert "zawsze częstsza odpowiedź" in text
     assert "–" not in text.replace("−", "")
     page.wait_for_timeout(PAUSE)
 
-    open_row(page, "dla-doradcy")  # the folded tables of the agreement with IUNG
     page.wait_for_selector("#krzywa-kalibracji", timeout=30000)
     marker = page.locator("#krzywa-kalibracji [data-marker]")
     key = marker.get_attribute("data-marker")
-    share = SMSR["calibration"]["fao56"][key]["plus_share"]
-    frame = page.locator("#zgodnosc-ramka").inner_text()
-    assert f"w {round(100 * share)} na 100 przypadków" in frame
+    share = SMSR["calibration"]["dg"][key]["plus_share"]
+    frame = page.locator("#pasek-pewnosci").inner_text()
+    assert f"{round(100 * share)} na 100 przypadków" in frame
     assert len(page.locator("#po-latach tbody tr").all()) == 7
     page.locator("#krzywa-kalibracji").scroll_into_view_if_needed()
     page.wait_for_timeout(PAUSE)
