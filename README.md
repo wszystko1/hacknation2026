@@ -29,6 +29,7 @@ Adres po starcie: http://127.0.0.1:8000. Dane działki aplikacja pobiera z inter
 **Linux i macOS**
 
 ```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh   # instalacja uv (jednorazowo; potem otwórz nowy terminal)
 git clone https://github.com/wszystko1/hacknation2026.git && cd hacknation2026
 uv sync --no-dev                           # zależności produkcyjne (make setup robi to samo; bez Playwrighta)
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000   # albo: make serve
@@ -37,6 +38,7 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8000   # albo: make serve
 **Windows (PowerShell lub cmd, bez `make`)**
 
 ```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"   # instalacja uv (jednorazowo; potem otwórz nowy terminal); albo: winget install --id=astral-sh.uv
 git clone https://github.com/wszystko1/hacknation2026.git; cd hacknation2026
 uv sync
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000   # równoważnie: uv run python -m app
