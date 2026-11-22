@@ -1,0 +1,33 @@
+/* Print view: three A4 pages, one column, no folds, no tabs. Colours only through the tokens of app.css. */
+.pr { max-width: 190mm; margin: 0 auto; padding: var(--s3); font-size: 10.5pt; line-height: 1.35; }
+.pr-info { margin: 0 0 var(--s3); color: var(--muted); }
+.pr-page { break-after: page; padding-bottom: var(--s3); }
+.pr-page:last-child { break-after: auto; }
+.pr-head h1 { font-size: 20pt; margin: 2pt 0; }
+.pr-brand { font-weight: 700; color: var(--accent-ink); }
+.pr-sub { margin: 0 0 var(--s3); color: var(--muted); }
+.pr-top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--s4); align-items: start; }
+.pr-sentence { font-size: 13pt; font-weight: 650; margin: var(--s2) 0; }
+.pr-frame { position: relative; line-height: 0; border-radius: var(--radius-sm); overflow: hidden; }
+.pr-frame img { width: 100%; height: auto; max-height: 55mm; object-fit: cover; }
+.pr-frame svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pr-photo { margin: 0; font-size: 8pt; color: var(--muted); }
+.pr-bars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); margin: var(--s3) 0; }
+.pr h2 { font-size: 11pt; margin: 0 0 var(--s2); }
+.pr-h { margin-top: var(--s4); padding-bottom: 2pt; border-bottom: 1px solid var(--line); color: var(--accent-ink); font-size: 12pt; }
+.pr-box { margin: var(--s3) 0; padding: var(--s3); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.pr-box p { margin: 0 0 var(--s2); }
+.pr-list { margin: 0 0 var(--s2); padding-left: 0; list-style: none; display: grid; gap: var(--s2); }
+.pr-n { display: inline-block; min-width: 1.4em; text-align: center; font-weight: 700; color: var(--accent-ink); }
+.pr-muted { color: var(--muted); }
+.pr-chart { max-width: 100%; overflow: hidden; }
+.pr-chart svg { width: 100%; height: auto; max-height: 48mm; }
+.pr-src { width: 100%; border-collapse: collapse; font-size: 9pt; }
+.pr-src th, .pr-src td { text-align: left; vertical-align: top; padding: 2pt 6pt 2pt 0; border-bottom: 1px solid var(--line); }
+.pr p, .pr li, .pr-box, .pr-bar, .pr-chart, .pr-src tr, .pr-verdict, .pr-photo { break-inside: avoid; page-break-inside: avoid; }
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+  body { background: var(--surface); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .no-print { display: none !important; }
+  .pr { padding: 0; font-size: 10.5pt; }
+}

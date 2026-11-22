@@ -1,6 +1,7 @@
 {% extends "base.html" %}
-{% block body_class %}view-doradca print-view{% endblock %}
-{% block head %}
+{% block body_class %}print-view{% endblock %}
+{% block header %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/print.css">
 <style>
   .print-photo .ledger, .print-photo .pick, .print-photo .nb-card { display: none; }
   .print-photo .map-ui { position: static; margin-top: var(--s2); }
@@ -17,17 +18,106 @@
     .print-view .mlegend { display: block; }
     .print-view .report .verdict { break-inside: auto; }
   }
-</style>
-{% endblock %}
+</style>{% endblock %}
+{% macro lines(row, limit=8) %}
+{% if row and row.lines %}<ul class="pr-list">{% for l in row.lines[:limit] %}<li>{% if l.n %}<span class="pr-n">{{ l.n }}</span> {% endif %}<b>{{ l.text }}</b>{% if l.note %} <span class="pr-muted">{{ l.note }}</span>{% endif %}{% for label, value in l.fields if label in ('Termin', 'Kiedy', 'Miejsce') %} <span class="pr-muted">{{ label }}: {{ value }}</span>{% endfor %}</li>{% endfor %}</ul>{% endif %}
+{% endmacro %}
 {% block main %}
-<main id="tresc" class="page">
-  <p class="banner banner--info no-print" id="druk-info"><i aria-hidden="true">i</i>Widok do druku: ten sam raport w jednej kolumnie. <button type="button" class="btn btn--ghost" id="drukuj">Drukuj lub zapisz PDF</button></p>
-  <div class="report">
+{% set fv = report.farmer %}
+{% set v = report.verdict %}
+{% set m = report.map %}
+{% set rows = {} %}{% for r in fv.rows %}{% set _ = rows.update({r.id: r}) %}{% endfor %}
+{% set hist = report.sections | selectattr('id', 'equalto', 'historia') | first %}
+{% set cause = report.sections | selectattr('id', 'equalto', 'przyczyny') | first %}
+<main id="tresc" class="pr">
+  <p class="pr-info no-print" id="druk-info">Widok do druku: 3 strony A4. <button type="button" id="drukuj">Drukuj lub zapisz PDF</button></p>
+
+  <section class="pr-page" id="strona-1" aria-label="Wynik">
+    <header class="pr-head">
+      <div class="pr-brand">ChrońPlon · raport o suszy rolniczej</div>
+      <h1>Działka {{ fv.header.parcel }}</h1>
+      <p class="pr-sub">gm. {{ fv.header.commune }}, obręb {{ fv.header.precinct }} · {{ fv.header.crop | crop_label }} · {{ fv.header.area }} · {{ fv.header.soil }}<br>ocena na {{ fv.header.day }}{% if fv.header.demo_label %} · <span class="demo-data">{{ fv.header.demo_label }}</span>{% endif %}</p>
+    </header>
+    <div class="pr-top">
+      <div class="pr-verdict" id="k-werdykt">
+        <span class="badge badge--{{ {'dry': 'dry', 'ok': 'ok', 'neutral': 'neutral'}[fv.verdict.tone] }}" id="k-plakietka">{{ fv.verdict.word }}</span>
+        <p id="k-zdanie" class="pr-sentence">{{ v.sentence }}</p>
+        {% if v.kbw_mm is not none %}{{ hbar(v) | safe }}{% endif %}
+      </div>
+      {% if m %}
+      <figure class="pr-photo" id="k-zdjecie">
+        <div class="pr-frame"><img src="{{ m.image_url }}" width="{{ m.width }}" height="{{ m.height }}" alt="Ortofotomapa działki {{ report.parcel.number }}">
+          <svg viewBox="0 0 {{ m.width }} {{ m.height }}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Obrys działki {{ report.parcel.number }}">
+            {% set pts = m.outline_px[0] | map('join', ',') | join(' ') %}
+            <polygon class="mo-casing" points="{{ pts }}"/><polygon class="mo-outline" points="{{ pts }}"/>
+          </svg></div>
+        <figcaption>{{ m.label }} · {{ m.attribution }}</figcaption>
+      </figure>
+      {% endif %}
+    </div>
+    <div class="pr-bars">
+      {% for bar in fv.bars %}
+      <div class="pr-bar" role="img" aria-label="{{ bar.label }}: zwykle {{ bar.usual }}, teraz {{ bar.now }}">
+        <h2>{{ bar.label }}</h2>
+        <div class="a-bar"><span>zwykle {{ bar.usual }}</span><svg viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="bar-usual" width="{{ bar.usual_pct }}" height="8" rx="2"/></svg></div>
+        <div class="a-bar"><span>teraz {{ bar.now }}</span><svg viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="bar-now" width="{{ bar.now_pct }}" height="8" rx="2"/></svg></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="pr-box" id="k-pewnosc">
+      <h2>Ocena IUNG dla gminy</h2>
+      {% for line in fv.confidence[:2] %}<p>{{ line }}</p>{% endfor %}
+    </div>
+    <div class="pr-box" id="k-dzialanie-1">
+      <h2>Co robić najpierw</h2>
+      {% if fv.todo %}<ol class="pr-list">{% for t in fv.todo[:3] %}<li><span class="pr-n">{{ t.n }}</span> <b>{{ t.title }}</b>{% if t.when != 'termin do ustalenia' %} <span class="pr-muted">· termin: {{ t.when }}</span>{% endif %}</li>{% endfor %}</ol>
+      {% else %}<p class="pr-muted">Brak wyniku.</p>{% endif %}
+      <p class="pr-muted" id="k-licznik"><b data-plan-count>{{ report.plan_count }}</b> z {{ report.actions | length }} działań w planie</p>
+    </div>
+  </section>
+
+  <section class="pr-page" id="strona-2" aria-label="Przyczyny i zalecenia">
+    <h2 class="pr-h">Przyczyny</h2>
+    {% if cause and cause.chart_svg %}<div class="pr-chart" role="img" aria-label="Wykres: {{ cause.title }}">{{ cause.chart_svg | safe }}</div>{% endif %}
+    {{ lines(rows.get('dlaczego'), 4) }}
+    {% if hist and hist.chart_svg %}
+    <h2 class="pr-h">Historia: 10 sezonów</h2>
+    <div class="pr-chart" role="img" aria-label="Wykres: {{ hist.title }}">{{ hist.chart_svg | safe }}</div>
+    {% if fv.season_line %}<p>{{ fv.season_line }}</p>{% endif %}
+    {% endif %}
+    {% if rows.get('zabiegi') or rows.get('nawadnianie') %}
+    <h2 class="pr-h">Zalecenia</h2>
+    {{ lines(rows.get('zabiegi'), 4) }}{{ lines(rows.get('nawadnianie'), 2) }}
+    {% endif %}
+    {% if rows.get('formalnosci') %}<h2 class="pr-h">Formalności</h2>{{ lines(rows.get('formalnosci'), 3) }}{% endif %}
+  </section>
+
+  <section class="pr-page" id="strona-3" aria-label="Zastrzeżenie, źródła i metoda">
+    <h2 class="pr-h">Zastrzeżenie</h2>
+    <p class="pr-disclaimer" id="k-zastrzezenie">{{ v.disclaimer }}.</p>
+    <h2 class="pr-h">Źródła danych</h2>
+    <table class="pr-src" id="k-tabela-zrodel">
+      <thead><tr><th>Źródło</th><th>Co dało</th><th>Stan i data kopii</th></tr></thead>
+      <tbody>
+        {% for r in report.sources %}
+        <tr><td>{{ r.label }} <span class="pr-muted">({{ r.provider }})</span></td><td>{{ r.gave or '–' }}</td>
+          <td>{% if r.status == 'copy' %}kopia z dnia {{ r.retrieved_at[8:10] }}.{{ r.retrieved_at[5:7] }}.{{ r.retrieved_at[:4] }}{% else %}{{ {'ok': 'jest', 'fallback': 'zapas', 'missing': 'brak', 'waiting': 'w toku'}[r.status] }}{% if r.retrieved_at %}, {{ r.retrieved_at[8:10] }}.{{ r.retrieved_at[5:7] }}.{{ r.retrieved_at[:4] }}{% endif %}{% endif %}{% if r.reason %}: {{ r.reason }}{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <h2 class="pr-h">Jak liczyliśmy</h2>
+    {% for text in (rows['jak'].paragraphs[:3] if rows.get('jak') else []) %}<p>{{ text }}</p>{% endfor %}
+    {% if fv.missing_line %}<h2 class="pr-h">Czego nie uwzględniamy</h2><p id="k-brak">{{ fv.missing_line }}</p>{% endif %}
+  </section>
+  <div class="pr-full no-print" id="pelny-raport">
+    <h2 class="pr-h">Pełny raport na ekranie (poza wydrukiem)</h2>
+<div class="report">
     {% include "report/_head.html" %}
     <div class="print-photo" id="zdjecie-druk">{% include "report/_map.html" %}</div>
     {% include "report/_verdict.html" %}
     {% include "report/_toc.html" %}
     {% for s in report.sections %}{% include "sections/" ~ s.id ~ ".html" %}{% endfor %}
+  </div>
   </div>
 </main>
 <script src="/static/plan.js" defer></script>

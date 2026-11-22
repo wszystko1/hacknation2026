@@ -30,6 +30,35 @@ PARCELS = {
 }
 
 
+def export_one(params: dict, path: Path) -> Path:
+    """Write the print view of one parcel as an A4 PDF at `path`."""
+    from playwright.sync_api import sync_playwright
+
+    port = free_port()
+    server = start_server(port)
+    try:
+        base = f"http://127.0.0.1:{port}"
+        if not up(base + "/health", 60):
+            raise SystemExit("the app did not start")
+        with sync_playwright() as pw:
+            browser = launch(pw)
+            page = browser.new_page(viewport={"width": 1100, "height": 1400})
+            _save(page, base, params, path)
+            browser.close()
+    finally:
+        stop_server(server)
+    return path
+
+
+def _save(page, base: str, params: dict, path: Path) -> None:
+    page.goto(f"{base}/raport/druk?{urlencode(params)}", wait_until="networkidle", timeout=60000)
+    page.wait_for_selector("#tabela-zrodel", state="attached")
+    page.evaluate(
+        "Promise.all([...document.images].map(i => i.complete || new Promise(r => { i.onload = i.onerror = r; })))"
+    )
+    page.pdf(path=str(path), format="A4", print_background=True, prefer_css_page_size=True)
+
+
 def export(out_dir: Path = OUT) -> list[Path]:
     from playwright.sync_api import sync_playwright
 
@@ -45,18 +74,8 @@ def export(out_dir: Path = OUT) -> list[Path]:
             browser = launch(pw)
             page = browser.new_page(viewport={"width": 1100, "height": 1400})
             for name, params in PARCELS.items():
-                page.goto(f"{base}/raport/druk?{urlencode(params)}", wait_until="networkidle", timeout=60000)
-                page.wait_for_selector("#tabela-zrodel", state="attached")
-                page.evaluate(
-                    "Promise.all([...document.images].map(i => i.complete || new Promise(r => { i.onload = i.onerror = r; })))"
-                )
                 path = out_dir / f"{name}.pdf"
-                page.pdf(
-                    path=str(path),
-                    format="A4",
-                    print_background=True,
-                    margin={"top": "14mm", "bottom": "14mm", "left": "14mm", "right": "14mm"},
-                )
+                _save(page, base, params, path)
                 written.append(path)
             browser.close()
     finally:
