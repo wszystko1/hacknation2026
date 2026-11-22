@@ -10,6 +10,14 @@ either in the quote of a Polish source (CDR 2025, with its page) or the row says
 the number is ours and is to be checked with an adviser. "Lower boundary segment" in a title or sentence is the part of
 the parcel outline where the fitted slope plane leaves the parcel.
 
+Two separate labels describe how well a row is backed. `confidence` is about the row's numbers (thresholds): a number
+the quote does not state is "propozycja zespołu". `source_kind` is about the action itself: "opis praktyki" (a source
+describes the practice), "badanie z liczbą" (a study with a number behind it) or "propozycja zespołu" (no publication).
+The optional `research_*` columns hold a second source found in the literature (document, address, page or paragraph,
+quote, what it says); several quotes in one cell are separated by " | " and pair with the pages separated by "; ".
+Each risk of an action carries its source and its kind: badanie, opis praktyki, przepis prawny or opinia; a risk
+without a source is an opinion and is shown as one, not as a fact.
+
 Sentence templates use `str.format` fields filled from the parcel: `{area_ha}`, `{slope_pct}`, `{catchment_ha}`,
 `{length_m}`, `{distance_m}`, `{n_weirs}`, `{deficit_mm}`, `{dose_mm}`, `{dose_m3}`, `{soil}`, `{place}`, `{term}`.
 """
@@ -32,7 +40,22 @@ GROUP_ORDER: tuple[ActionGroup, ...] = ("retencja", "uprawa", "nawadnianie")
 MAX_PER_GROUP = 3
 MIN_QUOTE_CHARS = 20
 
+SOURCE_KINDS = ("opis praktyki", "badanie z liczbą", "propozycja zespołu")
+RISK_KINDS = ("badanie", "opis praktyki", "przepis prawny", "opinia")
+
 Confidence = Literal["badanie", "opinia ekspercka", "propozycja zespołu"]
+SourceKind = Literal["opis praktyki", "badanie z liczbą", "propozycja zespołu"]
+RiskKind = Literal["badanie", "opis praktyki", "przepis prawny", "opinia"]
+
+
+class Risk(BaseModel):
+    """What can go wrong with an action, with the source that says so and its kind."""
+
+    model_config = ConfigDict(frozen=True)
+
+    text: str
+    source: str
+    kind: RiskKind
 
 
 def _number(text: str) -> float | None:
@@ -55,6 +78,15 @@ class CatalogRow(BaseModel):
     source_quote: str
     source_url: str
     confidence: Confidence
+    source_kind: SourceKind
+    research_doc: str
+    research_url: str
+    research_page: str
+    research_quote: str
+    research_says: str
+    risks: tuple[Risk, ...]
+    not_when: str
+    next_step: str
     legal_article: str
     term: str
     farmer_alone: bool
@@ -78,6 +110,16 @@ class CatalogRow(BaseModel):
         raw = self.conditions.get(name, "")
         return tuple(p.strip() for p in raw.split(";") if p.strip())
 
+    def has_research_source(self) -> bool:
+        """A second source from the literature: document, address, page or paragraph, quote and what it says."""
+        return bool(
+            self.research_doc.strip()
+            and self.research_url.startswith("http")
+            and self.research_page.strip()
+            and len(self.research_quote.strip()) >= MIN_QUOTE_CHARS
+            and self.research_says.strip()
+        )
+
     def has_full_source(self) -> bool:
         """Document, page, quote of at least 20 characters and an http address: the price of a number."""
         return bool(
@@ -86,6 +128,17 @@ class CatalogRow(BaseModel):
             and len(self.source_quote.strip()) >= MIN_QUOTE_CHARS
             and self.source_url.startswith("http")
         )
+
+
+def _risks(raw: dict[str, str]) -> tuple[Risk, ...]:
+    found: list[Risk] = []
+    for n in (1, 2):
+        text = raw[f"risk_{n}"].strip()
+        if text:
+            found.append(
+                Risk(text=text, source=raw[f"risk_{n}_source"].strip(), kind=raw[f"risk_{n}_kind"].strip())  # type: ignore[arg-type]
+            )
+    return tuple(found)
 
 
 def _row(raw: dict[str, str]) -> CatalogRow:
@@ -102,6 +155,15 @@ def _row(raw: dict[str, str]) -> CatalogRow:
         source_quote=raw["source_quote"].strip(),
         source_url=raw["source_url"].strip(),
         confidence=raw["confidence"].strip(),  # type: ignore[arg-type]
+        source_kind=raw["source_kind"].strip(),  # type: ignore[arg-type]
+        research_doc=raw["research_doc"].strip(),
+        research_url=raw["research_url"].strip(),
+        research_page=raw["research_page"].strip(),
+        research_quote=raw["research_quote"].strip(),
+        research_says=raw["research_says"].strip(),
+        risks=_risks(raw),
+        not_when=raw["not_when"].strip(),
+        next_step=raw["next_step"].strip(),
         legal_article=raw["legal_article"].strip(),
         term=raw["term"].strip(),
         farmer_alone=raw["farmer_alone"].strip().lower() == "tak",
