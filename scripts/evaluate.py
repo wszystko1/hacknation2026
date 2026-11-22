@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 METRICS = ROOT / "metrics.json"
-EVALUATIONS = ["smsr", "soil", "forecast", "parcels"]
+EVALUATIONS = ["smsr", "soil", "forecast", "parcels", "retention", "ponds", "wet_zones"]
 
 
 def load(name: str):
@@ -47,6 +47,12 @@ def flatten(tree: dict, prefix: str = "") -> dict:
     return flat
 
 
+def save(current: dict) -> None:
+    METRICS.write_text(
+        json.dumps(nest(current), ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
 def main(names: list[str]) -> int:
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
@@ -62,10 +68,9 @@ def main(names: list[str]) -> int:
             print(f"eval {name}: skipped (no data), previous values kept")
             continue
         current.update(result)
+        save(current)  # the next evaluation reads the keys of this one from the file
         print(f"eval {name}: {len(result)} values in {time.monotonic() - started:.1f} s")
-    METRICS.write_text(
-        json.dumps(nest(current), ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    save(current)
     print(f"metrics.json: {len(current)} values")
     return 0
 
