@@ -347,4 +347,4 @@ Kod, o który jury może zapytać: [docs/PYTANIA_JURY.md](docs/PYTANIA_JURY.md).
 
 ## Licencja
 
-MIT, plik `LICENSE`.
+Wszelkie prawa zastrzeżone; kod udostępniony do oceny w ramach HackNation 2026 (plik `LICENSE`).
