@@ -224,3 +224,41 @@ def test_pickmap_script_is_short_and_has_no_libraries() -> None:
         "http://www.w3.org/2000/svg", ""
     )  # the SVG namespace name, not an address we call
     assert not re.search(r"^\s*(import|export)\b|\brequire\(|importScripts|https?://", source, re.M)
+
+
+_LUMINANCE_JS = """
+(rgb) => { const c = rgb.match(/[\\d.]+/g).slice(0, 3).map(Number).map(v => { v /= 255;
+  return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+"""
+
+
+@pytest.mark.parametrize("size", [{"width": 1440, "height": 800}, {"width": 390, "height": 844}])
+def test_search_card_is_a_grey_square_panel_with_a_blue_button_and_readable_text(
+    browser_page: Page, base_url: str, size: dict
+) -> None:
+    browser_page.set_viewport_size(size)
+    browser_page.goto(base_url + "/")
+    card = browser_page.locator("#start-card")
+    card.wait_for(state="visible")
+    style = card.evaluate(
+        "e => { const s = getComputedStyle(e); return {bg: s.backgroundColor, r: s.borderTopLeftRadius,"
+        " r2: s.borderTopRightRadius, w: s.borderTopWidth}; }"
+    )
+    channels = [float(v) for v in re.findall(r"[\d.]+", style["bg"])[:3]]
+    assert max(channels) - min(channels) <= 16 and 200 <= min(channels) < 245, style  # neutral grey, not white
+    assert style["r"] == "0px" and style["r2"] == "0px" and style["w"] == "1px", style
+    button = browser_page.get_by_role("button", name="Oceń działkę")
+    bg = [float(v) for v in re.findall(r"[\d.]+", button.evaluate("e => getComputedStyle(e).backgroundColor"))[:3]]
+    assert bg[2] > bg[0] + 60 and bg[2] > bg[1] + 40, bg  # blue
+    ratios = browser_page.evaluate(
+        """(lum => { const L = eval(lum);
+          const bg = getComputedStyle(document.getElementById('start-card')).backgroundColor;
+          const sel = '#start-card h1, #start-card label, #start-card .start-lead, #start-card .field-hint,'
+            + ' #start-card summary, #start-card .ex-go, #start-card .muted';
+          return [...document.querySelectorAll(sel)].filter(e => e.offsetParent && e.textContent.trim()).map(e => {
+            const a = L(getComputedStyle(e).color), b = L(bg), hi = Math.max(a, b), lo = Math.min(a, b);
+            return [e.className || e.tagName, (hi + 0.05) / (lo + 0.05)]; }); })""",
+        _LUMINANCE_JS,
+    )
+    assert ratios and all(r >= 4.5 for _, r in ratios), ratios

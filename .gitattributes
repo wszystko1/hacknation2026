@@ -1,3 +1,7 @@
 # Parallel builders append to these logs; keep both sides' lines on merge.
 # Written by `make eval`; on a merge keep the current copy and re-run the evaluation.
 metrics.json merge=ours
+# Windows start scripts need CRLF; the shell script needs LF.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.sh text eol=lf

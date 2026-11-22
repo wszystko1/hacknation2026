@@ -7,6 +7,7 @@
   --st-card-w: 380px; --st-gap: 24px; --st-head-h: 52px;
   --st-shadow: 0 2px 4px rgba(20, 30, 45, .12), 0 10px 28px rgba(20, 30, 45, .22);
   --st-glass: rgba(255, 255, 255, .94);
+  --st-panel: #e4e8ee; --st-panel-line: #b9c1ce;
 }
 
 /* frame: header, map, footer fill the window; the map takes the rest */
@@ -41,7 +42,7 @@ main.pickmap .pm-actions button { border-radius: var(--radius-ui); font-size: va
 /* the search card */
 main.pickmap .start { position: absolute; left: var(--st-gap); top: var(--st-gap); transform: none; margin: 0; z-index: 2;
   width: var(--st-card-w); max-width: calc(100% - 2 * var(--st-gap)); max-height: calc(100% - 2 * var(--st-gap)); overflow: auto;
-  display: block; background: var(--surface); border-radius: var(--radius-ui); box-shadow: var(--st-shadow); }
+  display: block; background: var(--st-panel); border: 1px solid var(--st-panel-line); border-radius: 0; box-shadow: none; }
 main.pickmap .start-grip { display: block; width: 100%; min-height: 0; padding: var(--s4) var(--s4) 0; background: none; border: 0;
   border-radius: 0; color: var(--text); text-align: left; cursor: default; }
 main.pickmap .start-grip:hover { background: none; }
@@ -64,10 +65,10 @@ main.pickmap .start .pick input:focus-visible, main.pickmap .start .pick select:
 main.pickmap .start .pick [aria-invalid="true"] { border-color: var(--danger); background: var(--danger-soft); }
 main.pickmap .start .pick .field-hint { color: var(--muted); font-size: var(--st-fs-m); line-height: 1.4; }
 main.pickmap .start .pick .field--id::after { content: "albo kliknij działkę na mapie"; margin-top: var(--s1); padding-top: var(--s3);
-  border-top: 1px solid var(--line); color: var(--muted); font-size: var(--st-fs-m); }
+  border-top: 1px solid var(--st-panel-line); color: var(--muted); font-size: var(--st-fs-m); }
 main.pickmap .start .pick .field-error { background: none; color: var(--danger); padding: 0; margin: 0; border-radius: 0;
   font-size: var(--st-fs-m); font-weight: 600; line-height: 1.4; }
-main.pickmap .start .pick .choices a { color: var(--accent-ink); font-size: var(--st-fs-m); border-top: 1px solid var(--line); }
+main.pickmap .start .pick .choices a { color: var(--accent-ink); font-size: var(--st-fs-m); border-top: 1px solid var(--st-panel-line); }
 main.pickmap .start .pick button[type="submit"] { grid-column: 1 / 3; margin: var(--s1) 0 0; min-height: 52px; border-radius: var(--radius-ui);
   background: var(--accent); color: var(--accent-text); font-size: var(--st-fs-l); font-weight: 600; }
 main.pickmap .start .pick button[type="submit"]:hover { background: var(--accent-ink); }
@@ -91,7 +92,7 @@ main.pickmap .examples a { gap: var(--s2); padding: var(--s2) 0; }
   main.pickmap .map { height: 100%; }
   body:has(main.pickmap) .top { padding: 0 var(--s4); }
   main.pickmap .start { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-width: none; max-height: 78%;
-    border-radius: var(--radius-ui) var(--radius-ui) 0 0; }
+    border-radius: 0; }
   main.pickmap .start-grip { position: relative; min-height: 48px; padding: var(--s3) var(--s4) var(--s2); cursor: pointer; }
   main.pickmap .start-grip::before { content: ""; position: absolute; left: 50%; top: 6px; width: 40px; height: 4px; margin-left: -20px;
     background: var(--line-2); border-radius: var(--radius-ui); }
