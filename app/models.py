@@ -10,7 +10,7 @@ from datetime import date
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 # ---------------------------------------------------------------- vocabulary of the drought regulation
 
@@ -298,12 +298,36 @@ class OffSeason(BaseModel):
 CauseCode = Literal["malo_opadu", "duze_parowanie", "gleba_lekka", "splyw", "faza_wrazliwa"]
 
 
+CauseAxis = Literal["pogoda", "miejsce", "uprawa"]
+
+# The axis of each cause code: weather (ranked in mm), place (runoff, soil) or crop.
+AXIS_OF_CAUSE: dict[CauseCode, CauseAxis] = {
+    "malo_opadu": "pogoda",
+    "duze_parowanie": "pogoda",
+    "splyw": "miejsce",
+    "gleba_lekka": "miejsce",
+    "faza_wrazliwa": "uprawa",
+}
+
+
 class Cause(BaseModel):
     """A diagnosed cause of the water deficit; every action answers one of them."""
 
     code: CauseCode
     words: str  # "spadło 61 mm, o 71 mm mniej niż zwykle"
-    strength_mm: float | None = None  # contribution to the deficit, when measurable
+    axis: CauseAxis | None = None  # taken from `code` when not given
+    evidence: dict[str, float | int | str | bool | None] = Field(
+        default_factory=dict
+    )  # this parcel's numbers
+    strength_mm: float | None = None  # contribution to the deficit; only for the weather axis
+
+    @model_validator(mode="after")
+    def _axis_and_strength(self) -> Cause:
+        if self.axis is None:
+            self.axis = AXIS_OF_CAUSE[self.code]
+        if self.strength_mm is not None and self.axis != "pogoda":
+            raise ValueError("strength_mm is set only for causes on the weather axis")
+        return self
 
 
 class Diagnosis(BaseModel):
@@ -356,6 +380,76 @@ class Place(BaseModel):
 ActionGroup = Literal["retencja", "uprawa", "nawadnianie"]
 
 
+Confidence = Literal["niska", "średnia", "wysoka"]
+NO_PLACE_PREFIX = "brak miejsca na działce, bo "
+
+
+class Geometry(BaseModel):
+    """A place on the parcel in EPSG:2180 (metres): a point, a line or a polygon ring."""
+
+    type: Literal["point", "line", "polygon"]
+    coordinates: list[tuple[float, float]]  # point: 1 vertex, line: >= 2, polygon: >= 3 (ring not repeated)
+    azimuth_deg: float | None = Field(default=None, ge=0, lt=360)
+    length_m: float | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def _vertex_count(self) -> Geometry:
+        need = {"point": 1, "line": 2, "polygon": 3}[self.type]
+        ok = len(self.coordinates) == 1 if self.type == "point" else len(self.coordinates) >= need
+        if not ok:
+            raise ValueError(f"a {self.type} needs {'exactly' if need == 1 else 'at least'} {need} vertices")
+        return self
+
+
+class Range(BaseModel):
+    """A parameter range (for example a width in m) with the place it comes from."""
+
+    low: float
+    high: float
+    unit: str = Field(min_length=1)
+    source: str = Field(min_length=1)  # the source page, or "propozycja zespołu"
+
+    @model_validator(mode="after")
+    def _ordered(self) -> Range:
+        if self.low > self.high:
+            raise ValueError("low must not exceed high")
+        if not self.unit.strip() or not self.source.strip():
+            raise ValueError("unit and source must not be blank")
+        return self
+
+
+class Candidate(BaseModel):
+    """One candidate action with its place: the single source of the action's text, the map and the PDF.
+
+    Without a geometry the candidate keeps `no_place_reason` ("brak miejsca na działce, bo …") and low confidence.
+    """
+
+    action_id: str = ""
+    mechanism_id: str = ""
+    cause_codes: list[CauseCode] = Field(default_factory=list)
+    geometry: Geometry | None = None
+    no_place_reason: str = ""
+    parameters: dict[str, Range] = Field(default_factory=dict)
+    evidence: dict[str, float | int | str | bool | None] = Field(default_factory=dict)
+    confidence: Confidence = "niska"
+    risks: list[str] = Field(default_factory=list)
+    legal: LegalNote | None = None
+    consents: list[str] = Field(default_factory=list)
+    next_step: str = ""
+
+    @model_validator(mode="after")
+    def _needs_reason_without_place(self) -> Candidate:
+        if self.geometry is None:
+            if (
+                not self.no_place_reason.startswith(NO_PLACE_PREFIX)
+                or self.no_place_reason == NO_PLACE_PREFIX
+            ):
+                raise ValueError(f"without a geometry no_place_reason must start with '{NO_PLACE_PREFIX}'")
+            if self.confidence != "niska":
+                raise ValueError("without a geometry confidence is 'niska'")
+        return self
+
+
 class Action(BaseModel):
     id: str  # stable code from the action catalogue, e.g. "niecka-przy-wyplywie"
     n: int  # number on the map and in the plan (1..M, unique within a report)
@@ -363,6 +457,8 @@ class Action(BaseModel):
     title: str
     sentence: str  # with this parcel's numbers
     cause: str  # the diagnosed cause it answers first (one of `causes`)
+    cause_codes: list[CauseCode] = Field(default_factory=list)  # codes of the diagnosed causes it answers
+    candidate: Candidate | None = None  # filled by the advice modules
     causes: list[str] = Field(default_factory=list)  # Cause.words of every diagnosed cause it answers
     effect: str = ""  # literature range from a catalogue row with source and quote, "… (literatura)"; else ""
     when: str  # "po żniwach, do 15.09.2023"
