@@ -11,6 +11,7 @@ from app.advice.legal import CHECK, CSV_PATH, legal_note, load_notes
 from scripts.fetch_water_law import PDF, page_text
 from tests.acceptance.helpers import DOBRCZ, GSM_TODAY, report
 
+QUOTE_JOIN = " … "
 HEADER = "action_id,formality,article,quote,pdf_page,checked_on,extra\n"
 WATER_ACTIONS = [
     "zastawka-istniejaca",
@@ -65,10 +66,11 @@ def test_quote_is_on_the_stated_pdf_page(action_id: str) -> None:
     if note is None or not note.quote:
         pytest.skip("no quote to check")
     assert note.pdf_page is not None
-    assert " ".join(note.quote.split()).lower() in page_text(PDF, note.pdf_page).lower(), action_id
+    page = page_text(PDF, note.pdf_page).lower()
+    for fragment in note.quote.split(QUOTE_JOIN):
+        assert " ".join(fragment.split()).lower() in page, action_id
 
 
-@pytest.mark.xfail(reason="the CSV rows with quotes are not filled in yet", strict=False)
 def test_every_water_action_has_a_row() -> None:
     rows = load_notes(CSV_PATH)
     assert set(WATER_ACTIONS) <= set(rows), sorted(set(WATER_ACTIONS) - set(rows))
@@ -85,3 +87,31 @@ def test_report_formalities_cite_an_article_with_a_quote_or_say_to_check(params:
             assert note.article == ""
         else:
             assert note.article.startswith("art. ") and note.quote and note.pdf_page, a.id
+
+
+def test_row_without_date_is_refused(tmp_path: Path) -> None:
+    path = _csv(tmp_path, 'x,zgłoszenie,art. 394 ust. 1 pkt 9,"a quote of some length",12,,')
+    with pytest.raises(ValueError, match="date"):
+        load_notes(path)
+
+
+def test_the_file_holds_every_article_the_advice_cites() -> None:
+    text = " ".join(f"{n.article} {' '.join(n.extra)}" for n in load_notes(CSV_PATH).values())
+    for article in (
+        "art. 394 ust. 1 pkt 9",
+        "art. 395 pkt 11",
+        "art. 395 pkt 12",
+        "art. 395 pkt 15",
+        "art. 395 pkt 16",
+        "art. 395a",
+        "art. 234 ust. 1",
+        "art. 389 pkt 6",
+    ):
+        assert article in text, article
+
+
+def test_drain_regulator_note_quotes_pkt_16_and_395a() -> None:
+    note = legal_note("dreny-regulowany-odplyw")
+    assert note.formality == "powiadomienie Wód Polskich" and note.checked_on is not None
+    assert "hamowania odpływu wody" in note.quote and "powiadomienia" in note.quote
+    assert note.pdf_page == 176

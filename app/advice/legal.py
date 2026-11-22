@@ -29,13 +29,16 @@ def _note(row: dict[str, str]) -> LegalNote:
             raise ValueError(f"{row['action_id']}: '{CHECK}' goes without an article number")
     elif not (article.startswith("art. ") and quote and page.isdigit() and int(page) > 0):
         raise ValueError(f"{row['action_id']}: a formality needs article, quote and PDF page")
+    if formality != CHECK and not row["checked_on"].strip():
+        raise ValueError(f"{row['action_id']}: a formality needs the date it was checked")
     extra = [e.strip() for e in row["extra"].split(EXTRA_SEPARATOR) if e.strip()]
+    checked = row["checked_on"].strip()
     return LegalNote(
         formality=formality,  # type: ignore[arg-type]
         article=article,
         quote=quote,
         pdf_page=int(page) if page else None,
-        checked_on=date.fromisoformat(row["checked_on"].strip()),
+        checked_on=date.fromisoformat(checked) if checked else None,
         extra=extra,
     )
 
