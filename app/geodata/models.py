@@ -52,6 +52,9 @@ class Parcel:
     centroid_4326: list[float]  # [lon, lat]
     bbox_2180: list[float]  # [xmin, ymin, xmax, ymax]
     bbox_4326: list[float]  # [lonmin, latmin, lonmax, latmax]
+    outline_source: str = (
+        "kopia lokalna"  # where the outline came from: "kopia lokalna", "ULDK" or "EGiB WFS"
+    )
 
 
 @dataclass

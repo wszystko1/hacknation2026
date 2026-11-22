@@ -23,12 +23,14 @@ from app.geodata import (
     cache,
     config,
     fetch_parcel_by_lonlat,
-    http,
     list_samples,
     load_sample,
     normalize_parcel_id,
+    parcel_wfs,
+    uldk_guard,
 )
 from app.geodata.models import Parcel
+from app.geodata.parcel import both_failed_message
 from app.models import SOIL_CATEGORIES, CropGroup, FieldError, ReportRequest
 
 FIRST_DAY = date(2016, 1, 1)
@@ -149,7 +151,7 @@ def _by_point(lon: float, lat: float) -> str:
                 "W tym miejscu ULDK nie zna działki. Sprawdź współrzędne albo wpisz numer działki"
             ) from exc
         raise ParcelLookupError(
-            "Nie udało się zapytać ULDK o te współrzędne. Wpisz pełny numer działki albo spróbuj za chwilę"
+            "Nie udało się zapytać ULDK ani EGiB WFS o te współrzędne. Wpisz pełny numer działki albo spróbuj za chwilę"
         ) from exc
 
 
@@ -178,11 +180,16 @@ def _by_name_from_uldk(precinct: str, number: str) -> list[ParcelChoice]:
         return [ParcelChoice(**c) for c in hit]
     cache.require_online("parcel", key)
     params = {"request": "GetParcelByIdOrNr", "id": query, "result": NAME_FIELDS, "srid": "2180"}
-    resp = http.get(config.ULDK_URL, params=params, timeout=config.TIMEOUTS["parcel"])
-    if resp.status_code != 200:
-        raise UpstreamError(f"ULDK HTTP {resp.status_code}")
-    resp.encoding = "utf-8"
-    choices = _parse_name_lines(resp.text)
+    try:
+        choices = _parse_name_lines(uldk_guard.fetch(params, geometry=False).text)
+    except UpstreamError:  # the decoy, silence or an error of ULDK: the EGiB WFS knows the precinct names too
+        try:
+            found = parcel_wfs.parcels_by_name(precinct, number)
+        except ParcelNotFound:
+            raise
+        except UpstreamError as exc:
+            raise UpstreamError(both_failed_message()) from exc
+        choices = [ParcelChoice(p.id, _label(p.number, p.precinct, p.commune, p.county)) for p in found]
     cache.put_json("parcel", key, [{"id": c.id, "label": c.label} for c in choices])
     return choices
 
@@ -207,7 +214,7 @@ def _by_name(precinct: str, number: str) -> list[ParcelChoice]:
                 f"ULDK nie zna działki „{precinct} {number}”. Sprawdź nazwę obrębu i numer"
             ) from exc
         raise ParcelLookupError(
-            "Nie udało się zapytać ULDK o obręb i numer. Wpisz pełny numer działki albo spróbuj za chwilę"
+            "Nie udało się zapytać ULDK ani EGiB WFS o obręb i numer. Wpisz pełny numer działki albo spróbuj za chwilę"
         ) from exc
 
 

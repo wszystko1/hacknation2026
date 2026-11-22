@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import re
 import threading
+from collections.abc import Callable
 from dataclasses import asdict
 
 from pyproj import Transformer
 
-from . import cache, config, http
+from . import cache, config, parcel_wfs, uldk_guard
 from .errors import InvalidParcelId, ParcelNotFound, UpstreamError
 from .models import Parcel, SourceResult, now_iso
+from .samples import list_samples
 
 RESULT_FIELDS = "id,voivodeship,county,commune,region,parcel,geom_wkt"
 RESOLUTION = "EGiB cadastral geometry (vector, EPSG:2180)"
@@ -37,6 +39,12 @@ def _to_wgs() -> Transformer:
     if not hasattr(_local, "t"):
         _local.t = Transformer.from_crs(2180, 4326, always_xy=True)
     return _local.t
+
+
+def _to_2180() -> Transformer:
+    if not hasattr(_local, "t2180"):
+        _local.t2180 = Transformer.from_crs(4326, 2180, always_xy=True)
+    return _local.t2180
 
 
 def to_wgs84(x: float, y: float) -> list[float]:
@@ -85,18 +93,41 @@ def parse_uldk(text: str, *, multipolygon: bool = False) -> Parcel:
         raise UpstreamError(f"ULDK: unexpected answer: {lines[1][:120]}")
     pid, voiv, county, commune, precinct, number = parts[:6]
     rings = parse_wkt_rings(parts[6])
-    is_multi = "MULTIPOLYGON" in parts[6].upper()
+    return build_parcel(
+        pid, voivodeship=voiv, county=county, commune=commune, precinct=precinct, number=number,
+        rings=rings, multipolygon="MULTIPOLYGON" in parts[6].upper(), source="ULDK",
+    )  # fmt: skip
+
+
+def build_parcel(
+    pid: str,
+    *,
+    voivodeship: str,
+    county: str,
+    commune: str,
+    precinct: str,
+    number: str,
+    rings: list[list[list[float]]],
+    multipolygon: bool,
+    source: str,
+) -> Parcel:
+    """The Parcel of any source: the area is computed from the geometry, the source is recorded."""
+    rings = [r for r in rings if len(r) >= 4]
+    if not rings:
+        raise UpstreamError(f"no usable geometry for {pid}")
+    if multipolygon:
+        rings.sort(key=lambda r: -abs(_ring_area(r)))
     # For a plain polygon: outer ring minus holes. For multi-part parcels all parts count as area.
     outer = abs(_ring_area(rings[0]))
     rest = sum(abs(_ring_area(r)) for r in rings[1:])
-    area_m2 = outer + rest if is_multi else outer - rest
+    area_m2 = outer + rest if multipolygon else outer - rest
     xs = [p[0] for r in rings for p in r]
     ys = [p[1] for r in rings for p in r]
     centroid = _ring_centroid(rings[0])
     lo, hi = to_wgs84(min(xs), min(ys)), to_wgs84(max(xs), max(ys))
     return Parcel(
         id=pid,
-        voivodeship=voiv,
+        voivodeship=voivodeship,
         county=county,
         commune=commune,
         precinct=precinct,
@@ -108,45 +139,71 @@ def parse_uldk(text: str, *, multipolygon: bool = False) -> Parcel:
         centroid_4326=to_wgs84(*centroid),
         bbox_2180=[round(min(xs), 2), round(min(ys), 2), round(max(xs), 2), round(max(ys), 2)],
         bbox_4326=[lo[0], lo[1], hi[0], hi[1]],
+        outline_source=source,
     )
 
 
-def _lookup(cache_key: str, params: dict[str, str], deadline: float | None) -> SourceResult[Parcel]:
-    hit = cache.get_json("parcel", cache_key, config.TTL_PARCEL)
-    if hit is not None:
-        return SourceResult(
-            "parcel", "ok", Parcel(**hit["data"]), source_url=hit["url"], retrieved_at=hit["retrieved_at"],
-            resolution=RESOLUTION, from_cache=True,
-        )  # fmt: skip
-    cache.require_online("parcel", cache_key)
-    resp = http.get(config.ULDK_URL, params=params, timeout=config.TIMEOUTS["parcel"], deadline=deadline)
-    if resp.status_code != 200:
-        raise UpstreamError(f"ULDK HTTP {resp.status_code}")
-    resp.encoding = "utf-8"
-    parcel = parse_uldk(resp.text)
-    entry = {"data": asdict(parcel), "url": str(resp.url), "retrieved_at": now_iso()}
+def _local_ids() -> str:
+    return ", ".join(sorted({pid for pid, _ in list_samples()}))
+
+
+def both_failed_message() -> str:
+    """The sentence shown when ULDK and the EGiB WFS gave nothing (Polish: the user reads it)."""
+    ids = _local_ids()
+    tail = f" Bez nich działają tylko działki z kopią lokalną: {ids}." if ids else ""
+    return f"Usługi GUGiK (ULDK i EGiB WFS) nie odpowiedziały.{tail}"
+
+
+def _result(parcel: Parcel, url: str, retrieved_at: str, *, from_cache: bool = False) -> SourceResult[Parcel]:
+    return SourceResult(
+        "parcel", "ok", parcel, source_url=url, retrieved_at=retrieved_at, resolution=RESOLUTION,
+        from_cache=from_cache,
+    )  # fmt: skip
+
+
+def _store(cache_key: str, parcel: Parcel, url: str) -> SourceResult[Parcel]:
+    entry = {"data": asdict(parcel), "url": url, "retrieved_at": now_iso()}
     cache.put_json("parcel", cache_key, entry)
     if cache_key != parcel.id:
         cache.put_json("parcel", parcel.id, entry)
-    return SourceResult(
-        "parcel",
-        "ok",
-        parcel,
-        source_url=entry["url"],
-        retrieved_at=entry["retrieved_at"],
-        resolution=RESOLUTION,
-    )
+    return _result(parcel, url, entry["retrieved_at"])
+
+
+def _lookup(
+    cache_key: str,
+    params: dict[str, str],
+    deadline: float | None,
+    wfs: Callable[[], Parcel],
+) -> SourceResult[Parcel]:
+    """Local copy, then ULDK (guarded), then the EGiB WFS; an honest error when none answers."""
+    hit = cache.get_json("parcel", cache_key, config.TTL_PARCEL)
+    if hit is not None:
+        parcel = Parcel(**hit["data"])  # keeps the source the outline was first fetched from
+        return _result(parcel, hit["url"], hit["retrieved_at"], from_cache=True)
+    cache.require_online("parcel", cache_key)
+    try:
+        answer = uldk_guard.fetch(params, geometry=True, deadline=deadline)
+        return _store(cache_key, parse_uldk(answer.text), answer.url)
+    except UpstreamError:
+        pass  # the decoy, silence or an error of ULDK: ask the EGiB WFS
+    try:
+        return _store(cache_key, wfs(), config.EGIB_WFS_URL)
+    except ParcelNotFound:
+        raise
+    except UpstreamError as exc:
+        raise UpstreamError(both_failed_message()) from exc
 
 
 def fetch_parcel(parcel_id: str, *, deadline: float | None = None) -> SourceResult[Parcel]:
     """Parcel by identifier. Raises InvalidParcelId, ParcelNotFound, UpstreamError or CacheMiss."""
     pid = normalize_parcel_id(parcel_id)
     params = {"request": "GetParcelById", "id": pid, "result": RESULT_FIELDS, "srid": "2180"}
-    return _lookup(pid, params, deadline)
+    return _lookup(pid, params, deadline, lambda: parcel_wfs.parcel_by_id(pid, deadline=deadline))
 
 
 def fetch_parcel_by_lonlat(lon: float, lat: float, *, deadline: float | None = None) -> SourceResult[Parcel]:
     """Parcel that contains the WGS84 point."""
     key = f"xy_{lon:.6f}_{lat:.6f}"
     params = {"request": "GetParcelByXY", "xy": f"{lon},{lat},4326", "result": RESULT_FIELDS, "srid": "2180"}
-    return _lookup(key, params, deadline)
+    x, y = _to_2180().transform(lon, lat)
+    return _lookup(key, params, deadline, lambda: parcel_wfs.parcel_at_point(x, y, deadline=deadline))

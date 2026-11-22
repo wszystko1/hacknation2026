@@ -27,6 +27,9 @@ LABELS: dict[str, tuple[str, str]] = {
     "crop_hint": ("Mapa upraw JRC 2022", "JRC EUCROPMAP"),
 }
 
+# the outline's source as written in Parcel.outline_source -> provider shown in the row
+OUTLINE_PROVIDERS = {"kopia lokalna": "kopia lokalna", "ULDK": "ULDK GUGiK", "EGiB WFS": "EGiB WFS GUGiK"}
+
 # resolution of each source, in words the adviser can quote
 RESOLUTIONS: dict[str, str] = {
     "parcel": "wektor ewidencji gruntów, skala działki",
@@ -77,11 +80,7 @@ def _gave_weather(ctx: ReportContext, s: SourceResult) -> str:
         if w.precipitation_station
         else "siatka NASA POWER"
     )
-    et0 = (
-        f"posterunek {w.et0_station}, {_km(w.et0_station_km)}"
-        if w.et0_station
-        else "siatka NASA POWER"
-    )
+    et0 = f"posterunek {w.et0_station}, {_km(w.et0_station_km)}" if w.et0_station else "siatka NASA POWER"
     text = f"opad {_years(w.dates)} ({rain}); parowanie ({et0})"
     if w.missing_days:
         text += f"; brakuje {w.missing_days} dni"
@@ -99,7 +98,9 @@ def _gave_soil(ctx: ReportContext, s: SourceResult) -> str:
 
 def _gave_terrain(ctx: ReportContext, s: SourceResult) -> str:
     t = s.data
-    slope = f"spadek średni {dec(t.slope_mean_pct, 1)}%" if t.slope_mean_pct is not None else "spadek nieznany"
+    slope = (
+        f"spadek średni {dec(t.slope_mean_pct, 1)}%" if t.slope_mean_pct is not None else "spadek nieznany"
+    )
     return f"{slope}, {t.samples} punktów w obrysie"
 
 
@@ -175,10 +176,20 @@ def _row(ctx: ReportContext, key: str) -> SourceRow:
                 gave = ""
     if usable:
         waiting = key == "satellite" and gave == "ocena roślin w toku"
-        status = "waiting" if waiting else "copy" if ctx.data_copy else "fallback" if s.status == "fallback" else "ok"
+        status = (
+            "waiting"
+            if waiting
+            else "copy"
+            if ctx.data_copy
+            else "fallback"
+            if s.status == "fallback"
+            else "ok"
+        )
     else:
         status = "missing"
         reason = reason or REASONS.get(s.status, "brak odpowiedzi usługi")
+    if key == "parcel" and usable and s.data is not None:
+        provider = OUTLINE_PROVIDERS.get(s.data.outline_source, provider)
     return SourceRow(
         key=key,
         label=label,
@@ -208,5 +219,8 @@ def source_rows(ctx: ReportContext) -> list[SourceRow]:
     The seasonal forecast is not listed: no part of the report reads it.
     """
     rows = [_row(ctx, key) for key in LABELS if key != "crop_hint" or _crop_map_listed(ctx)]
-    extra = [r.model_copy(update={"resolution": r.resolution or RESOLUTIONS.get(r.key, "")}) for r in ctx.extra_sources]
+    extra = [
+        r.model_copy(update={"resolution": r.resolution or RESOLUTIONS.get(r.key, "")})
+        for r in ctx.extra_sources
+    ]
     return rows + extra

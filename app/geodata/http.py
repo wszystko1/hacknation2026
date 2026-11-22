@@ -36,6 +36,9 @@ def set_client(client: httpx.Client | None) -> None:
     global _client
     with _lock:
         _client = client
+    from . import uldk_guard
+
+    uldk_guard.reset()  # a new client is a new network: the breaker of the old one does not apply
 
 
 def request(

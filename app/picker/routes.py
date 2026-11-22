@@ -19,7 +19,7 @@ router = APIRouter()
 # Rectangle around Poland with a margin; a point outside it is refused without asking ULDK.
 POLAND_LON = (14.0, 24.3)
 POLAND_LAT = (48.9, 55.0)
-LIVE_WAIT_S = 6.0
+LIVE_WAIT_S = 9.0
 
 _pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="uldk-xy")
 
@@ -75,7 +75,7 @@ def parcel_at_point(lon: str | None = None, lat: str | None = None) -> JSONRespo
         return _refuse("W tym punkcie nie ma działki ewidencyjnej. Kliknij w pole albo wpisz numer działki.")
     except (GeodataError, FutureTimeout, AssertionError):
         return _refuse(
-            "Nie mamy odpowiedzi z ewidencji gruntów (ULDK). Spróbuj za chwilę albo wpisz numer działki."
+            "Nie mamy odpowiedzi z ewidencji gruntów (ULDK ani EGiB WFS). Spróbuj za chwilę albo wpisz numer działki."
         )
 
 

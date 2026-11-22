@@ -8,6 +8,8 @@ from pathlib import Path
 USER_AGENT = "geodata-client/0.1 (python-httpx)"
 
 ULDK_URL = "https://uldk.gugik.gov.pl/"
+EGIB_WFS_URL = "https://mapy.geoportal.gov.pl/wss/service/PZGIK/EGIB/WFS/UslugaZbiorcza"
+EGIB_WFS_TIMEOUT = 5.0
 ORTHO_WMS_URL = "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution"
 OPEN_METEO_ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 OPEN_METEO_FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
@@ -26,7 +28,7 @@ NMT_COVERAGE = "DTM_PL-KRON86-NH_TIFF"
 
 # Per-source wall-clock limits in seconds (the orchestrator also enforces the total budget).
 TIMEOUTS: dict[str, float] = {
-    "parcel": 8.0,
+    "parcel": 9.0,
     "weather": 12.0,
     "ortho": 12.0,
     "soil": 7.0,
