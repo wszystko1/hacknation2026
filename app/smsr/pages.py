@@ -98,6 +98,6 @@ def load_page(year: int, teryt: str, *, today: datetime | None = None) -> Page:
         raise PageUnavailable(f"IUNG nie opublikował tabeli tej gminy za {year} r.")
     if resp.status_code != 200 or config.is_offline():
         raise PageUnavailable("wykaz IUNG nie odpowiedział")
-    retrieved = datetime.now(UTC).isoformat(timespec="seconds")
+    retrieved = (today or datetime.now(UTC)).isoformat(timespec="seconds")
     _store(year, teryt, resp.text, retrieved, elapsed)
     return Page(resp.text, "live", retrieved, elapsed)

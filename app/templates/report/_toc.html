@@ -4,7 +4,7 @@
   <h2>Cały raport w skrócie · kliknij, aby zobaczyć wykres</h2>
   <ol>
     {% for s in report.sections %}
-    <li><a href="#{{ s.id }}"><span class="n">{{ s.n }}</span><span class="t">{{ s.title }}</span><span class="s {{ 'is-loading' if s.state != 'ready' and not s.summary else '' }}">{% for part in s.summary %}{% if part.bold %}<b>{{ part.text }}</b>{% elif part.warn %}<span class="warn">{{ part.text }}</span>{% else %}{{ part.text }}{% endif %}{% endfor %}</span><i class="c" aria-hidden="true"></i></a></li>
+    <li><a href="#{{ s.id }}"><span class="n">{{ s.n }}</span><span class="t">{{ s.title }}</span><span class="s {{ 'is-loading' if s.state != 'ready' and not s.summary else '' }}{{ ' is-missing' if s.summary and s.summary[0].text.startswith('Brak') else '' }}">{% for part in s.summary %}{% if part.bold %}<b>{{ part.text }}</b>{% elif part.warn %}<span class="warn">{{ part.text }}</span>{% else %}{{ part.text }}{% endif %}{% endfor %}</span><i class="c" aria-hidden="true"></i></a></li>
     {% endfor %}
   </ol>
 </nav>

@@ -37,7 +37,7 @@
   </div>
   <div class="field">
     <label for="f-data">Data oceny</label>
-    <input id="f-data" name="data" type="text" inputmode="numeric" maxlength="10" autocomplete="off"
+    <input id="f-data" name="data" type="text" lang="pl" inputmode="numeric" maxlength="10" autocomplete="off"
            placeholder="dd.mm.rrrr" value="{{ date_shown }}"
            {% if errors and errors.data %}aria-invalid="true" aria-describedby="e-data"{% endif %}>
     {% if errors and errors.data %}<span class="field-error" id="e-data">{{ errors.data }}</span>{% endif %}

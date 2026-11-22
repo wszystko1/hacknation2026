@@ -6,7 +6,6 @@
   {% endif %}
   <div class="vrow">
     {% if v.badge %}<span class="badge {{ {'below': 'badge--dry', 'above': 'badge--ok', 'out_of_season': 'badge--neutral'}.get(v.state, 'badge--neutral') }}" id="plakietka">{{ v.badge }}</span>{% endif %}
-    <span class="law">definicja i próg: rozporządzenie MRiRW, Dz.U. 2019 poz. 739</span>
   </div>
   {% if v.kbw_mm is not none %}
   <div class="big-number {{ 'big-number--dry' if v.state == 'below' else '' }}">
