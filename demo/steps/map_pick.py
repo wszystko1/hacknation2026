@@ -8,6 +8,8 @@ from __future__ import annotations
 import math
 from urllib.parse import urlparse
 
+from playwright.sync_api import expect
+
 from app.picker.zoompath import DEMO_CENTRES, FIRST_ZOOM
 from demo.steps.common import PAUSE
 
@@ -44,7 +46,9 @@ def map_centre(page) -> tuple[float, float]:
 
 
 def tiles_loaded(page) -> None:
-    page.wait_for_function("[...document.querySelectorAll('.pm-tile')].every(i => i.complete)", timeout=20000)
+    tiles = page.locator(".pm-tile")
+    for i in range(tiles.count()):
+        expect(tiles.nth(i)).to_have_js_property("complete", True, timeout=20000)
 
 
 def pixel_of(page, lon: float, lat: float) -> tuple[float, float]:
@@ -136,5 +140,5 @@ def scene(page, base_url: str) -> None:
     page.wait_for_timeout(PAUSE)
     if previous:
         page.set_viewport_size(previous)
-        page.wait_for_function("document.querySelector('[data-pickmap]').clientWidth > 0")
+        expect(page.locator("[data-pickmap]")).to_be_visible()
         tiles_loaded(page)  # the new window may need tiles; the next scene must not cut their requests off

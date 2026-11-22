@@ -122,7 +122,7 @@ Ocenę bieżącą liczy rachunek i reguły, bez uczenia maszynowego. Raport nie 
 
 ## Dowody
 
-**Jakość jedną komendą.** `make jakosc` (albo `uv run python scripts/jakosc.py`) wypisuje na jednej stronie zmierzone liczby (zgodność z SMSR, CSI, czułość i precyzja, prognoza, gleba, retencja, czas raportu) wraz z tym, czego nie dowodzą, i uruchamia ręcznie dobrane „złote lokalizacje” (15 działek z oczekiwaniami eksperckimi; znane wady oznaczone XFAIL z powodem). Na działającej aplikacji: `uv run python scripts/jakosc.py --online https://ADRES`; przeliczenie pomiarów (sieć): `--przelicz`.
+**Jakość jedną komendą.** `make jakosc` (albo `uv run python scripts/jakosc.py`) wypisuje na jednej stronie zmierzone liczby (zgodność z SMSR, CSI, czułość i precyzja, prognoza, gleba, retencja, czas raportu) wraz z tym, czego nie dowodzą, i uruchamia ręcznie dobrane „złote lokalizacje” (15 działek z oczekiwaniami eksperckimi; znane wady oznaczone XFAIL z powodem). Na działającej aplikacji: `uv run python scripts/jakosc.py --online https://ADRES`; przeliczenie pomiarów (sieć): `--przelicz`. Wszystkie pomiary, skrypty i ich ograniczenia w jednej tabeli: [docs/POMIARY.md](docs/POMIARY.md).
 
 
 Liczba główna: **krzywa kalibracji**. Gdy bilans działki leży co najmniej 25 mm poniżej progu, SMSR potwierdza suszę w 92,3% przypadków
@@ -142,9 +142,9 @@ Próba: 149 gmin, 1017 gmino-lat (2020–2026), 566130 symboli „+” lub „-�
 | zmierzone, słabe | kategoria gleby z SoilGrids wobec mapy IUNG | 0,375; w granicach jednej kategorii 0,8958 (96 punktów) | `soil.category_agreement` |
 | zmierzone, słabe | zgodność zależy od roku | CSI od 0,1103 (2025) do 0,4758 (2022) | `smsr.by_year` |
 | zmierzone, słabe | przesunięcie progu o 53 mm | trafność zrównoważona 2026: 0,7727 → 0,9094; dopasowane do ocen IUNG, w werdykcie nieużyte | `smsr.balanced_accuracy_2026_shifted` |
-| zmierzone | czas raportu na 20 działkach z 15 województw (zimny start, dane na żywo) | mediana 12,5 s, 95. percentyl 17,6 s; 17 z 20 poniżej 30 s (0,85); 3 działki bez pogody | `robustness.*` |
+| zmierzone | czas raportu na 20 działkach z 15 województw (zimny start, dane na żywo) | mediana 10,3 s, 95. percentyl 25,9 s; 18 z 20 poniżej 30 s (0,9); 2 działki bez pogody | `robustness.*` |
 | zmierzone, słabe | retencja: najniższy punkt granicy leży do 30 m od rowu | 0,50 wobec 0,2456 dla losowego punktu granicy (50 działek z rowem; rów jest zagłębieniem w modelu terenu, więc wynik jest optymistyczny) | `retention.outlet_hit_lowest`, `retention.outlet_hit_random` |
-| zmierzone, słabe | prosta miara „o ile miejsce leży niżej niż teren w oknie 100 m” odróżnia stawy z BDOT10k od losowych miejsc poza nimi (to nie jest dokładnie reguła, którą aplikacja wskazuje nieckę; test jest łatwy, bo staw jest zagłębieniem w modelu terenu) | AUC 0,902 (124 zbiorniki); po dopasowaniu tła do położenia (ta sama wysokość ±2 m, 30–150 m od brzegu) ok. 0,86 (przedział 0,83–0,89); reguła „dołka” użyta w aplikacji odróżnia stawy słabo (AUC 0,53); optymistyczne | `retention.pond_auc_lowest` |
+| zmierzone, słabe | stawy z BDOT10k jako zastępnik niecek (mapy niecek na polach nie ma): prosta miara „o ile miejsce leży niżej niż teren w oknie 100 m” odróżnia stawy z BDOT10k od losowych miejsc poza nimi (to nie jest dokładnie reguła, którą aplikacja wskazuje nieckę; test jest łatwy, bo staw jest zagłębieniem w modelu terenu) | AUC 0,902 (124 zbiorniki); po dopasowaniu tła do położenia (ta sama wysokość ±2 m, 30–150 m od brzegu) 0,858 (przedział 0,826–0,886; `retention.pond_auc_matched`); reguła „dołka” użyta w aplikacji odróżnia stawy słabo (AUC 0,538; `retention.pond_auc_pit_rule`); optymistyczne | `retention.pond_auc_lowest` |
 | nie zmierzone | zgodność miejsc zastawek z rzeczywistymi budowlami | pilot na BDOT10k (97 działek) nierozstrzygający: dane nie zawierają zastawek rolniczych; miejsca działań to kandydatury do weryfikacji w terenie | n/d |
 | nie zmierzone | zgodność upraw z mapą JRC | brak; mapa nie rozróżnia zbóż ozimych i jarych | brak `crop.rotation_agreement_jrc` |
 | nie zmierzone | zgodność z SMSR na działkach | brak; pomiar jest na gminach | n/d |

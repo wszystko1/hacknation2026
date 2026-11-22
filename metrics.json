@@ -354,7 +354,11 @@
     "pond_auc": 0.902,
     "pond_auc_d8": 0.7242,
     "pond_auc_lowest": 0.902,
-    "with_place_share": 0.9412
+    "with_place_share": 0.9412,
+    "pond_auc_matched": 0.858,
+    "pond_auc_matched_ci_low": 0.826,
+    "pond_auc_matched_ci_high": 0.886,
+    "pond_auc_pit_rule": 0.5377
   },
   "robustness": {
     "n_no_weather": 2,

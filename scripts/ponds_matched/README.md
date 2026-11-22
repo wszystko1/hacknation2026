@@ -1,0 +1,1 @@
+Pond AUC, honest version (22.11.2026): see honest.py. Matched background (same height band, 30-150 m from the pond edge): AUC 0.86, 95% CI 0.83-0.89; the full-grid background gives 0.89-0.90; the pit rule used by the app separates ponds only weakly (AUC 0.53).
