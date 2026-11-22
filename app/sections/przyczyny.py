@@ -35,7 +35,7 @@ def _causes_advisor(ctx: ReportContext) -> list[KeyValue]:
     rows = [
         KeyValue(
             key=f"Reguła: {r.label.lower()}" + (" (spełniona)" if r.code in found else ""),
-            value=f"{r.condition} · pewność: {r.confidence}" + (f" · {r.source}" if r.source else ""),
+            value=f"{r.condition} · źródło progu: {r.threshold_source}" + (f" · {r.source}" if r.source else ""),
         )
         for r in RULES
     ]
@@ -43,6 +43,7 @@ def _causes_advisor(ctx: ReportContext) -> list[KeyValue]:
     for c in causes:
         evidence = ", ".join(f"{k.replace('_', ' ')}: {_num(v)}" for k, v in c.evidence.items())
         mm = f", udział w niedoborze {dec(c.strength_mm)} mm" if c.strength_mm is not None else ""
+        mm += f", pewność: {c.confidence}" if c.confidence else ""
         rows.append(
             KeyValue(
                 key=f"Przyczyna: {c.code} · oś: {AXIS_NAMES[c.axis or 'pogoda']}", value=f"{evidence}{mm}"

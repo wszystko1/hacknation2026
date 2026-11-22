@@ -18,13 +18,16 @@ IP="${ARGS[0]:-}"; DOMAIN="${ARGS[1]:-${DOMAIN:-}}"
 [ -n "$IP" ] || { echo "Usage: $0 <IP> [domain] [--warm] [--bootstrap]" >&2; exit 1; }
 SSH_USER="${SSH_USER:-root}"
 # BatchMode: never wait for a password prompt; a missing key fails at once with a clear message.
-SSH_OPTS=(-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -o ServerAliveInterval=30)
+SSH_OPTS=(-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ControlMaster=auto -o ControlPath=/tmp/chronplon-ssh-%r@%h-%p -o ControlPersist=180)
 command -v rsync >/dev/null || { echo "FAIL: rsync is not installed on this machine" >&2; exit 1; }
 command -v ssh >/dev/null || { echo "FAIL: ssh is not installed on this machine" >&2; exit 1; }
 SUDO=""; [ "$SSH_USER" = root ] || SUDO="sudo -E"
 HOST="${DOMAIN:-${IP//./-}.sslip.io}"
 
+# Some networks reset a share of new SSH connections: open one shared connection per user (ControlMaster) with retries.
+ssh_master() { for _try in 1 2 3 4 5 6 7 8; do ssh "${SSH_OPTS[@]}" -fN "$1@$IP" 2>/dev/null && return 0; sleep 2; done; return 1; }
 echo "== ssh check ($SSH_USER@$IP)"
+ssh_master "$SSH_USER" || true
 ssh "${SSH_OPTS[@]}" "$SSH_USER@$IP" true || {
   echo "FAIL: ssh to $SSH_USER@$IP. Check: (1) your public key was added to the server when it was created," >&2
   echo "      (2) the IP is right and port 22 is open, (3) 'REMOTE HOST IDENTIFICATION HAS CHANGED' above means the IP" >&2
@@ -53,7 +56,13 @@ du -sh --exclude=.git --exclude=.venv --exclude=.worktrees --exclude=data/raw --
 # Excluded paths (.venv, data/raw) are neither uploaded nor deleted on the server (no --delete-excluded).
 # The exit status of rsync itself is checked: a failed upload must not end with "DEPLOY OK" on old code.
 RSYNC_OUT=$(mktemp)
-if ! rsync -az --delete --stats "${RSYNC_EXCL[@]}" -e "ssh ${SSH_OPTS[*]}" ./ "deploy@$IP:/srv/bilans/app/" >"$RSYNC_OUT" 2>&1; then
+ssh_master deploy || true
+rsync_ok=0
+for _try in 1 2 3 4; do
+  rsync -az --delete --stats "${RSYNC_EXCL[@]}" -e "ssh ${SSH_OPTS[*]}" ./ "deploy@$IP:/srv/bilans/app/" >"$RSYNC_OUT" 2>&1 && { rsync_ok=1; break; }
+  sleep 3
+done
+if [ "$rsync_ok" != 1 ]; then
   cat "$RSYNC_OUT" >&2; rm -f "$RSYNC_OUT" deploy/.REVISION
   echo "FAIL: rsync to deploy@$IP (the 'deploy' user needs your SSH key; bootstrap copies it from the login user)" >&2
   exit 1

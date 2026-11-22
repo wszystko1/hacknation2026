@@ -311,12 +311,26 @@ AXIS_OF_CAUSE: dict[CauseCode, CauseAxis] = {
 }
 
 
+ThresholdSource = Literal["przepis", "literatura", "kalibracja danych", "propozycja zespołu"]
+
+# The kind of source behind the threshold of each cause code (the adviser view names it).
+SOURCE_OF_CAUSE: dict[CauseCode, ThresholdSource] = {
+    "malo_opadu": "literatura",
+    "duze_parowanie": "kalibracja danych",
+    "splyw": "literatura",
+    "gleba_lekka": "przepis",
+    "faza_wrazliwa": "przepis",
+}
+
+
 class Cause(BaseModel):
     """A diagnosed cause of the water deficit; every action answers one of them."""
 
     code: CauseCode
     words: str  # "spadło 61 mm, o 71 mm mniej niż zwykle"
     axis: CauseAxis | None = None  # taken from `code` when not given
+    threshold_source: ThresholdSource | None = None  # kind of source of the threshold; taken from `code` when not given
+    confidence: Literal["niska", "średnia", "wysoka"] | None = None  # set where the cause is weaker than the rule
     evidence: dict[str, float | int | str | bool | None] = Field(
         default_factory=dict
     )  # this parcel's numbers
@@ -326,6 +340,8 @@ class Cause(BaseModel):
     def _axis_and_strength(self) -> Cause:
         if self.axis is None:
             self.axis = AXIS_OF_CAUSE[self.code]
+        if self.threshold_source is None:
+            self.threshold_source = SOURCE_OF_CAUSE[self.code]
         if self.strength_mm is not None and self.axis != "pogoda":
             raise ValueError("strength_mm is set only for causes on the weather axis")
         return self

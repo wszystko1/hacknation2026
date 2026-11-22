@@ -24,6 +24,7 @@ from app.models import (
     CropGroup,
     Diagnosis,
     PeriodBalance,
+    ThresholdSource,
 )
 
 T = TypeVar("T")
@@ -32,11 +33,14 @@ SEASONS = 10  # seasons in the history: the verdict's season and the nine before
 MIN_EARLIER_SEASONS = 3  # fewer earlier seasons give no "usual" season
 MIN_DATA_SHARE = 0.9  # a period needs at least this share of days with rain and evaporation data
 
-# Thresholds of the rules. `source` empty means the number is the team's proposal and says so in the adviser view.
-LESS_RAIN_SHARE = 0.85  # rain at most this share of the usual
+# Thresholds of the rules; the kind of source of each stands in `Rule.threshold_source` (see docs/notes/progi-literatura.md).
+LESS_RAIN_SHARE = 0.89  # rain at most this share of the usual: class "suchy" of the IMGW scale (Kaczorowska 1962)
+VERY_DRY_SHARE = 0.74  # "bardzo suchy" of the same scale, shown in the evidence
+EXTREMELY_DRY_SHARE = 0.50  # below this: "skrajnie suchy"
 MORE_EVAPORATION_SHARE = 1.10  # evaporation at least this share of the usual
 LIGHT_SOIL_CATEGORIES = ("I", "II")
-RUNOFF_SLOPE_PCT = 2.0  # mean slope above this makes water run off
+RUNOFF_MILD_SLOPE_PCT = 2.0  # from this mean slope: mild runoff, low confidence (FAO class "gently sloping", 2-5%)
+RUNOFF_SLOPE_PCT = 5.0  # from this mean slope: runoff (first IUNG class "do 5%" ends here)
 
 
 @dataclass(frozen=True)
@@ -44,22 +48,26 @@ class Rule:
     code: CauseCode
     label: str  # farmer-facing name of the cause
     condition: str  # the threshold in words, for the adviser view
-    confidence: str  # "propozycja zespołu" unless a source stands behind the number
-    source: str = ""
+    threshold_source: ThresholdSource  # kind of the source of the number
+    source: str = ""  # the citation
 
 
 RULES: tuple[Rule, ...] = (
     Rule(
         "malo_opadu",
         "Za mało opadu",
-        f"opad w okresie co najwyżej {dec(LESS_RAIN_SHARE * 100)}% opadu zwykłego sezonu",
-        "propozycja zespołu",
+        f"opad w okresie co najwyżej {dec(LESS_RAIN_SHARE * 100)}% opadu zwykłego sezonu "
+        f"(klasa „suchy”); w dowodzie także co najwyżej {dec(VERY_DRY_SHARE * 100)}% („bardzo suchy”) "
+        f"i poniżej {dec(EXTREMELY_DRY_SHARE * 100)}% („skrajnie suchy”)",
+        "literatura",
+        "skala opadowa IMGW wg Kaczorowskiej (1962), Biuletyn PSHM 2022, s. 13",
     ),
     Rule(
         "duze_parowanie",
         "Duże parowanie",
         f"parowanie w okresie co najmniej {dec(MORE_EVAPORATION_SHARE * 100)}% parowania zwykłego sezonu",
-        "propozycja zespołu",
+        "kalibracja danych",
+        "kalibracja danych i analogia do granicy „normalny” skali IMGW (90–110%)",
     ),
     Rule(
         "gleba_lekka",
@@ -71,8 +79,11 @@ RULES: tuple[Rule, ...] = (
     Rule(
         "splyw",
         "Woda spływa z pola",
-        f"średni spadek terenu z NMT powyżej {dec(RUNOFF_SLOPE_PCT, 1)}%",
-        "propozycja zespołu",
+        f"średni spadek terenu z NMT co najmniej {dec(RUNOFF_SLOPE_PCT, 1)}% (spływ); od "
+        f"{dec(RUNOFF_MILD_SLOPE_PCT, 1)}% do {dec(RUNOFF_SLOPE_PCT, 1)}% spływ łagodny, pewność niska",
+        "literatura",
+        "klasy spadków IUNG, Józefaciuk i in. 1985 wg Nowocień i Wawer 2013 (do 5%: erozja słaba); "
+        "klasa FAO „łagodnie nachylony” 2–5%",
     ),
     Rule(
         "faza_wrazliwa",
@@ -277,10 +288,22 @@ def need(diagnosis: Diagnosis) -> list[CauseCode]:
 # ---------------------------------------------------------------- the rules
 
 
+def _rain_class(share: float | None) -> str | None:
+    """The class of the IMGW scale (Kaczorowska 1962) of this period's rain against the usual."""
+    if share is None:
+        return None
+    if share < EXTREMELY_DRY_SHARE:
+        return "skrajnie suchy"
+    if share <= VERY_DRY_SHARE:
+        return "bardzo suchy"
+    return "suchy"
+
+
 def _rain_cause(p: PeriodBalance, usual: UsualSeason) -> Cause | None:
     if p.precip_mm > LESS_RAIN_SHARE * usual.precip_mm:
         return None
     gap = usual.precip_mm - p.precip_mm
+    share = p.precip_mm / usual.precip_mm if usual.precip_mm else None
     return Cause(
         code="malo_opadu",
         words=f"spadło {dec(p.precip_mm)} mm, o {dec(gap)} mm mniej niż zwykle ({dec(usual.precip_mm)} mm)",
@@ -288,7 +311,8 @@ def _rain_cause(p: PeriodBalance, usual: UsualSeason) -> Cause | None:
         evidence={
             "opad_mm": p.precip_mm,
             "opad_zwykly_mm": usual.precip_mm,
-            "opad_do_zwyklego_proc": round(100 * p.precip_mm / usual.precip_mm) if usual.precip_mm else None,
+            "opad_do_zwyklego_proc": round(100 * share) if share is not None else None,
+            "klasa_opadu": _rain_class(share),
         },
     )
 
@@ -343,20 +367,36 @@ def _catchment_ha(ctx: ReportContext) -> float | None:
 
 
 def _runoff_cause(ctx: ReportContext) -> Cause | None:
+    """Two levels: mean slope from 5% is runoff; from 2% to 5% it is mild runoff with low confidence.
+
+    Both carry the code "splyw", so the retention actions of that cause stay open at the mild level too.
+    """
     slope = mean_slope_pct(ctx)
-    if slope is None or slope <= RUNOFF_SLOPE_PCT:
+    if slope is None or slope < RUNOFF_MILD_SLOPE_PCT:
         return None
+    mild = slope < RUNOFF_SLOPE_PCT
     words = f"spadek terenu {dec(slope, 1)}% (NMT)"
+    if mild:
+        words = f"łagodny spadek terenu {dec(slope, 1)}% (NMT), woda spływa głównie przy ulewnych opadach"
     ditch = nearest_ditch_m(ctx)
     if ditch is not None:
         words += f", najbliższy rów w odległości {dec(ditch, 1 if ditch < 10 else 0)} m (BDOT10k)"
-    evidence: dict[str, float | int | str | bool | None] = {"spadek_proc": round(slope, 1)}
+    evidence: dict[str, float | int | str | bool | None] = {
+        "spadek_proc": round(slope, 1),
+        "poziom": "łagodny" if mild else "wyraźny",
+    }
     if ditch is not None:
         evidence["row_m"] = round(ditch, 1)
     area = _catchment_ha(ctx)
     if area is not None:
         evidence["zlewnia_ha"] = area
-    return Cause(code="splyw", words=words, evidence=evidence)
+    return Cause(
+        code="splyw",
+        words=words,
+        evidence=evidence,
+        threshold_source="literatura",
+        confidence="niska" if mild else "średnia",
+    )
 
 
 def _phase_cause(ctx: ReportContext, p: PeriodBalance) -> Cause | None:

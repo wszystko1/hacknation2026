@@ -478,8 +478,9 @@ def _sentence(row: CatalogRow, ctx: ReportContext, ir: Irrigation) -> str:
         dose_mm, dose_m3 = _range(ir.dose_mm), _range(ir.dose_m3)
         share = row.cond("dose_share_of_max")
         if share is not None:  # one dose "about 0.75 of the maximum" instead of the range
-            dose_mm = dec(share * ir.dose_mm[1])
-            dose_m3 = dec(share * ir.dose_mm[1] * M3_PER_HA_PER_MM * area)
+            one = min(max(share * ir.dose_mm[1], ir.dose_mm[0]), ir.dose_mm[1])  # stay inside the stated range
+            dose_mm = dec(one)
+            dose_m3 = dec(one * M3_PER_HA_PER_MM * area)
     fields = {
         "area_ha": dec(area, 2),
         "soil": _soil_words(ctx),

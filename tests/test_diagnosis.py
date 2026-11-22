@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 import re
+from datetime import date
 
 import pytest
 
@@ -12,6 +13,10 @@ from app.advice.diagnosis import (
     LESS_RAIN_SHARE,
     MORE_EVAPORATION_SHARE,
     RULES,
+    RUNOFF_MILD_SLOPE_PCT,
+    RUNOFF_SLOPE_PCT,
+    UsualSeason,
+    _rain_cause,
     attribution,
     balance_split,
     diagnose,
@@ -22,12 +27,13 @@ from app.advice.diagnosis import (
 from app.context import ReportContext
 from app.drought.kbw import assess
 from app.inputs import parse_request
-from app.models import Diagnosis, Report
+from app.models import Diagnosis, PeriodBalance, Report
 from app.report import build_context
 from app.soil import assess_soil
 from tests.acceptance.helpers import DOBRCZ, GSM_TODAY, client, html, query, report
 
 PARCELS = [DOBRCZ, GSM_TODAY]
+KINDS = ("przepis", "literatura", "kalibracja danych", "propozycja zespołu")
 BALANCE_SENTENCE = re.compile(r"spadło \d+ mm, parowanie zabrało \d+ mm")
 
 
@@ -76,17 +82,71 @@ def test_without_an_assessment_the_diagnosis_is_empty() -> None:
     assert diagnose(ctx) == Diagnosis()
 
 
-@pytest.mark.parametrize(("slope", "runoff"), [(2.5, True), (2.0, False), (1.4, False)])
-def test_runoff_cause_needs_a_mean_slope_above_two_percent(slope: float, runoff: bool) -> None:
-    codes = {c.code for c in diagnose(make_context(DOBRCZ, slope_pct=slope)).causes}
-    assert ("splyw" in codes) is runoff
+@pytest.mark.parametrize(
+    ("slope", "level"),
+    [(1.4, None), (1.99, None), (2.0, "łagodny"), (2.85, "łagodny"), (4.9, "łagodny"), (5.0, "wyraźny"), (6.0, "wyraźny")],
+)
+def test_runoff_has_two_levels_mild_from_two_percent_and_clear_from_five(slope: float, level: str | None) -> None:
+    causes = {c.code: c for c in diagnose(make_context(DOBRCZ, slope_pct=slope)).causes}
+    if level is None:
+        assert "splyw" not in causes
+        return
+    c = causes["splyw"]  # the same code at both levels: the retention actions of the cause stay open
+    assert c.evidence["poziom"] == level
+    assert c.confidence == ("niska" if level == "łagodny" else "średnia")
+    assert c.threshold_source == "literatura"
+    assert ("ulewn" in c.words) is (level == "łagodny")
+
+
+def test_mild_runoff_keeps_the_retention_actions_of_the_cause() -> None:
+    from app.models import AXIS_OF_CAUSE
+
+    assert RUNOFF_MILD_SLOPE_PCT == 2.0 and RUNOFF_SLOPE_PCT == 5.0
+    mild = diagnose(make_context(DOBRCZ, slope_pct=2.85))
+    clear = diagnose(make_context(DOBRCZ, slope_pct=6.0))
+    assert need(mild).count("splyw") == need(clear).count("splyw") == 1
+    assert AXIS_OF_CAUSE["splyw"] == "miejsce"
+
+
+def test_gora_swietej_malgorzaty_gets_mild_runoff_and_keeps_retention() -> None:
+    r = report(GSM_TODAY)
+    runoff = next((c for c in r.diagnosis.causes if c.code == "splyw"), None)
+    assert runoff is not None and runoff.evidence["poziom"] == "łagodny" and runoff.confidence == "niska"
+    assert any(a.group == "retencja" for a in r.actions)
+
+
+def _period(precip: float) -> PeriodBalance:
+    return PeriodBalance(
+        n=4, start=date(2023, 4, 21), end=date(2023, 6, 20), days=61, precip_mm=precip, et0_mm=200.0,
+        kbw_mm=round(precip - 200.0, 1), threshold_mm=None, margin_mm=None, complete=True,
+    )
+
+
+@pytest.mark.parametrize(
+    ("share", "flag", "klasa"),
+    [(0.31, True, "skrajnie suchy"), (0.50, True, "bardzo suchy"), (0.74, True, "bardzo suchy"),
+     (0.75, True, "suchy"), (0.88, True, "suchy"), (0.89, True, "suchy"), (0.90, False, None)],
+)
+def test_less_rain_flag_is_up_to_89_percent_with_the_imgw_class(share: float, flag: bool, klasa: str | None) -> None:
+    usual = UsualSeason(n_seasons=9, years=list(range(2014, 2023)), kbw_mm=-90.0, precip_mm=100.0, et0_mm=190.0)
+    c = _rain_cause(_period(100.0 * share), usual)
+    assert (c is not None) is flag
+    if c is not None:
+        assert c.evidence["klasa_opadu"] == klasa and c.threshold_source == "literatura"
+
+
+def test_dobrcz_rain_flag_is_up_and_the_flat_parcel_has_no_runoff() -> None:
+    causes = {c.code: c for c in report(DOBRCZ).diagnosis.causes}
+    rain = causes["malo_opadu"].evidence  # far below the usual season
+    assert rain["opad_do_zwyklego_proc"] <= 89 and rain["klasa_opadu"] in ("suchy", "bardzo suchy", "skrajnie suchy")
+    assert "splyw" not in causes  # mean slope 1.4%
 
 
 def test_parcel_with_little_rain_and_a_slope_gets_both_causes() -> None:
-    causes = diagnose(make_context(DOBRCZ, slope_pct=3.1)).causes
+    causes = diagnose(make_context(DOBRCZ, slope_pct=6.1)).causes
     by_code = {c.code: c for c in causes}
     assert {"malo_opadu", "splyw"} <= by_code.keys()
-    assert "3,1%" in by_code["splyw"].words and re.search(r"\d+ m\b", by_code["splyw"].words)
+    assert "6,1%" in by_code["splyw"].words and re.search(r"\d+ m\b", by_code["splyw"].words)
 
 
 def test_usual_balance_is_the_median_of_the_earlier_seasons() -> None:
@@ -114,7 +174,7 @@ def test_history_has_ten_seasons_ending_with_the_verdicts_own() -> None:
     assert seasons[-1].period.margin_mm == ctx.verdict.margin_mm
 
 
-def test_every_rule_names_its_threshold_and_confidence() -> None:
+def test_every_rule_and_every_cause_names_the_kind_of_its_threshold_source() -> None:
     assert {r.code for r in RULES} == {
         "malo_opadu",
         "duze_parowanie",
@@ -123,8 +183,17 @@ def test_every_rule_names_its_threshold_and_confidence() -> None:
         "faza_wrazliwa",
     }
     for r in RULES:
-        assert r.condition and r.confidence
-        assert r.source or r.confidence == "propozycja zespołu"
+        assert r.condition and r.threshold_source in KINDS
+        assert r.source or r.threshold_source == "propozycja zespołu"
+    assert {r.code: r.threshold_source for r in RULES} == {
+        "malo_opadu": "literatura",
+        "duze_parowanie": "kalibracja danych",
+        "gleba_lekka": "przepis",
+        "splyw": "literatura",
+        "faza_wrazliwa": "przepis",
+    }
+    for c in report(DOBRCZ).diagnosis.causes + report(GSM_TODAY).diagnosis.causes:
+        assert c.threshold_source in KINDS, c.code
 
 
 @pytest.mark.parametrize("params", PARCELS)
@@ -140,15 +209,20 @@ def test_causes_stand_above_the_retention_section_in_both_views(params: dict) ->
 
 
 @pytest.mark.parametrize("params", PARCELS)
-def test_adviser_view_shows_rule_thresholds_with_confidence(params: dict) -> None:
+def test_adviser_view_shows_rule_thresholds_with_the_kind_of_source(params: dict) -> None:
     r = Report.model_validate(client.get(f"/api/raport?{query(params, widok='doradca')}").json())
     keys = {kv.key: kv.value for kv in r.section("przyczyny").advisor}
-    assert any("propozycja zespołu" in v for v in keys.values())
+    rules = {k: v for k, v in keys.items() if k.startswith("Reguła: ")}
+    assert len(rules) == len(RULES)
+    assert all("źródło progu: " in v for v in rules.values())
+    assert not any("propozycja zespołu" in v for v in rules.values())
+    assert any("źródło progu: literatura" in v and "Kaczorowskiej" in v for v in rules.values())
+    assert any("źródło progu: kalibracja danych" in v for v in rules.values())
     assert all(any(rule.label.lower() in k for k in keys) for rule in RULES)
 
 
-def test_thresholds_are_85_and_110_percent() -> None:
-    assert (LESS_RAIN_SHARE, MORE_EVAPORATION_SHARE) == (0.85, 1.10)
+def test_thresholds_are_89_and_110_percent() -> None:
+    assert (LESS_RAIN_SHARE, MORE_EVAPORATION_SHARE) == (0.89, 1.10)
 
 
 @pytest.mark.parametrize("params", PARCELS)

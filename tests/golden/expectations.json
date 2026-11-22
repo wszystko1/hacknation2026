@@ -289,11 +289,9 @@
      "splyw"
     ],
     "forbidden": [
-     "gleba_lekka",
-     "malo_opadu"
+     "gleba_lekka"
     ],
     "forbidden_why": {
-     "malo_opadu": "opad 136 mm w okresie, brak deficytu opadu wg normy",
      "gleba_lekka": "kat. IV"
     }
    },
@@ -512,12 +510,8 @@
    },
    "causes": {
     "required": [],
-    "forbidden": [
-     "malo_opadu"
-    ],
-    "forbidden_why": {
-     "malo_opadu": "opad 112 mm w okresie, brak deficytu wzgledem progu"
-    }
+    "forbidden": [],
+    "forbidden_why": {}
    },
    "actions": {
     "required": [],

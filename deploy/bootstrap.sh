@@ -86,7 +86,7 @@ if ! command -v uv >/dev/null || ! uv --version | grep -q " $UV_VERSION"; then
     | env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh
 fi
 install -d -o "$APP_USER" -g "$APP_USER" /opt/uv-python
-sudo -u "$APP_USER" env UV_PYTHON_INSTALL_DIR=/opt/uv-python uv python install 3.12
+(cd / && sudo -u "$APP_USER" env UV_PYTHON_INSTALL_DIR=/opt/uv-python uv python install 3.12)
 
 echo "== Caddy"
 if ! command -v caddy >/dev/null; then
