@@ -328,15 +328,15 @@ def forecast_exceedance(ctx: ReportContext) -> ExceedanceForecast:
     if _analog_loses(metrics):
         method, shown = "historical", own
         sentence = (
-            f"W {own.k} z {own.n} wcześniejszych lat bilans spadł poniżej progu suszy dla {genitive} w okresie kończącym się "
-            f"od {day(asof)} do {day(end)}. Dopełnianie przebiegami nie wygrało w walidacji z samą częstością, "
+            f"Na dzień {day(asof)}: w {own.k} z {own.n} wcześniejszych lat bilans spadł poniżej progu suszy dla "
+            f"{genitive} w którymś z okresów kończących się od {day(asof)} do {day(end)}. Dopełnianie przebiegami nie wygrało w walidacji z samą częstością, "
             "więc podajemy częstość."
         )
     else:
         method, shown = "analog", analog
         sentence = (
-            f"W {analog.k} z {analog.n} wcześniejszych lat dalsza pogoda doprowadziła do przekroczenia progu suszy "
-            f"dla {genitive} do {day(end)}. Bilans do {day(asof)} jest znany, resztę okresu dopełnia pogoda "
+            f"Na dzień {day(asof)}: w {analog.k} z {analog.n} wcześniejszych lat dalsza pogoda doprowadziła do "
+            f"przekroczenia progu suszy dla {genitive} do {day(end)}. Bilans do {day(asof)} jest znany, resztę okresu dopełnia pogoda "
             f"tych samych dni z lat {analog.years[0]}–{analog.years[-1]}."
         )
     return ExceedanceForecast(

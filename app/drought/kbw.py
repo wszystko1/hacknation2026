@@ -7,6 +7,7 @@ The verdict compares the KBW of each finished period with the threshold for the 
 from __future__ import annotations
 
 import calendar
+import os
 from collections.abc import Sequence
 from datetime import date, timedelta
 from typing import Literal
@@ -24,6 +25,23 @@ from app.models import (
     SoilCategory,
     Verdict,
 )
+
+# Switches read at every call, so a running server and a test can flip them without a restart.
+VERDICT_PERIOD_ENV = (
+    "CHRONPLON_VERDICT_PERIOD"  # "current" (default): the period ending on the last full dekad
+)
+VERDICT_ET_ENV = "CHRONPLON_VERDICT_ET"  # "fao56" (default) or "dg"; the verdict still computes with FAO-56
+
+
+def verdict_period_mode() -> Literal["current", "worst"]:
+    """Which period the verdict is about: "current" (default) or "worst" (the earlier behaviour, smallest margin)."""
+    return "worst" if os.environ.get(VERDICT_PERIOD_ENV, "").strip().lower() == "worst" else "current"
+
+
+def verdict_et_method() -> Literal["fao56", "dg"]:
+    """Evaporation formula named by the switch; any other value means FAO-56."""
+    return "dg" if os.environ.get(VERDICT_ET_ENV, "").strip().lower() == "dg" else "fao56"
+
 
 # A period with more than this share of days without precipitation or ET0 does not enter the verdict.
 MAX_MISSING_SHARE = 0.10
@@ -238,8 +256,8 @@ def _neighbour_note(crop: CropGroup, neighbour: SoilCategory, periods: list[Peri
     )
 
 
-def _no_data(sentence: str, periods: list[PeriodBalance] | None = None, note: str = "") -> Verdict:
-    return Verdict(
+def _no_data(sentence: str, periods: list[PeriodBalance] | None = None, note: str = "") -> PeriodVerdict:
+    return PeriodVerdict(
         state="no_data",
         badge="",
         kbw_mm=None,
@@ -253,6 +271,42 @@ def _no_data(sentence: str, periods: list[PeriodBalance] | None = None, note: st
     )
 
 
+class PeriodVerdict(Verdict):
+    """`Verdict` that also keeps the worst period of the season so far and the line that sets it beside the shown one."""
+
+    worst: PeriodBalance | None = None  # smallest margin among the usable finished periods with a threshold
+    context: str = ""  # "Najgorszy okres sezonu do tej pory: ..." or "" when the shown period is the worst
+
+
+def _current_period(usable: list[PeriodBalance], with_thr: list[PeriodBalance]) -> PeriodBalance:
+    """The period that ends on the last full dekad; the latest one with a threshold when the crop has none now.
+
+    Crops with a late or short critical period (potatoes from period 3, maize from 4, cereals up to 9) have
+    no threshold in the period that ends today, so the verdict stays on the last one that has it.
+    """
+    latest = max(usable, key=lambda p: p.n)
+    if latest.margin_mm is not None or not with_thr:
+        return latest
+    return max(with_thr, key=lambda p: p.n)
+
+
+def _context_line(top: PeriodBalance, worst: PeriodBalance | None, until: date, crop: CropGroup) -> str:
+    """One line: the worst period of the season so far beside the shown one, and why the shown one is not latest."""
+    parts = []
+    if top.end < until:
+        parts.append(
+            f"Okres kończący się {ddmmyyyy(until)} nie ma progu suszy dla {CROP_GENITIVE[crop]}, "
+            f"więc werdykt dotyczy ostatniego okresu z progiem: {_span(top)}."
+        )
+    if worst is not None and worst.n != top.n and worst.margin_mm is not None:
+        side = "poniżej" if worst.margin_mm < 0 else "powyżej"
+        parts.append(
+            f"Najgorszy okres sezonu do tej pory: {_span(worst)}, bilans {dec(worst.kbw_mm)} mm, "
+            f"{dec(abs(worst.margin_mm))} mm {side} progu."
+        )
+    return " ".join(parts)
+
+
 def assess(
     dates: Sequence[str],
     precip: Sequence[float | None],
@@ -263,21 +317,49 @@ def assess(
     *,
     neighbour: SoilCategory | None = None,
     et_method: Literal["fao56", "dg"] = "fao56",
-) -> Verdict:
+    period: Literal["current", "worst"] | None = None,
+) -> PeriodVerdict:
     """The verdict for the analysis day by the definition of Dz.U. 2019 poz. 739.
 
     `et0` is the series of the evaporation formula named by `et_method` (the caller computes it). The running
     window ends on the last full dekad, as SMSR IUNG counts it: on 15.V it is 21.III-10.V (51 days).
 
-    Every finished period of the season is compared with the threshold for the crop group and soil category;
-    the period with the smallest margin (KBW - threshold) is shown. Periods with more than 10% of days
-    without weather data are left out and named in `note`.
+    Every finished period of the season is compared with the threshold for the crop group and soil category.
+    `period="worst"` (the default here) shows the period with the smallest margin (KBW - threshold);
+    `period="current"` shows the period that ends on the last full dekad, as SMSR IUNG reports it, and keeps the
+    worst period of the season so far in `worst`. The report takes the choice from `main_verdict`, which reads the
+    switch. Out of season the worst period of the season is shown either way.
+    Periods with more than 10% of days without weather data are left out and named in `note`.
     """
-    verdict = _assess(dates, precip, et0, day, crop, soil, neighbour)
+    verdict = _assess(dates, precip, et0, day, crop, soil, neighbour, period or "worst")
     if et_method == "dg":
         how = f"{verdict.how} · parowanie wzorem Doroszewskiego–Górskiego" if verdict.how else ""
         return verdict.model_copy(update={"et_method": "dg", "how": how})
     return verdict
+
+
+def main_verdict(
+    dates: Sequence[str],
+    precip: Sequence[float | None],
+    et0: Sequence[float | None],
+    day: date,
+    crop: CropGroup,
+    soil: SoilCategory | None,
+    *,
+    neighbour: SoilCategory | None = None,
+) -> PeriodVerdict:
+    """The verdict the report and the waiting page show: one call for both paths, period chosen by the switch."""
+    return assess(
+        dates,
+        precip,
+        et0,
+        day,
+        crop,
+        soil,
+        neighbour=neighbour,
+        et_method="fao56",
+        period=verdict_period_mode(),
+    )
 
 
 def _assess(
@@ -288,7 +370,8 @@ def _assess(
     crop: CropGroup,
     soil: SoilCategory | None,
     neighbour: SoilCategory | None,
-) -> Verdict:
+    mode: Literal["current", "worst"],
+) -> PeriodVerdict:
     if not dates:
         return _no_data(
             "Brak: bilansu wody, bo nie ma danych o pogodzie dla tej działki; "
@@ -314,7 +397,7 @@ def _assess(
                 "Brak: bilansu wody, bo pierwsza dekada okresu monitoringu (21–31 marca) jeszcze się nie zakończyła."
             )
         elapsed = (until - running.start).days + 1
-        return Verdict(
+        return PeriodVerdict(
             state="running",
             badge="",
             kbw_mm=running.kbw_mm,
@@ -346,7 +429,10 @@ def _assess(
             gap_note,
         )
     with_thr = [p for p in usable if p.margin_mm is not None]
-    top = min(with_thr, key=lambda p: p.margin_mm) if with_thr else min(usable, key=lambda p: p.kbw_mm)
+    worst = min(with_thr, key=lambda p: p.margin_mm) if with_thr else None
+    top = worst if worst else min(usable, key=lambda p: p.kbw_mm)
+    if in_season and mode == "current":
+        top = _current_period(usable, with_thr)
 
     if not in_season:
         state, badge = "out_of_season", f"Sezon {year}"
@@ -357,7 +443,12 @@ def _assess(
     else:
         state, badge = "above", BADGE_ABOVE
 
-    lead = "W tych 60 dniach" if in_season else f"W sezonie {year}, w dniach {_span(top)},"
+    if not in_season:
+        lead = f"W sezonie {year}, w dniach {_span(top)},"
+    elif mode == "current":
+        lead = "W tych 60 dniach"
+    else:
+        lead = "W tych 60 dniach"
     sentence = f"{lead} {_water(top.kbw_mm)}. "
     if top.margin_mm is not None:
         sentence += _against_threshold(top.margin_mm, crop)
@@ -374,7 +465,7 @@ def _assess(
     notes = [gap_note]
     if neighbour and neighbour != soil and crop != CropGroup.INNA:
         notes.append(_neighbour_note(crop, neighbour, usable))
-    return Verdict(
+    return PeriodVerdict(
         state=state,
         badge=badge,
         kbw_mm=top.kbw_mm,
@@ -386,4 +477,6 @@ def _assess(
         how=how,
         season_year=year if not in_season else None,
         note=" ".join(n for n in notes if n),
+        worst=worst if in_season else None,
+        context=_context_line(top, worst, until, crop) if in_season and mode == "current" else "",
     )

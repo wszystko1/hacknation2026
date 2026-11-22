@@ -234,7 +234,8 @@ def confidence(report: Report) -> list[str]:
     if s.state == "ok":
         first = f"Państwowa ocena IUNG dla gminy {s.commune}: {plain(s.words).split(',')[0]}."
     else:
-        first = f"Oceny IUNG dla gminy {s.commune} w tym okresie nie mamy: {plain(s.reason)}"
+        reason = plain(s.reason)
+        first = reason if reason.startswith("Brak") else f"Brak oceny IUNG dla gminy {s.commune} w tym okresie: {reason}"
     lines = [first]
     a = report.agreement
     if a.available and a.k_per_100 is not None:
@@ -312,9 +313,13 @@ def _action_line(a: Action, report: Report, *, plan_switch: bool = False) -> Lin
 
 
 def _balance_row(report: Report) -> Row:
-    """The balance and the threshold, once; out of season also the rain since 1 October against the norm."""
+    """The balance and the threshold, once; the worst period of the season beside it; out of season also the rain
+    since 1 October against the norm."""
     off = report.off_season
     paragraphs = [plain(off.sentence)] if off and off.sentence else []
+    context = getattr(report.verdict, "context", "")
+    if context:
+        paragraphs.append(plain(context))
     return Row("bilans", "Bilans wody i próg suszy", paragraphs=paragraphs, kind="balance")
 
 
@@ -507,6 +512,9 @@ def balance_caption(report: Report) -> str:
     if p is None:
         return ""
     note = f"; {plain(report.verdict.note)}" if report.verdict.note else ""
+    day = report.request.day
+    if report.verdict.state in ("below", "above", "no_threshold") and p.end < day:
+        note = f"; okno kończy się na ostatniej pełnej dekadzie przed {date_words(day)}{note}"
     return f"opad minus parowanie, od {date_words(p.start)} do {date_words(p.end)}{note}"
 
 

@@ -21,7 +21,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app import datasource, fmt
 from app.context import ReportContext
 from app.drought.chart import hbar_svg
-from app.drought.kbw import assess
+from app.drought.kbw import main_verdict
 from app.farmer_view import plain as plain_words
 from app.geodata import InvalidParcelId, fetch_all
 from app.inputs import FORMAT_ERROR, parse_request
@@ -235,7 +235,7 @@ def _first_look(req: ReportRequest) -> dict:
     ctx = ReportContext(request=req, data=data, parcel=parcel_info(data))
     ctx.soil = assess_soil(ctx)
     w = data.weather.data if data.weather.usable else None
-    verdict = assess(
+    verdict = main_verdict(
         w.dates if w else [], w.precipitation_mm if w else [], w.et0_mm if w else [], req.day, req.crop,
         ctx.soil.category,
     )  # fmt: skip

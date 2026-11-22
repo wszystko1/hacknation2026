@@ -16,7 +16,7 @@ from app.advice.rules import field_actions
 from app.context import ReportContext
 from app.crop_condition import assess_crop_condition
 from app.crop_condition.reading import read_together
-from app.drought.kbw import assess, season_of
+from app.drought.kbw import main_verdict, season_of
 from app.drought.variants import verdict_dg
 from app.forecast.exceedance import forecast_exceedance
 from app.geodata import FetchResult
@@ -130,7 +130,7 @@ def build_report(req: ReportRequest) -> Report:
     w = ctx.data.weather.data if ctx.data.weather.usable else None
     ctx.verdict = _safe(
         "verdict",
-        lambda: assess(
+        lambda: main_verdict(
             w.dates if w else [],
             w.precipitation_mm if w else [],
             w.et0_mm if w else [],

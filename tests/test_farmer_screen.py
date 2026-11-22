@@ -82,7 +82,10 @@ def test_header_has_the_date_in_words_and_the_soil_without_a_category_code() -> 
 def test_balance_and_threshold_stand_in_one_row_of_level_b() -> None:
     page = html(DOBRCZ)
     balance = next(r for r in rows_of(page) if 'id="wiersz-bilans"' in r)
-    assert "−201" in text_of(balance) and "−154 mm" in text_of(balance)
+    # the period ending on the last full dekad (21.V-20.VII), not the worst of the season (21.IV-20.VI: −201 and −154)
+    assert "−203" in text_of(balance) and "−188 mm" in text_of(balance)
+    assert "od 21 maja 2023 do 20 lipca 2023" in text_of(balance)
+    assert "Najgorszy okres sezonu do tej pory: 21 kwietnia 2023–20 czerwca 2023" in text_of(balance)
 
 
 @pytest.mark.parametrize("params", PARCELS, ids=IDS)
@@ -109,9 +112,9 @@ def test_verdict_is_coloured_with_a_word_and_out_of_season_is_grey_without_bars(
 def test_bar_shows_usual_and_now_of_the_first_weather_cause() -> None:
     r = report(DOBRCZ)
     bar = weather_bar(r)
-    assert bar == Bar("Opad w tym okresie", "106 mm", "33 mm", 100, 31)
+    assert bar == Bar("Opad w tym okresie", "130 mm", "69 mm", 100, 53)
     page_bar = text_of(re.search(r'class="a-bars tile".*?</div>\s*</div>', html(DOBRCZ), flags=re.S).group(0))
-    assert "zwykle 106 mm" in page_bar and "teraz 33 mm" in page_bar
+    assert "zwykle 130 mm" in page_bar and "teraz 69 mm" in page_bar
 
 
 def test_bar_follows_the_order_of_the_diagnosis_and_drops_out_without_a_weather_cause() -> None:
