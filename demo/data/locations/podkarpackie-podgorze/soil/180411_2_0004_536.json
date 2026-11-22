@@ -1,0 +1,10 @@
+{
+ "parcel_id": "180411_2.0004.536",
+ "counts": {
+  "2": 5
+ },
+ "points": 5,
+ "url": "https://sgeo.iung.pl/geoserver/ows?layers=Susza:katgl_landuse2024",
+ "retrieved_at": "2026-11-22T04:50:37+00:00",
+ "layer": "Susza:katgl_landuse2024"
+}

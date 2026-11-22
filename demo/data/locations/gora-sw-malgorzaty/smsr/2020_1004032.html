@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    
+    <title>SMSR  Góra Świętej Małgorzaty 2020</title>
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+	<!-- Bootstrap Core CSS -->
+	<link rel="stylesheet" href="/static/vendor/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/static/vendor/font-awesome/css/all.min.css">
+
+    <!-- Custom CSS -->
+	<link rel="stylesheet" href="/static/css/leaflet.css">
+	<link rel="stylesheet" href="/static/css/leaflet-sidepanel2.css">
+    <link rel="stylesheet" href="/static/css/lightbox.css">
+	<link rel="stylesheet" href="/static/css/smsr.css">
+  </head>
+  <body>
+    
+
+
+<!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+		<div class="container">
+		  <a class="navbar-brand" href="/">SMSR</a>
+		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		  </button>
+		  <div class="collapse navbar-collapse" id="navbarResponsive">
+			<ul class="navbar-nav ml-auto">
+			  <!--<li class="nav-item smsr-active">
+				<a class="nav-link" href="#">Home
+				  <span class="sr-only">(current)</span>
+				</a>
+			  </li>-->
+			  <li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPortfolio" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				  O systemie
+				</a>
+				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownPortfolio">
+				  <a class="dropdown-item" href="/">Główna</a>
+				  <a class="dropdown-item" href="/news/">Aktualności</a>
+				  <a class="dropdown-item" href="/system/">O systemie</a>
+				  <a class="dropdown-item" href="/raporty/">Okresy raportowania</a>
+				  <a class="dropdown-item" href="/progi/">Wartości progowe KBW</a>
+				  <a class="dropdown-item" href="/kategorie/">Kategorie glebowe</a>
+				  <a class="dropdown-item" href="/mapa-kategorii/">Mapa kategorii glebowych</a>
+				</div>
+			  </li>
+
+			  <li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPortfolio" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				  Zagrożenie suszą
+				</a>
+				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownPortfolio">
+				  <a class="dropdown-item" href="/komentarz/2020/">Komunikaty</a>
+				  <a class="dropdown-item" href="/kbw/2020/">Mapy KBW</a>
+				  <a class="dropdown-item" href="/mapy/2020/">Mapy zagrożenia suszą</a>
+				  <a class="dropdown-item" href="/wykazy/2020/">Tabele dla gmin</a>
+				</div>
+			  </li>
+
+
+			  <li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPortfolio" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				  Wilgotność gleby
+				</a>
+				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownPortfolio">
+				  <a class="dropdown-item" href="/mwg/">O monitoringu wilgotności</a>
+				  <a class="dropdown-item" href="/mwgst/">Stacje pomiarowe</a>
+				</div>
+			  </li>
+
+
+			  <li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="DropdownLanguage" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				  PL
+				</a>
+				<div class="dropdown-menu dropdown-menu-right" id="DivLanguage" aria-labelledby="DropdownLanguage">
+				  <a class="dropdown-item" href="/wykazy/2020,1004032/">PL</a>
+				  <a class="dropdown-item" href="/en/wykazy/2020,1004032/">EN</a>
+				</div>
+			  </li>
+			</ul>
+		  </div>
+		</div>
+	</nav>
+
+    <!-- Page Content -->
+
+    
+
+
+<!-- Header -->
+  <header class="smsr-head">
+
+    <div class="container h-100">
+
+    <div class="row no-gutters">
+        
+      <div class="col-xl-3 col-sm-6 col-3 links-modules">
+        <a href="/komentarz/2020/">
+        <div class="card-body">
+			<div class="media link-module-v2">
+				<div class="mr-2">
+					<i class="fas fa-3x fa-address-card"></i>
+				</div>
+				<div class="media-body d-none d-sm-block">
+					<h5 class="mt-0 mb-0">Komunikaty</h5>
+				</div>
+			</div>
+        </div>
+        </a>
+      </div>
+    
+      <div class="col-xl-3 col-sm-6 col-3 links-modules">
+        <a href="/kbw/2020/">
+		<div class="card-body">
+			<div class="media link-module-v2">
+				<div class="mr-2">
+					<i class="fa fa-3x fa-cloud-sun-rain"></i>
+				</div>
+				<div class="media-body d-none d-sm-block">
+					<h5 class="mt-0 mb10">Mapy KBW</h5>
+				</div>
+			</div>
+		</div>
+        </a>
+      </div>
+	  
+	  <div class="col-xl-3 col-sm-6 col-3 links-modules">
+        <a href="/mapy/2020/">
+		<div class="card-body">
+			<div class="media link-module-v2">
+				<div class="mr-2">
+					<i class="fa fa-3x fa-map-marked"></i>
+				</div>
+				<div class="media-body d-none d-sm-block">
+					<h5 class="mt-0 mb10">Mapy zagrożenia suszą</h5>
+				</div>
+			</div>
+		</div>
+        </a>
+      </div>
+	  
+	  <div class="col-xl-3 col-sm-6 col-3 links-modules">
+        <a href="/wykazy/2020/">
+		<div class="card-body">
+			<div class="media link-module-v2">
+				<div class="mr-2">
+					<i class="fa fa-3x fa-database"></i>
+				</div>
+				<div class="media-body d-none d-sm-block">
+					<h5 class="mt-0 mb10">Tabele dla gmin</h5>
+				</div>
+			</div>
+		</div>
+        </a>
+      </div>
+        
+        
+        
+   </div>
+	  
+	  
+    </div>
+
+  </header>
+<section>
+  <div class="container pt-3">
+
+	<div class="row">
+		
+		<div class="col-lg-12">
+			<h4>Zagrożenie suszą na poziomie gminy</h4>
+		</div>
+		
+		<div class="col-xl-3 col-sm-6">
+			<div class="form-group">
+				<label for="sel-rok-gm">Wybierz rok</label>
+				<select class="form-control" id="sel-rok-gm">
+				  <option selected>2020</option><option>2021</option><option>2022</option><option>2023</option><option>2024</option><option>2025</option><option>2026</option>
+				</select>
+			 </div>
+		</div>
+		
+		<div class="col-xl-3 col-sm-6">
+			<div class="form-group">
+				<label for="sel-woj">Wybierz województwo</label>
+				<select class="form-control" id="sel-woj">
+				  <option value="-">-Wybierz-</option><option value="02">dolnośląskie</option><option value="04">kujawsko-pomorskie</option><option value="06">lubelskie</option><option value="08">lubuskie</option><option value="10" selected>łódzkie</option><option value="12">małopolskie</option><option value="14">mazowieckie</option><option value="16">opolskie</option><option value="18">podkarpackie</option><option value="20">podlaskie</option><option value="22">pomorskie</option><option value="24">śląskie</option><option value="26">świętokrzyskie</option><option value="28">warmińsko-mazurskie</option><option value="30">wielkopolskie</option><option value="32">zachodniopomorskie</option>
+				</select>
+			 </div>
+		</div>
+		
+		<div class="col-xl-3 col-sm-6">
+			<div class="form-group">
+				<label for="sel-pow">Wybierz powiat</label>
+				<select class="form-control" id="sel-pow">
+				  <option value="-">-Wybierz-</option><option value="1001">bełchatowski</option><option value="1002">kutnowski</option><option value="1003">łaski</option><option value="1004" selected>łęczycki</option><option value="1005">łowicki</option><option value="1006">łódzki wschodni</option><option value="1007">opoczyński</option><option value="1008">pabianicki</option><option value="1009">pajęczański</option><option value="1010">piotrkowski</option><option value="1011">poddębicki</option><option value="1012">radomszczański</option><option value="1013">rawski</option><option value="1014">sieradzki</option><option value="1015">skierniewicki</option><option value="1016">tomaszowski</option><option value="1017">wieluński</option><option value="1018">wieruszowski</option><option value="1019">zduńskowolski</option><option value="1020">zgierski</option><option value="1021">brzeziński</option><option value="1061">m. Łódź</option><option value="1062">m. Piotrków Trybunalski</option><option value="1063">m. Skierniewice</option>
+				</select>
+			 </div>
+		</div>
+		
+		<div class="col-xl-3 col-sm-6">
+			<div class="form-group">
+				<label for="sel-gmina">Wybierz gminę</label>
+				<select class="form-control" id="sel-gmina">
+				  <option value="-">-Wybierz-</option><option value="1004011">Łęczyca</option><option value="1004022">Daszyna</option><option value="1004032" selected>Góra Świętej Małgorzaty</option><option value="1004042">Grabów</option><option value="1004052">Łęczyca</option><option value="1004063">Piątek</option><option value="1004072">Świnice Warckie</option><option value="1004082">Witonia</option>
+				</select>
+			 </div>
+		</div>
+		
+
+	</div>
+  
+    <!-- /.row --> 
+
+  </div>
+</sections>
+
+
+  <!-- Page Content -->
+<section class="pt-3">
+  <div class="container">
+
+	<div class="row">
+		<div class="col-xl-1"></div>
+		<div class="col-xl-10">
+			<div class="card mb-3" style="width: 100%; min-height: 400px;">
+				  <div class="card-body">
+					<h5 class="card-title">Gmina: Góra Świętej Małgorzaty; TERYT: 1004032</h5>
+					<span></span>			
+					
+					
+					
+						<div class="table-responsive-xl">
+							<table class="table table-bordered legend">
+							  <tbody>
+								<tr><td class="center" style="width: 25px; background: #a6ffa5">-</td><td>Kryterium suszy (wg. Roz. MRiRW) nie zostało przekroczone</td></tr>
+								<tr><td class="center" style="width: 50px; background: #fea277">+</td><td>Zagrożenie wystąpienia suszy</td></tr>
+								<tr><td class="center" style="width: 50px; background: #fff">x</td><td>nie dotyczy w danym okresie</td></tr>
+								<tr><td class="center" style="width: 50px; background: #b6b7b8">*</td><td>kategoria gleby nie występuje</td></tr>
+								<tr><td class="center" style="width: 50px; background: #b6b7b8">#</td><td>na oznaczonej kategorii gleby uprawa nie jest wskazana</td></tr>
+							  </tbody>
+							</table>
+						</div>
+					
+						<h6 class="card-title">Kategoria gleby I</h6>
+						<div class="table-responsive-xl">
+							<table class="table table-bordered tab-gmina">
+								<thead class="thead-light">
+									<tr><th>Gatunek roślin uprawnych</th><th title="2020-03-21 - 2020-05-20">01</th><th title="2020-04-01 - 2020-05-31">02</th><th title="2020-04-11 - 2020-06-10">03</th><th title="2020-04-21 - 2020-06-20">04</th><th title="2020-05-01 - 2020-06-30">05</th><th title="2020-05-11 - 2020-07-10">06</th><th title="2020-05-21 - 2020-07-20">07</th><th title="2020-06-01 - 2020-07-31">08</th><th title="2020-06-11 - 2020-08-10">09</th><th title="2020-06-21 - 2020-08-20">10</th><th title="2020-07-01 - 2020-08-31">11</th><th title="2020-07-11 - 2020-09-10">12</th><th title="2020-07-21 - 2020-09-20">13</th><th title="2020-08-01 - 2020-09-30">14</th></tr>
+								</thead>
+								<tbody>
+									<tr><td class="s-name left bold">Zboża ozime</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Zboża jare</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Kukurydza na ziarno</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Kukurydza na kiszonkę</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-susza">+</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Rzepak i rzepik</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td class="s-susza">+</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Ziemniak</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-susza">+</td><td>x</td></tr><tr><td class="s-name left bold">Burak cukrowy</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td><td class="s-nwsk">#</td></tr><tr><td class="s-name left bold">Chmiel</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Tytoń</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Warzywa gruntowe</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Krzewy owocowe</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Drzewa owocowe</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Truskawki</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Rośliny strączkowe</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Drzewa i krzewy owocowe</td><td>x</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>x</td><td>x</td><td>x</td><td>x</td></tr>
+								</tbody>
+							</table>
+						</div>
+						
+						<h6 class="card-title">Kategoria gleby II</h6>
+						<div class="table-responsive-xl">
+							<table class="table table-bordered tab-gmina">
+								<thead class="thead-light">
+									<tr><th>Gatunek roślin uprawnych</th><th title="2020-03-21 - 2020-05-20">01</th><th title="2020-04-01 - 2020-05-31">02</th><th title="2020-04-11 - 2020-06-10">03</th><th title="2020-04-21 - 2020-06-20">04</th><th title="2020-05-01 - 2020-06-30">05</th><th title="2020-05-11 - 2020-07-10">06</th><th title="2020-05-21 - 2020-07-20">07</th><th title="2020-06-01 - 2020-07-31">08</th><th title="2020-06-11 - 2020-08-10">09</th><th title="2020-06-21 - 2020-08-20">10</th><th title="2020-07-01 - 2020-08-31">11</th><th title="2020-07-11 - 2020-09-10">12</th><th title="2020-07-21 - 2020-09-20">13</th><th title="2020-08-01 - 2020-09-30">14</th></tr>
+								</thead>
+								<tbody>
+									<tr><td class="s-name left bold">Zboża ozime</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Zboża jare</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Kukurydza na ziarno</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Kukurydza na kiszonkę</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Rzepak i rzepik</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Ziemniak</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td></tr><tr><td class="s-name left bold">Burak cukrowy</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Chmiel</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Tytoń</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Warzywa gruntowe</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Krzewy owocowe</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Drzewa owocowe</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Truskawki</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Rośliny strączkowe</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Drzewa i krzewy owocowe</td><td>x</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>x</td><td>x</td><td>x</td><td>x</td></tr>
+								</tbody>
+							</table>
+						</div>
+						
+						<h6 class="card-title">Kategoria gleby III</h6>
+						<div class="table-responsive-xl">
+							<table class="table table-bordered tab-gmina">
+								<thead class="thead-light">
+									<tr><th>Gatunek roślin uprawnych</th><th title="2020-03-21 - 2020-05-20">01</th><th title="2020-04-01 - 2020-05-31">02</th><th title="2020-04-11 - 2020-06-10">03</th><th title="2020-04-21 - 2020-06-20">04</th><th title="2020-05-01 - 2020-06-30">05</th><th title="2020-05-11 - 2020-07-10">06</th><th title="2020-05-21 - 2020-07-20">07</th><th title="2020-06-01 - 2020-07-31">08</th><th title="2020-06-11 - 2020-08-10">09</th><th title="2020-06-21 - 2020-08-20">10</th><th title="2020-07-01 - 2020-08-31">11</th><th title="2020-07-11 - 2020-09-10">12</th><th title="2020-07-21 - 2020-09-20">13</th><th title="2020-08-01 - 2020-09-30">14</th></tr>
+								</thead>
+								<tbody>
+									<tr><td class="s-name left bold">Zboża ozime</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Zboża jare</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Kukurydza na ziarno</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Kukurydza na kiszonkę</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Rzepak i rzepik</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Ziemniak</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td></tr><tr><td class="s-name left bold">Burak cukrowy</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Chmiel</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Tytoń</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Warzywa gruntowe</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Krzewy owocowe</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Drzewa owocowe</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Truskawki</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Rośliny strączkowe</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Drzewa i krzewy owocowe</td><td>x</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>x</td><td>x</td><td>x</td><td>x</td></tr>
+								</tbody>
+							</table>
+						</div>
+						
+						<h6 class="card-title">Kategoria gleby IV</h6>
+						<div class="table-responsive-xl">
+							<table class="table table-bordered tab-gmina">
+								<thead class="thead-light">
+									<tr><th>Gatunek roślin uprawnych</th><th title="2020-03-21 - 2020-05-20">01</th><th title="2020-04-01 - 2020-05-31">02</th><th title="2020-04-11 - 2020-06-10">03</th><th title="2020-04-21 - 2020-06-20">04</th><th title="2020-05-01 - 2020-06-30">05</th><th title="2020-05-11 - 2020-07-10">06</th><th title="2020-05-21 - 2020-07-20">07</th><th title="2020-06-01 - 2020-07-31">08</th><th title="2020-06-11 - 2020-08-10">09</th><th title="2020-06-21 - 2020-08-20">10</th><th title="2020-07-01 - 2020-08-31">11</th><th title="2020-07-11 - 2020-09-10">12</th><th title="2020-07-21 - 2020-09-20">13</th><th title="2020-08-01 - 2020-09-30">14</th></tr>
+								</thead>
+								<tbody>
+									<tr><td class="s-name left bold">Zboża ozime</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Zboża jare</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Kukurydza na ziarno</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Kukurydza na kiszonkę</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Rzepak i rzepik</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Ziemniak</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td></tr><tr><td class="s-name left bold">Burak cukrowy</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Chmiel</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Tytoń</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Warzywa gruntowe</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Krzewy owocowe</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Drzewa owocowe</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Truskawki</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Rośliny strączkowe</td><td>x</td><td>x</td><td>x</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td><td class="s-brak">-</td></tr><tr><td class="s-name left bold">Drzewa i krzewy owocowe</td><td>x</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>n</td><td>x</td><td>x</td><td>x</td><td>x</td></tr>
+								</tbody>
+							</table>
+						</div>
+						
+						<h6 class="card-title">Udział powierzchni zagrożonej suszą [%]</h6>
+						<div class="table-responsive-xl">
+							<table class="table table-bordered tab-gmina">
+								<thead class="thead-light">
+									<tr><th>Gatunek roślin uprawnych</th><th title="2020-03-21 - 2020-05-20">01</th><th title="2020-04-01 - 2020-05-31">02</th><th title="2020-04-11 - 2020-06-10">03</th><th title="2020-04-21 - 2020-06-20">04</th><th title="2020-05-01 - 2020-06-30">05</th><th title="2020-05-11 - 2020-07-10">06</th><th title="2020-05-21 - 2020-07-20">07</th><th title="2020-06-01 - 2020-07-31">08</th><th title="2020-06-11 - 2020-08-10">09</th><th title="2020-06-21 - 2020-08-20">10</th><th title="2020-07-01 - 2020-08-31">11</th><th title="2020-07-11 - 2020-09-10">12</th><th title="2020-07-21 - 2020-09-20">13</th><th title="2020-08-01 - 2020-09-30">14</th></tr>
+								</thead>
+								<tbody>
+									<tr><td class="s-name left bold">Zboża ozime</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Zboża jare</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Kukurydza na ziarno</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td></tr><tr><td class="s-name left bold">Kukurydza na kiszonkę</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td class="s-susza">0.02</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td></tr><tr><td class="s-name left bold">Rzepak i rzepik</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td><td class="s-susza">6.25</td><td>0.0</td></tr><tr><td class="s-name left bold">Ziemniak</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td class="s-susza">0.43</td><td>x</td></tr><tr><td class="s-name left bold">Burak cukrowy</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td></tr><tr><td class="s-name left bold">Chmiel</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Tytoń</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Warzywa gruntowe</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Krzewy owocowe</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Drzewa owocowe</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Truskawki</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td><td>x</td><td>x</td></tr><tr><td class="s-name left bold">Rośliny strączkowe</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td></tr><tr><td class="s-name left bold">Drzewa i krzewy owocowe</td><td>x</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>x</td><td>x</td><td>x</td><td>x</td></tr>
+								</tbody>
+							</table>
+						</div>
+
+					
+					
+				  </div>
+
+			</div>
+		</div>
+		<div class="col-xl-1"></div>
+
+	</div>
+  
+  
+    
+    <!-- /.row --> 
+
+  </div>
+</sections>
+  <!-- /.container -->
+
+  
+
+
+
+    
+<!-- Footer -->
+    <footer class="py-5 bg-dark">
+    <div class="container text-white">
+		<h6 class="text-white">Kontakt</h6>
+		<div class="row">
+			<div class="col-md-6 col-12 mb-2 ">
+				Instytut Uprawy Nawożenia i Gleboznawstwa<br>Państwowy Instytut Badawczy<br>
+				ul. Czartoryskich 8, 24-100 Puławy<br><br>
+				Zakład Biogospodarki i Agrometeorologii<br>
+				Zakład Gleboznawstwa i Analiz Środowiskowych <br>
+
+			</div>
+
+			<div class="col-md-6 col-12 mb-2">
+				<p>W przypadku pytań dotyczących suszy proponujemy kontakt poprzez formularz zapytania, który należy wysłać mailem na adres susza@iung.pulawy.pl</p>
+				<a href="/static/Formularz_zapytania.doc">Pobierz formularz</a>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-12 mt-2">
+				Opracowanie IUNG-PIB 2020 na zlecenie Misterstwa Rolnictwa i Rozwoju Wsi
+			</div>
+		</div>
+    </div>
+    <!-- /.container -->
+  </footer>
+
+
+    
+    <script src="/static/vendor/jquery/jquery.min.js"></script>
+    <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/lightbox.min.js"></script>
+	<script src="/static/js/main_smsr.js"></script>
+	<script src="/static/js/leaflet.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.0/proj4.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4leaflet/1.0.2/proj4leaflet.js"></script>
+	<script src="/static/js/TileLayer.ProjWMTS.js"></script>
+	<script src="/static/js/leaflet-sidepanel.min.js"></script>
+	<script src="/static/js/wicket.js"></script>
+	<script src="/static/js/wicket-leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet.nontiledlayer@1.0.8/dist/NonTiledLayer.js"></script>
+	<script src="/static/js/mapkat.js"></script>
+    
+		<script>
+
+		</script>
+  </body>
+</html>

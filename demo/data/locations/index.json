@@ -1,0 +1,86 @@
+[
+ {
+  "name": "dobrcz",
+  "voivodeship": "kujawsko-pomorskie",
+  "parcel_id": "040303_2.0002.189/13",
+  "day": "2023-07-20",
+  "crop": "zboza_jare"
+ },
+ {
+  "name": "gora-sw-malgorzaty",
+  "voivodeship": "łódzkie",
+  "parcel_id": "100403_2.0011.144",
+  "day": "2026-11-22",
+  "crop": "rosliny_straczkowe"
+ },
+ {
+  "name": "kietrz",
+  "voivodeship": "opolskie",
+  "parcel_id": "160204_5.0001.101",
+  "day": "2022-07-20",
+  "crop": "rzepak"
+ },
+ {
+  "name": "podkarpackie-podgorze",
+  "voivodeship": "podkarpackie",
+  "parcel_id": "180411_2.0004.536",
+  "day": "2021-05-04",
+  "crop": "zboza_jare"
+ },
+ {
+  "name": "malopolska-wyzyna",
+  "voivodeship": "małopolskie",
+  "parcel_id": "120806_2.0001.234/1",
+  "day": "2020-06-04",
+  "crop": "zboza_ozime"
+ },
+ {
+  "name": "lubuskie-poza-sezonem",
+  "voivodeship": "lubuskie",
+  "parcel_id": "080901_5.0005.1299/61",
+  "day": "2026-11-22",
+  "crop": "drzewa_owocowe"
+ },
+ {
+  "name": "lubelskie-susza",
+  "voivodeship": "lubelskie",
+  "parcel_id": "062009_2.0007.30/2",
+  "day": "2022-07-30",
+  "crop": "kukurydza_ziarno"
+ },
+ {
+  "name": "pomorskie-rzepak",
+  "voivodeship": "pomorskie",
+  "parcel_id": "220908_2.0001.100/2",
+  "day": "2024-08-01",
+  "crop": "rzepak"
+ },
+ {
+  "name": "zachodniopomorskie",
+  "voivodeship": "zachodniopomorskie",
+  "parcel_id": "321205_5.0002.193",
+  "day": "2023-05-21",
+  "crop": "ziemniak"
+ },
+ {
+  "name": "podlaskie-chmiel",
+  "voivodeship": "podlaskie",
+  "parcel_id": "201303_5.0012.41/2",
+  "day": "2023-04-27",
+  "crop": "chmiel"
+ },
+ {
+  "name": "slaskie-poza-sezonem",
+  "voivodeship": "śląskie",
+  "parcel_id": "241504_1.0006.6673",
+  "day": "2026-11-22",
+  "crop": "kukurydza_ziarno"
+ },
+ {
+  "name": "dolnoslaskie-tyton",
+  "voivodeship": "dolnośląskie",
+  "parcel_id": "021803_5.0024.445",
+  "day": "2019-06-11",
+  "crop": "tyton"
+ }
+]
