@@ -17,7 +17,7 @@ from .ortho import fetch_ortho
 from .parcel import fetch_parcel, fetch_parcel_by_lonlat, normalize_parcel_id
 from .satellite import fetch_satellite
 from .soil import fetch_soil
-from .terrain import fetch_terrain
+from .terrain import CATCHMENT_BUDGET_S, fetch_terrain
 from .water import fetch_water
 from .weather import fetch_weather
 
@@ -79,6 +79,16 @@ def _empty(name: str, status: str, elapsed_ms: int, error: str = "", note: str =
     )  # fmt: skip
 
 
+def d8_wins() -> bool:
+    """True when the D8 variant won the placement check, so the margin grid is worth downloading."""
+    try:
+        from app.advice import placement
+
+        return "d8" in (placement.outlet_method(), placement.basin_method())
+    except Exception:  # noqa: BLE001 - no module or no metrics: the base layout needs no margin grid
+        return False
+
+
 def fetch_all(
     parcel_id: str | None,
     date: date | str,  # noqa: A002 - public parameter name
@@ -91,6 +101,7 @@ def fetch_all(
     ortho_max_px: int = 1024,
     history_years: int = 3,
     background: tuple[str, ...] = (),
+    with_catchment: bool | None = None,
 ) -> FetchResult:
     """Fetch everything known about a parcel for a date. Never raises for data or network problems.
 
@@ -102,6 +113,7 @@ def fetch_all(
     background: sources that do not hold the answer back: after the others have answered they get
         BACKGROUND_GRACE_S more seconds; if still running they report `timeout` and finish up to
         BACKGROUND_S in a daemon thread, so the next call finds them in the cache.
+    with_catchment: download the terrain margin grid for D8 (None = only when the D8 variant won the check).
     offline: serve only from the cache (None = follow GEODATA_OFFLINE).
     Raises only InvalidParcelId / ValueError for malformed input.
     """
@@ -112,6 +124,7 @@ def fetch_all(
     target = _date.fromisoformat(date) if isinstance(date, str) else date
     if parcel_id is None and lonlat is None:
         raise InvalidParcelId("give a parcel identifier or lonlat=(lon, lat)")
+    catchment = d8_wins() if with_catchment is None else with_catchment
     pid = normalize_parcel_id(parcel_id) if parcel_id is not None else ""
     wanted = set(sources or DEFAULT_SOURCES) | {"parcel"}
     previous = config._offline_override
@@ -135,6 +148,8 @@ def fetch_all(
             lon, lat = parcel.centroid_4326
             now = time.monotonic()
             limits = {n: min(total_deadline, now + config.TIMEOUTS[n]) for n in others}
+            if catchment:
+                limits["terrain"] = min(total_deadline, now + CATCHMENT_BUDGET_S)
             for n in background:
                 if n in limits:
                     limits[n] = now + config.BACKGROUND_S
@@ -147,7 +162,9 @@ def fetch_all(
                 "satellite": lambda: fetch_satellite(
                     parcel, target, history_years=history_years, deadline=limits["satellite"]
                 ),
-                "terrain": lambda: fetch_terrain(parcel, deadline=limits["terrain"]),
+                "terrain": lambda: fetch_terrain(
+                    parcel, deadline=limits["terrain"], with_catchment=catchment
+                ),
                 "water": lambda: fetch_water(parcel, deadline=limits["water"]),
                 "forecast": lambda: fetch_forecast(lat, lon, deadline=limits["forecast"]),
                 "seasonal": lambda: fetch_seasonal(lat, lon, deadline=limits["seasonal"]),

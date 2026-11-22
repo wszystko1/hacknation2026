@@ -168,6 +168,10 @@ class Terrain:
     samples: int  # cells inside the parcel
     provider: str  # "gugik-nmt-points", "gugik-nmt-wcs" or "open-meteo-elevation"
     grid: ElevationGrid | None = None  # parcel bbox plus margin
+    catchment_grid: ElevationGrid | None = (
+        None  # outline plus ~300 m, one step for the whole grid; D8 accumulation only
+    )
+    catchment_note: str = ""  # what was downloaded for catchment_grid (Polish, shown to the user)
 
 
 @dataclass

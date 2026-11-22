@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 
 import numpy as np
 
@@ -122,6 +122,24 @@ def parse_height_list(text: str, expected: int) -> list[float]:
     return heights
 
 
+def _post_heights(points: list[str], deadline: float | None) -> list[float]:
+    """Heights of "northing easting" points, in request order; chunks of CHUNK points on 4 threads."""
+    chunks = [points[i : i + CHUNK] for i in range(0, len(points), CHUNK)]
+
+    def fetch(chunk: list[str]) -> list[float]:
+        # POST: a GET with more than a few hundred points is refused with HTTP 414.
+        resp = http.request(
+            "POST", config.NMT_POINTS_URL, data={"request": "GetHByPointList", "list": ",".join(chunk)},
+            timeout=8.0, retries=1, deadline=deadline,
+        )  # fmt: skip
+        if resp.status_code != 200:
+            raise UpstreamError(f"height service HTTP {resp.status_code}: {resp.text[:100]}")
+        return parse_height_list(resp.text, len(chunk))
+
+    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="geodata-nmt") as pool:
+        return [h for part in pool.map(fetch, chunks) for h in part]
+
+
 def _from_points(
     parcel: Parcel, spacing: float, margin: float, max_points: int, deadline: float | None
 ) -> tuple[Terrain, str, list[str]]:
@@ -137,20 +155,7 @@ def _from_points(
         for r in range(rows)
         for c in range(cols)
     ]
-    chunks = [points[i : i + CHUNK] for i in range(0, len(points), CHUNK)]
-
-    def fetch(chunk: list[str]) -> list[float]:
-        # POST: a GET with more than a few hundred points is refused with HTTP 414.
-        resp = http.request(
-            "POST", config.NMT_POINTS_URL, data={"request": "GetHByPointList", "list": ",".join(chunk)},
-            timeout=8.0, retries=1, deadline=deadline,
-        )  # fmt: skip
-        if resp.status_code != 200:
-            raise UpstreamError(f"height service HTTP {resp.status_code}: {resp.text[:100]}")
-        return parse_height_list(resp.text, len(chunk))
-
-    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="geodata-nmt") as pool:
-        heights = [h for part in pool.map(fetch, chunks) for h in part]
+    heights = _post_heights(points, deadline)
     z = np.array(heights, dtype="float64").reshape(rows, cols)
     if not np.isfinite(z).any():
         raise UpstreamError("height service returned no heights")
@@ -207,6 +212,163 @@ def _from_coarse(parcel: Parcel, margin: float, deadline: float | None) -> tuple
     return grid_stats(z, x0, y_top, step, parcel, "open-meteo-elevation"), config.OPEN_METEO_ELEVATION_URL
 
 
+# --- Grid with a margin for D8 accumulation -------------------------------------------------------------
+CATCHMENT_MARGIN_M = 300.0
+CATCHMENT_MARGINS = (300.0, 250.0, 200.0, 150.0)  # tried in this order until the points fit the budget
+CATCHMENT_STEP_M = 10.0
+CATCHMENT_COARSE_STEPS = (20.0, 30.0)  # outside the outline, interpolated bilinearly to CATCHMENT_STEP_M
+CATCHMENT_BUDGET_S = 25.0
+# Points one live download manages in CATCHMENT_BUDGET_S. Measured cost per chunk of CHUNK points is in
+# docs/notes/siatka-zlewni-czas.md; 4 chunks run in parallel, a round takes about 6 s.
+CATCHMENT_MAX_POINTS = 12000
+
+
+@dataclass(frozen=True)
+class CatchmentPlan:
+    """Layout of the margin grid: final grid on a 10 m lattice, optionally coarse outside the outline."""
+
+    x0: float
+    y_top: float
+    rows: int
+    cols: int
+    margin_m: float
+    coarse_k: int  # 1 = every cell downloaded; 2 or 3 = coarse nodes every k cells outside the fine window
+    fine_window: tuple[int, int, int, int]  # row0, row1, col0, col1 (end exclusive) downloaded at every cell
+
+    @property
+    def coarse_nodes(self) -> tuple[list[int], list[int]]:
+        return _nodes(self.rows, self.coarse_k), _nodes(self.cols, self.coarse_k)
+
+    @property
+    def points(self) -> int:
+        r0, r1, c0, c1 = self.fine_window
+        fine = (r1 - r0) * (c1 - c0)
+        if self.coarse_k == 1:
+            return fine
+        rows, cols = self.coarse_nodes
+        return fine + len(rows) * len(cols)
+
+
+def _nodes(n: int, k: int) -> list[int]:
+    nodes = list(range(0, n, k))
+    if nodes[-1] != n - 1:
+        nodes.append(n - 1)
+    return nodes
+
+
+def catchment_plan(
+    parcel: Parcel, max_points: int = CATCHMENT_MAX_POINTS, margin_m: float = CATCHMENT_MARGIN_M
+) -> CatchmentPlan:
+    """The richest layout that fits max_points: 10 m everywhere, else 20 m, else 30 m outside the parcel bbox,
+    else the same with a smaller margin (down to 150 m). The last candidate is returned when nothing fits."""
+    step = CATCHMENT_STEP_M
+    xmin, ymin, xmax, ymax = parcel.bbox_2180
+    plan = None
+    for margin in [m for m in CATCHMENT_MARGINS if m <= margin_m] or [margin_m]:
+        cols = math.ceil((xmax - xmin + 2 * margin) / step)
+        rows = math.ceil((ymax - ymin + 2 * margin) / step)
+        x0 = round((xmin + xmax) / 2 - cols * step / 2, 2)
+        y_top = round((ymin + ymax) / 2 + rows * step / 2, 2)
+        c0 = max(0, int((xmin - 1.5 * step - x0) // step))
+        c1 = min(cols, math.ceil((xmax + 1.5 * step - x0) / step))
+        r0 = max(0, int((y_top - (ymax + 1.5 * step)) // step))
+        r1 = min(rows, math.ceil((y_top - (ymin - 1.5 * step)) / step))
+        for k in (1, *(round(c / step) for c in CATCHMENT_COARSE_STEPS)):
+            window = (0, rows, 0, cols) if k == 1 else (r0, r1, c0, c1)
+            plan = CatchmentPlan(x0, y_top, rows, cols, margin, k, window)
+            if plan.points <= max_points:
+                return plan
+    assert plan is not None
+    return plan
+
+
+def _interpolate(z_nodes: np.ndarray, rows: list[int], cols: list[int], shape: tuple[int, int]) -> np.ndarray:
+    """Bilinear interpolation of values on the lattice rows x cols (cell indices) to every cell."""
+    by_row = np.array([np.interp(np.arange(shape[1]), cols, line) for line in z_nodes])
+    return np.array([np.interp(np.arange(shape[0]), rows, by_row[:, j]) for j in range(shape[1])]).T
+
+
+def _centre(plan: CatchmentPlan, r: int, c: int) -> str:
+    return f"{plan.y_top - (r + 0.5) * CATCHMENT_STEP_M:.2f} {plan.x0 + (c + 0.5) * CATCHMENT_STEP_M:.2f}"
+
+
+def catchment_points(plan: CatchmentPlan) -> tuple[list[str], list[str]]:
+    """Request points: (coarse nodes, fine window) in the order they are read back. Coarse is empty for k = 1."""
+    r0, r1, c0, c1 = plan.fine_window
+    fine = [_centre(plan, r, c) for r in range(r0, r1) for c in range(c0, c1)]
+    if plan.coarse_k == 1:
+        return [], fine
+    rows, cols = plan.coarse_nodes
+    return [_centre(plan, r, c) for r in rows for c in cols], fine
+
+
+def assemble_catchment(plan: CatchmentPlan, coarse: list[float], fine: list[float]) -> np.ndarray:
+    """z[rows, cols] on the 10 m lattice: coarse nodes interpolated, the fine window written over them."""
+    r0, r1, c0, c1 = plan.fine_window
+    if plan.coarse_k == 1:
+        return np.array(fine, dtype="float64").reshape(plan.rows, plan.cols)
+    rows, cols = plan.coarse_nodes
+    z = _interpolate(
+        np.array(coarse, dtype="float64").reshape(len(rows), len(cols)), rows, cols, (plan.rows, plan.cols)
+    )
+    z[r0:r1, c0:c1] = np.array(fine, dtype="float64").reshape(r1 - r0, c1 - c0)
+    return z
+
+
+def catchment_note(plan: CatchmentPlan) -> str:
+    """What was downloaded, in plain Polish."""
+    area = f"obrys działki i {plan.margin_m:g} m wokół niego"
+    if plan.coarse_k == 1:
+        return f"Siatka zlewni: {area}, krok 10 m, {plan.points} punktów z usługi wysokości GUGiK."
+    return (
+        f"Siatka zlewni: {area}; krok 10 m przy działce, poza nią punkty co {plan.coarse_k * 10} m "
+        f"uzupełnione liniowo do kroku 10 m ({plan.points} punktów z usługi wysokości GUGiK)."
+    )
+
+
+def fetch_catchment_grid(
+    parcel: Parcel, *, max_points: int = CATCHMENT_MAX_POINTS, deadline: float | None = None
+) -> tuple[ElevationGrid, str]:
+    """Elevation grid over the parcel plus ~300 m with one 10 m step, heights rounded to 0.1 m."""
+    plan = catchment_plan(parcel, max_points)
+    coarse_points, fine_points = catchment_points(plan)
+    heights = _post_heights(coarse_points + fine_points, deadline)
+    z = assemble_catchment(plan, heights[: len(coarse_points)], heights[len(coarse_points) :])
+    if not np.isfinite(z).any():
+        raise UpstreamError("height service returned no heights for the margin grid")
+    z = np.round(z, 1)
+    terrain = grid_stats(z, plan.x0, plan.y_top, CATCHMENT_STEP_M, parcel, "gugik-nmt-points")
+    assert terrain.grid is not None
+    return terrain.grid, catchment_note(plan)
+
+
+def _with_catchment(
+    parcel: Parcel, result: SourceResult[Terrain], deadline: float | None, max_points: int
+) -> SourceResult[Terrain]:
+    """Add the margin grid to a terrain result that has none. Never turns a usable result into a failure."""
+    terrain = result.data
+    if terrain is None or terrain.catchment_grid is not None:
+        return result
+    if result.status != "ok":
+        terrain.catchment_note = "Siatki zlewni nie pobrano: wysokości tylko z modelu 90 m."
+        return result
+    key = f"{parcel.id}_catchment_p{max_points}"
+    hit = cache.get_json("terrain", key)
+    if hit is not None:
+        terrain.catchment_grid = from_dict(ElevationGrid, hit["grid"])
+        terrain.catchment_note = hit["note"]
+        return result
+    try:
+        cache.require_online("terrain", key)
+        grid, note = fetch_catchment_grid(parcel, max_points=max_points, deadline=deadline)
+    except (GeodataError, OSError, ValueError) as exc:
+        terrain.catchment_note = f"Siatki zlewni nie pobrano: {exc}"
+        return result
+    terrain.catchment_grid, terrain.catchment_note = grid, note
+    cache.put_json("terrain", key, {"grid": asdict(grid), "note": note})
+    return result
+
+
 def fetch_terrain(
     parcel: Parcel,
     *,
@@ -215,8 +377,28 @@ def fetch_terrain(
     max_points: int = MAX_POINTS,
     wcs_timeout: float = 4.0,
     deadline: float | None = None,
+    with_catchment: bool = False,
+    catchment_max_points: int = CATCHMENT_MAX_POINTS,
 ) -> SourceResult[Terrain]:
-    """Elevation grid over the parcel bbox plus margin, with min / max / mean, slope and the lowest outline point."""
+    """Elevation grid over the parcel bbox plus margin, with min / max / mean, slope and the lowest outline point.
+
+    with_catchment: also download `Terrain.catchment_grid` (outline plus ~300 m) for D8 accumulation. Off by
+    default: it is several times the points of the main grid and nothing but the D8 variant reads it.
+    """
+    result = _fetch_main(parcel, spacing_m, margin_m, max_points, wcs_timeout, deadline)
+    if with_catchment:
+        result = _with_catchment(parcel, result, deadline, catchment_max_points)
+    return result
+
+
+def _fetch_main(
+    parcel: Parcel,
+    spacing_m: float,
+    margin_m: float,
+    max_points: int,
+    wcs_timeout: float,
+    deadline: float | None,
+) -> SourceResult[Terrain]:
     key = f"{parcel.id}_s{spacing_m:g}_m{margin_m:g}_p{max_points}"
     hit = cache.get_json("terrain", key)
     if hit is not None and hit["status"] != "ok":
