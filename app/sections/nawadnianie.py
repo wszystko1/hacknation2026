@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from app.advice.catalog import load_catalog
 from app.advice.rules import (
     NOT_USED,
@@ -14,6 +16,7 @@ from app.advice.rules import (
 from app.charts.agro import deficit_svg
 from app.context import ReportContext
 from app.fmt import dec
+from app.geodata import parcel_use
 from app.models import KeyValue, Section, TextPart
 from app.sections import placeholder
 
@@ -43,8 +46,32 @@ def _advisor() -> list[KeyValue]:
     return rows
 
 
+NO_SOIL = "Brak kategorii gleby: dawka nie jest liczona."
+_EMPTY_NUMBERS = re.compile(r"około\s+mm|\s0?\s*m³|dawka to\s*(?:mm|\()")
+
+
+def land_use_of(ctx: ReportContext) -> parcel_use.LandUse | None:
+    """Land use of an uncached parcel (committed copies are known farmland); None when unknown."""
+    if ctx.data_copy:
+        return None
+    try:
+        return parcel_use.fetch_land_use(ctx.parcel.id)
+    except Exception:  # noqa: BLE001 - an unknown land use must not stop the report
+        return None
+
+
+def _without_empty_numbers(actions: list) -> list:
+    return [a for a in actions if not _EMPTY_NUMBERS.search(f"{a.title} {a.sentence}")]
+
+
 def build(ctx: ReportContext) -> Section:
     v = ctx.verdict
+    use = land_use_of(ctx)
+    if use is not None and not use.farmland:
+        sentence = parcel_use.not_farmland_sentence(use)
+        section = placeholder("nawadnianie", TITLE, sentence)
+        section.summary, section.reason, section.advisor = [TextPart(text=sentence)], sentence, []
+        return section
     if v is None or v.state == "no_data":
         section = placeholder(
             "nawadnianie",
@@ -55,9 +82,12 @@ def build(ctx: ReportContext) -> Section:
         return section
 
     ir = irrigation(ctx)
+    no_soil = ctx.soil is None or ctx.soil.category is None
     section = placeholder("nawadnianie", TITLE, "")
     section.state, section.reason = "ready", ""
     section.actions = [a for a in ctx.actions if a.group == "nawadnianie"]
+    if no_soil:
+        section.actions = _without_empty_numbers(section.actions)
     deficits = decade_deficits(ctx)
     section.chart_svg = deficit_svg(
         deficits, "Niedobór wody w dekadach IV–IX na tle faz uprawy z progiem w rozporządzeniu"
@@ -82,6 +112,8 @@ def build(ctx: ReportContext) -> Section:
         sentences.append(
             f"Pobór ponad 5 m³ na dobę średniorocznie, czyli {dec(PERMIT_M3_PER_YEAR)} m³ rocznie, wymaga pozwolenia wodnoprawnego; {reach}."
         )
+    if no_soil:
+        sentences.insert(0, NO_SOIL)
     sentences.append(water_source_sentence(ctx))
     section.sentences = sentences
     section.how = (

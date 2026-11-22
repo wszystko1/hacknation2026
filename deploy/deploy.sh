@@ -73,6 +73,15 @@ rm -f "$RSYNC_OUT" deploy/.REVISION
 echo "== uv sync on server"
 ssh "${SSH_OPTS[@]}" "deploy@$IP" 'cd /srv/bilans/app && UV_PYTHON_INSTALL_DIR=/opt/uv-python /usr/local/bin/uv sync --frozen --no-dev --python 3.12 -q'
 
+echo "== IMGW station index (weather from gauges, the basis of the SMSR validation)"
+if [ -f data/raw/imgw/index.npz ] && [ -f data/raw/imgw/index.json ]; then
+  ssh "${SSH_OPTS[@]}" "$SSH_USER@$IP" "$SUDO install -d -o deploy -g deploy /var/lib/bilans/imgw" || true
+  rsync -az -e "ssh ${SSH_OPTS[*]}" data/raw/imgw/index.npz data/raw/imgw/index.json "$SSH_USER@$IP:/var/lib/bilans/imgw/" && \
+  ssh "${SSH_OPTS[@]}" "$SSH_USER@$IP" "$SUDO chown -R deploy:deploy /var/lib/bilans/imgw; for kv in GEODATA_IMGW_DIR=/var/lib/bilans/imgw GEODATA_WEATHER=imgw; do grep -q \"^\${kv%%=*}=\" /etc/bilans.env || echo \"\$kv\" | $SUDO tee -a /etc/bilans.env >/dev/null; done" \
+    || echo "warn: IMGW index not installed; the server would fall back to Open-Meteo/NASA grid weather" >&2
+else
+  echo "warn: data/raw/imgw/index.* missing here; the server will use Open-Meteo/NASA grid weather (differs from the validated results)" >&2
+fi
 echo "== live-only mode (HN_LIVE_ONLY=1: no copy from demo/data on the server)"
 ssh "${SSH_OPTS[@]}" "deploy@$IP" "sudo grep -q '^HN_LIVE_ONLY=1' /etc/bilans.env || echo 'HN_LIVE_ONLY=1' | sudo tee -a /etc/bilans.env >/dev/null" \
   || echo "warn: could not set HN_LIVE_ONLY=1 in /etc/bilans.env; run deploy/bootstrap.sh again" >&2

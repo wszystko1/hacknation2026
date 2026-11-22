@@ -76,6 +76,16 @@ def _no_data(note: str, url: str = config.SOILGRIDS_URL, from_cache: bool = Fals
     )  # fmt: skip
 
 
+RETRY_TIMEOUT_S = 4.0
+
+
+def _ask(params: list[tuple[str, str]], timeout: float, deadline: float | None):
+    resp = http.get(config.SOILGRIDS_URL, params=params, timeout=timeout, retries=0, deadline=deadline)
+    if resp.status_code != 200:
+        raise UpstreamError(f"SoilGrids HTTP {resp.status_code}: {resp.text[:120]}")
+    return resp
+
+
 def fetch_soil(
     lat: float, lon: float, *, timeout: float | None = None, deadline: float | None = None
 ) -> SourceResult[Soil]:
@@ -103,15 +113,10 @@ def fetch_soil(
     params = [("lon", f"{lon:.5f}"), ("lat", f"{lat:.5f}"), ("value", "mean")]
     params += [("property", p) for p in ("sand", "silt", "clay")] + [("depth", d) for d in _DEPTHS]
     try:
-        resp = http.get(
-            config.SOILGRIDS_URL,
-            params=params,
-            timeout=timeout or config.TIMEOUTS["soil"],
-            retries=0,
-            deadline=deadline,
-        )
-        if resp.status_code != 200:
-            raise UpstreamError(f"SoilGrids HTTP {resp.status_code}: {resp.text[:120]}")
+        try:
+            resp = _ask(params, timeout or config.TIMEOUTS["soil"], deadline)
+        except UpstreamError:  # a slow or failing first answer: one more try with a shorter limit
+            resp = _ask(params, RETRY_TIMEOUT_S, deadline)
         soil = parse_soilgrids(resp.json())
         if soil.available:
             verdict = sanity.guarded(

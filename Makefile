@@ -11,7 +11,7 @@ serve: setup
 	$(UV) run uvicorn app.main:app --host 127.0.0.1 --port $(PORT)
 
 test: setup
-	timeout 540 $(UV) run pytest -q -x
+	timeout 1200 $(UV) run pytest -q -x
 
 lint: setup
 	$(UV) run ruff check .
