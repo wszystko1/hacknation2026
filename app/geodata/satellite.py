@@ -249,9 +249,16 @@ def _best_scene(
     target: date,
     pool: ThreadPoolExecutor,
     deadline: float | None,
-    tries: int = 4,
+    tries: int = 6,
+    stop_when_clear: bool = False,
 ) -> SceneIndex | None:
-    """First of the nearest scenes with at least MIN_CLEAR_SHARE of the shrunken outline cloud-free."""
+    """The scene with the largest clear share among the first `tries` candidates (nearest wins a tie).
+
+    The share of clear SCL pixels inside the shrunken outline decides, not the distance in days: a scene a week
+    further away with 100% clear pixels beats the nearest one with 19%. MIN_CLEAR_SHARE stays the usability
+    threshold, applied by the caller. `stop_when_clear` ends the search at the first usable scene (season
+    bins, where many scenes are read and speed matters more than the best one).
+    """
     best: SceneIndex | None = None
     for item in items[:tries]:
         if deadline is not None and time.monotonic() > deadline:
@@ -262,9 +269,11 @@ def _best_scene(
             raise
         except Exception:  # noqa: BLE001 - a broken scene must not hide the next candidate
             continue
-        if index.ndvi is not None and index.valid_fraction >= MIN_CLEAR_SHARE:
+        if index.ndvi is None:
+            continue
+        if stop_when_clear and index.valid_fraction >= MIN_CLEAR_SHARE:
             return index
-        if index.ndvi is not None and (best is None or index.valid_fraction > best.valid_fraction):
+        if best is None or index.valid_fraction > best.valid_fraction:
             best = index
     return best
 
@@ -436,7 +445,7 @@ def fetch_season(
     try:
         with ThreadPoolExecutor(max_workers=6, thread_name_prefix="geodata-s2-season") as pool:
             futures = [
-                pool.submit(_best_scene, group, parcel, first, band_pool, deadline, 2)
+                pool.submit(_best_scene, group, parcel, first, band_pool, deadline, 2, True)
                 for group in bins.values()
             ]
             for future in futures:

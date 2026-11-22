@@ -47,6 +47,30 @@ def _peak_until(points: list[Point], day: date) -> float | None:
     return max(p.ndvi for p in points if p.day <= day)
 
 
+CLOUDY = "zbyt wiele chmur na zdjęciach z tego okresu"
+WINDOW_DAYS = 20  # scenes this close to the day of the report compete for the assessment
+
+
+def choose_scene(points: list[Point], day: date) -> list[Point]:
+    """The curve cut at the scene to assess: the largest clear share within WINDOW_DAYS before `day`.
+
+    Ties go to the nearest scene. The curve keeps everything before the chosen scene, so the rotation group and
+    the phase of growth are read as before.
+    """
+    near = [i for i, p in enumerate(points) if (day - p.day).days <= WINDOW_DAYS]
+    if not near:
+        return points
+    best = max(near, key=lambda i: (points[i].scene.valid_fraction, i))
+    return points[: best + 1]
+
+
+def _only_cloudy(readings: list[SceneIndex], day: date) -> bool:
+    """Scenes exist near `day`, but none has enough clear pixels."""
+    return any(
+        r.ndvi is not None and abs((date.fromisoformat(r.date) - day).days) <= WINDOW_DAYS for r in readings
+    )
+
+
 def _gap(why: str, **fields: object) -> CropCondition:
     return CropCondition(
         state="missing",
@@ -76,7 +100,10 @@ def compare(
     """
     points = [p for p in usable_points(current) if p.day.year == day.year and p.day <= day]
     if not points:
+        if _only_cloudy(current, day):
+            return _gap(CLOUDY)
         return _gap("nie ma czystego zdjęcia tej działki z tego sezonu (chmury albo brak zdjęć)")
+    points = choose_scene(points, day)
     last = points[-1]
     seen = {"scene_date": last.day, "ndvi": round(last.ndvi, 3)}
     age = (day - last.day).days

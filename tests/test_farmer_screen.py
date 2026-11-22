@@ -132,10 +132,18 @@ def test_bar_follows_the_order_of_the_diagnosis_and_drops_out_without_a_weather_
 def test_action_one_has_a_pin_and_a_deadline_or_the_promise_to_give_one() -> None:
     a = text_of(level_a(html(DOBRCZ)))
     pin = 'aria-label="Miejsce na mapie: 1"' in level_a_html(html(DOBRCZ))
-    assert (not pin) or report(DOBRCZ).action_1.place is not None  # the pin only when the map has the place
+    first = report(DOBRCZ).action_1
+    has_place = first.candidate is not None and first.candidate.geometry is not None
+    assert pin is has_place  # the pin only when the candidate has a place on the map
     assert "inezka" not in a
     # "Kiedy" is shown only for a known deadline; an unknown one goes to the last line "Jeszcze nie liczymy"
-    assert "Kiedy: " in a or "termin działania nr 1" in text_of(html(DOBRCZ))
+    # A dated action shows the year; a seasonal one ("przed okresem wegetacji") shows its own words; an unknown one is promised.
+    if first.due is not None:
+        assert re.search(r"· .*20\d\d", a)
+    elif first.when and not first.when.startswith("Brak"):
+        assert re.search(r"· \S", a)
+    else:
+        assert "termin działania nr 1" in text_of(html(DOBRCZ))
 
 
 @pytest.mark.parametrize("params", PARCELS, ids=IDS)

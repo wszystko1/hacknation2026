@@ -5,8 +5,8 @@ W repozytorium nie ma sekretów; skrypty nie zapisują kluczy.
 
 ## a) Szybka ścieżka
 
-1. W panelu DigitalOcean (może być z telefonu): Create Droplet, Ubuntu 24.04, Frankfurt (FRA1), 2 vCPU / 4 GB,
-   uwierzytelnianie kluczem SSH (klucz publiczny laptopa dodany przy tworzeniu). Zapisz adres IP.
+1. W panelu Hetzner Cloud (Console, Add Server): obraz Ubuntu 24.04, typ x86 z 2 vCPU / 4 GB (np. CPX21 lub CX32), lokalizacja Falkenstein/Nuremberg/Helsinki,
+   uwierzytelnianie kluczem SSH (klucz publiczny laptopa dodany przy tworzeniu; bez klucza Hetzner wysyła hasło roota mailem i skrypty nie zadziałają). Zapisz adres IPv4.
 2. Na laptopie, w katalogu repozytorium: `./deploy/deploy.sh <IP>` (opcjonalnie `--warm`, opcjonalnie domena jako drugi argument).
    Pierwszy raz trwa 10–20 minut (aktualizacje systemu, uv, Python 3.12, Caddy, zależności).
 3. `./deploy/smoke.sh https://<IP z myślnikami>.sslip.io` (np. `https://203-0-113-7.sslip.io`). Oczekiwane: `SMOKE PASS`.
@@ -47,19 +47,18 @@ logi Caddy: `journalctl -u caddy -f`. Użycie pamięci: `free -h`.
 - **Brak pamięci (OOM):** `dmesg | grep -i kill`; zmniejsz `--workers` na 1 w `/etc/systemd/system/bilans.service`, potem
   `sudo systemctl daemon-reload && sudo systemctl restart bilans`.
 - **Certyfikat Let's Encrypt:** Caddy pobiera go sam przy pierwszym wejściu na HTTPS; potrzebuje otwartych portów 80 i 443
-  (ufw je otwiera; sprawdź też Cloud Firewall w DO). Błędy: `journalctl -u caddy`. `sslip.io` jest wspólną domeną publiczną,
+  (ufw je otwiera; sprawdź też Cloud Firewall w panelu Hetznera, jeśli go dołączono do serwera). Błędy: `journalctl -u caddy`. `sslip.io` jest wspólną domeną publiczną,
   więc limit Let's Encrypt (50 certyfikatów na domenę tygodniowo) bywa wyczerpany; wtedy użyj własnej domeny
   (rekord A na IP): `./deploy/deploy.sh <IP> moja.domena.pl`. Wielokrotne `--bootstrap` nie zużywa limitu (Caddy trzyma certyfikat).
 - **`ssh` odmawia dostępu:** klucz musi być na koncie root (lub ustaw `SSH_USER`).
 
 ## f) Koszty i usunięcie serwera po konkursie
 
-Droplet 2 vCPU / 4 GB to ok. 24 USD miesięcznie (ok. 0,036 USD/h). **Po konkursie zrób Destroy w panelu DO** (Droplets, Destroy).
-Samo wyłączenie (Power off) nie zatrzymuje opłat. Sprawdź, że nie zostały snapshoty ani dyski.
+Serwer Hetzner x86 z 2 vCPU / 4 GB kosztuje kilka euro miesięcznie, rozliczany godzinowo. **Po konkursie usuń serwer** w Hetzner Console
+(Server, Delete). Samo wyłączenie nie zatrzymuje opłat za serwer i adres IP. Sprawdź, że nie zostały snapshoty, wolumeny ani dodatkowe IP.
 
 ## g) Co NIE jest sprawdzone
 
 Skrypty nie były uruchomione na prawdziwym serwerze: `bootstrap.sh` (apt, Caddy, systemd, ufw), certyfikat HTTPS i `deploy.sh`
 przez SSH przeszły tylko `bash -n` i shellcheck. Lokalnie sprawdzono aplikację z komendą z jednostki systemd (2 procesy,
-`GEODATA_CACHE_DIR`) i `smoke.sh`. Skryptów Windows nie testowano. Nie sprawdzono zachowania na 4 GB pamięci przy wielu
-równoległych raportach ani instalacji rasterio na serwerze (koła binarne z uv.lock powinny wystarczyć).
+`GEODATA_CACHE_DIR`) i `smoke.sh`. Skryptów Windows nie testowano. Próba bez Dockera i bez serwera (świeże `uv sync`, zużycie pamięci, przegląd skryptów) jest opisana w `docs/notes/wdrozenie-proba.md`.
