@@ -650,3 +650,21 @@ details.calc pre, details.calc code { font-family: var(--font-mono); font-size: 
 .mlegend .layer input:checked + .layer-box::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--accent-text); font-size: 12px; line-height: 1; }
 .mlegend .layer input:focus-visible + .layer-box { outline: 3px solid var(--focus); outline-offset: 2px; }
 .mlegend .layer input:disabled + .layer-box { opacity: .4; }
+
+/* report visuals: phase calendar, cause cards, "Jak liczymy" schema */
+.ch .s-track { fill: var(--track); }
+.ch .ic { fill: none; stroke: var(--accent-ink); stroke-width: 2.5; stroke-linecap: square; stroke-linejoin: miter; }
+.ch .box { fill: none; stroke: var(--accent); stroke-width: 2; }
+.ch .num { font-size: 28px; font-weight: 700; fill: var(--text); }
+.ch .ring-bg, .ch .ring-fg, .ch .ring-dry { fill: none; stroke-width: 8; }
+.ch .ring-bg { stroke: var(--track); }
+.ch .ring-fg { stroke: var(--accent); }
+.ch .ring-dry { stroke: var(--danger); }
+.ch .arrow { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: square; }
+.cause-grid { list-style: none; margin: var(--s3) 0 0; padding: 0; display: grid; gap: var(--s3);
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.cause-card { background: var(--surface); border: 1px solid var(--line-2); border-left: 3px solid var(--accent);
+  border-radius: var(--radius); padding: var(--s2) var(--s3) var(--s3); }
+.cause-card .ch { margin-top: 0; max-width: 220px; }
+.cause-cap { display: block; font-size: var(--fs-sm); color: var(--muted); line-height: 1.35; }
+.visual { margin-top: var(--s4); }

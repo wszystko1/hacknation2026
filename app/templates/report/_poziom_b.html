@@ -84,10 +84,15 @@
       {% if sec.chart_svg %}<div class="chart" tabindex="0" role="group" aria-label="Wykres: {{ sec.title }}">{{ sec.chart_svg | safe }}</div>{% endif %}
       {% for t in (sec.sentences[:1] if gid == 'skad' else sec.sentences) %}<p>{{ t | plain }}</p>{% endfor %}
     </div>
+    {% if gid == 'skad' and chart_cause_cards is defined %}{% set cards = chart_cause_cards(report) %}{% set cal = chart_calendar(report) %}
+    {% if cards %}<div class="b-sub visual">{{ cards | safe }}</div>{% endif %}
+    {% if cal %}<div class="b-sub visual chart" tabindex="0" role="group" aria-label="Wykres: kalendarz uprawy">{{ cal | safe }}</div>{% endif %}
+    {% endif %}
     {% endfor %}{% endif %}
     {% if gid == 'gmina' %}{% for s in report.sections if s.id == 'gmina' and s.chart_svg %}{% set calib_part = 'chart' %}
     <div class="b-sub b-chart">{% include "sections/_calibration.html" %}<p>Wykres pokazuje, jak często państwowy system (SMSR) potwierdzał suszę przy takim bilansie jak na tej działce.</p></div>
     {% endfor %}{% endif %}
+    {% if gid == 'jak' and chart_schema is defined %}<div class="b-sub visual chart" tabindex="0" role="group" aria-label="Wykres: schemat Jak liczymy">{{ chart_schema() | safe }}</div>{% endif %}
     {% if gid == 'jak' %}{% for s in report.sections if s.id == 'zrodla' %}
     <details class="b-row b-nested" id="wiersz-zrodla"><summary>Źródła danych i czasy pobrania</summary><div class="b-body">{% include "sections/zrodla.html" %}</div></details>
     {% endfor %}{% endif %}

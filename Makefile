@@ -47,10 +47,10 @@ ui-audit: setup
 check-secrets:
 	$(UV) run python scripts/check_secrets.py
 
-# Lint, tests, text and claims checks, UI rules and the demo. Target < 60 s.
-gate-fast: lint test check-text check-claims check-ui demo
+# Lint, tests, text and claims checks and UI rules. Target < 90 s. The demo scenes run in gate-full (owner decision 22.11: gates were the bottleneck).
+gate-fast: lint test check-text check-claims check-ui
 	@echo "GATE OK"
 
 # gate-fast plus the UI audit at three screen sizes and the secrets scan.
-gate-full: gate-fast ui-audit check-secrets
+gate-full: gate-fast demo ui-audit check-secrets
 	@echo "GATE-FULL OK"

@@ -8,6 +8,7 @@
   "faza_wrazliwa": "Uprawa w wrażliwej fazie",
 } %}
 {% block extra %}
+{% if chart_cause_cards is defined %}{{ chart_cause_cards(report) | safe }}{% endif %}
 {% if report.diagnosis.causes %}
 <dl class="facts" id="przyczyny-lista">
   {% for c in report.diagnosis.causes %}<div><dt>{{ labels[c.code] }}</dt><dd>{{ c.words }}</dd></div>{% endfor %}
