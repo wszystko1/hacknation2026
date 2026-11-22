@@ -113,7 +113,9 @@ def fetch_all(
     background: sources that do not hold the answer back: after the others have answered they get
         BACKGROUND_GRACE_S more seconds; if still running they report `timeout` and finish up to
         BACKGROUND_S in a daemon thread, so the next call finds them in the cache.
-    with_catchment: download the terrain margin grid for D8 (None = only when the D8 variant won the check).
+    with_catchment: download the terrain margin grid (None = always for a full report, i.e. without `sources`;
+        for a chosen subset only when the D8 variant won the check). It runs inside the report's time limit; when it
+        cannot be had, `Terrain.catchment_note` says why.
     offline: serve only from the cache (None = follow GEODATA_OFFLINE).
     Raises only InvalidParcelId / ValueError for malformed input.
     """
@@ -124,7 +126,12 @@ def fetch_all(
     target = _date.fromisoformat(date) if isinstance(date, str) else date
     if parcel_id is None and lonlat is None:
         raise InvalidParcelId("give a parcel identifier or lonlat=(lon, lat)")
-    catchment = d8_wins() if with_catchment is None else with_catchment
+    if with_catchment is None:
+        # A full report always takes the margin grid (the terrain model reads it); a request for chosen
+        # sources keeps the old rule, so a targeted call does not pay for a download nobody reads.
+        catchment = sources is None or d8_wins()
+    else:
+        catchment = with_catchment
     pid = normalize_parcel_id(parcel_id) if parcel_id is not None else ""
     wanted = set(sources or DEFAULT_SOURCES) | {"parcel"}
     previous = config._offline_override

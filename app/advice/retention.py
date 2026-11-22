@@ -18,7 +18,7 @@ def placement_input(ctx: ReportContext) -> PlacementInput | None:
     water = ctx.data.water.data if ctx.data.water.usable else None
     return PlacementInput(
         outline_2180=parcel.rings_2180[0],
-        grid=terrain.grid if terrain else None,
+        grid=(terrain.catchment_grid or terrain.grid) if terrain else None,
         lowest_outline_point_2180=terrain.lowest_outline_point_2180 if terrain else None,
         water=water.features if water else [],
         slope_mean_pct=terrain.slope_mean_pct if terrain else None,
