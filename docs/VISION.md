@@ -1,13 +1,15 @@
 # Bilans działki (nazwa robocza)
 
 Raport wodny dla jednej działki ewidencyjnej, daty i uprawy. Działkę podaje się numerem albo klikiem na mapie. Bilans wody liczymy
-definicją suszy z rozporządzenia MRiRW (Dz.U. 2019 poz. 739) i stawiamy obok progu dla tej uprawy i gleby. Pod nim stoją ocena SMSR IUNG
-dla gminy, trzy osobne odpowiedzi (werdykt, stan roślin z Sentinel-2 wobec porównywalnych sezonów działki, podatność działki) ze
-zdaniem odczytu werdyktu i roślin naraz, bez jednej sklejonej liczby, i pierwsze działanie retencyjne z miejscem na zdjęciu. Dalej przyczyny, miejsca zatrzymania wody z
-formalnością z Prawa wodnego, zabiegi w uprawie, decyzja o nawadnianiu, plan z terminami i prognoza przekroczenia progu do końca okresu
-krytycznego. Zgodność metody z SMSR i trafność prognozy są zmierzone i pokazane w raporcie. Raport nie jest urzędowym stwierdzeniem suszy
-i mówi to zdaniem pod werdyktem. Ocenę bieżącą liczy rachunek i reguły, bez uczenia maszynowego; prognoza w aplikacji nie ma zapisanych
-wag.
+definicją suszy z rozporządzenia MRiRW (Dz.U. 2019 poz. 739) i stawiamy obok progu dla tej uprawy i gleby. Ekran rolnika ma dwa
+poziomy: u góry siedem rzeczy czytanych w trzy sekundy (werdykt zdaniem, jedna liczba jako dwa paski, działanie nr 1 z terminem,
+pewność), pod strzałkami cała reszta. Widok doradcy zostaje pełny: wskaźniki, progi, źródła, niepewność, metoda. Pod werdyktem stoją
+ocena SMSR IUNG dla gminy, trzy osobne odpowiedzi (werdykt, stan roślin z Sentinel-2 wobec porównywalnych sezonów działki, podatność
+działki) ze zdaniem odczytu werdyktu i roślin naraz, bez jednej sklejonej liczby, i działania retencyjne z miejscem na zdjęciu. Dalej
+przyczyny, miejsca zatrzymania wody z formalnością z Prawa wodnego, zabiegi w uprawie, decyzja o nawadnianiu, plan z terminami i
+prognoza przekroczenia progu do końca okresu krytycznego. Zgodność metody z SMSR i trafność prognozy są zmierzone i pokazane w
+raporcie. Raport nie jest urzędowym stwierdzeniem suszy i mówi to zdaniem pod werdyktem. Ocenę bieżącą liczy rachunek i reguły, bez
+uczenia maszynowego; prognoza w aplikacji nie ma zapisanych wag.
 
 ## Użytkownik i ból
 
@@ -30,14 +32,48 @@ Polskich: art. 395a ust. 2 Prawa wodnego wymaga m.in. numerów działek i wspó�
 same co w aplikacji suszowej (14 grup upraw, kategorie gleby I–IV, okres 6 dekad), ale o pomocy suszowej rozstrzyga ocena SMSR dla gminy,
 nie ten raport. Przy każdym działaniu retencyjnym stoi formalność z cytatem przepisu albo „sprawdź w Wodach Polskich”.
 
+## Ekran rolnika: dwa poziomy
+
+Zasada: element znika z ekranu rolnika tylko wtedy, gdy ta sama informacja stoi w widoku doradcy, w README albo w `metrics.json`;
+w przeciwnym razie trafia do rozwijanej części B. Widoku doradcy ta zmiana nie dotyczy (treść i układ bez zmian).
+
+**Poziom A, góra ekranu, najwyżej 7 elementów:**
+1. Nagłówek: działka, uprawa, data, gleba słowami („gleba bardzo lekka”, bez „kat. II”).
+2. Werdykt jednym zdaniem z kolorem i słowem: „susza: tak” / „susza: nie” z dopiskiem „nasz szacunek”; poza sezonem szary „nie dotyczy”.
+3. Jedna liczba jako dwa paski „zwykle X, teraz Y” dla głównej przyczyny pogodowej: pierwsza przyczyna z osi pogody wg obecnej
+   kolejności w `diagnosis.py` (za mało opadu albo duże parowanie), bez nowej logiki; gdy jej nie ma, tylko werdykt.
+4. Co robić: działanie nr 1 z pinezką na mapie i kiedy (termin albo „termin podamy po wyliczeniu”). Gdy sekcja retencji nie ma jeszcze
+   działania: „jeszcze nie liczymy”.
+5. Pewność w 1–2 zdaniach: nasz szacunek wobec oceny IUNG dla gminy; „przy wniosku liczy się ocena IUNG”.
+6. Przycisk „Raport PDF”.
+7. Przycisk „Pokaż doradcy”.
+
+**Poziom B, rozwijany, jedna strzałka na wiersz:** bilans (np. −201 mm) z progiem (−154 mm) w jednym miejscu, dlaczego (przyczyny
+słowami), jak często ta działka cierpi (n z 10 lat), parowanie, stan roślin, plan z osią czasu, zabiegi w uprawie, formalności, „jak
+policzyliśmy”, spadek słowami, gmina.
+
+**Znika z ekranu rolnika:** powtórzenia tej samej liczby (zostaje jedno miejsce i rozwinięcie); zdanie „spadło 33 mm, o 74 mm mniej
+niż zwykle” powtórzone pod działaniem; etykieta „bilans wody w 60 dniach”; czasy pobrania („14,5 s”, „razem 14,8 s”) i czasy per
+źródło (zostają w widoku doradcy po rozwinięciu panelu źródeł); ramka „Brak: zgodność metody z oceną SMSR…”; „kat. II” (zostaje
+kategoria słowami); ucięty wiersz gleby w panelu; kody „okres 4” i rzymskie daty (daty słowami; numeru okresu nie zaszywamy, wybór
+okresu zmieni się osobno).
+
+**Puste sekcje:** zamiast ramek „Brak: …” jedna linia na końcu raportu „Jeszcze nie liczymy: …”. Nie obiecujemy tego, czego nie ma.
+
+**Panel „Skąd są dane” na mapie:** domyślnie jedna linia „✔ Dane: 10 z 10 źródeł · kopia z 21.11.2026 · Szczegóły” (czerwona tylko, gdy
+brakuje źródła); rozwija się jako szuflada, nie jako nakładka na działkę; legenda nie zasłania działki; czasy tylko po rozwinięciu.
+
+**Język działań:** „rozważ …” z warunkiem i następnym krokiem, nie rozkaz („zrób nieckę”, „zamontuj zastawkę”), bo lokalizacja i zgody
+wymagają weryfikacji; efektu w mm nie obiecujemy. Opis „powyżej progu” brzmi jednoznacznie: „bilans jest lepszy niż próg suszy”.
+
 ## Złota ścieżka demo
 
 Ekran startowy: z lewej mapa do wskazania działki (mapa podkładowa GUGiK, przy dużym przybliżeniu ortofotomapa), na niej ciemny pasek
 wyboru z polem „Działka”. Ekran raportu ma trzy kolumny: pasek ikon 56 px (znak kropli, „Nowa ocena”, „Raport PDF”, „Zgodność
 z SMSR”; bez awatara i konta), ortofotomapa 560 px (na ekranie węższym niż 1180 px 44% szerokości) i raport w całej pozostałej
 szerokości, bo raport jest główną treścią. Mapa: biały obrys, przyciemnione otoczenie, strzałka kierunku spadku, dolny odcinek granicy,
-rów i numery działań, nieruchoma przy przewijaniu, na niej ciemny pasek wyboru i karta „Skąd są dane”. Raport biały, werdykt raz na
-górze, pod nim „Cały raport w skrócie”. Telefon (do 860 px): jedna kolumna, mapa nad raportem. W demo stoją liczby policzone przez aplikację. Dane demo to prawdziwe pobrania zamrożone
+rów i numery działań, nieruchoma przy przewijaniu, na niej ciemny pasek wyboru i zwinięty panel „Skąd są dane” (jedna linia, szuflada po rozwinięciu, legenda nie zasłania działki). Raport biały, werdykt raz na
+górze, pod nim poziom B rozwijany strzałkami. Telefon (do 860 px): jedna kolumna, mapa nad raportem. W demo stoją liczby policzone przez aplikację. Dane demo to prawdziwe pobrania zamrożone
 21.11.2026 w `demo/data/` (sceny nie wychodzą do sieci), w interfejsie z etykietą „kopia danych z 21.11.2026”.
 
 Działka 1: `040303_2.0002.189/13` (gm. Dobrcz, 21,53 ha, staw przy granicy), „Zboża jare”. Datę wybieramy według SMSR, nie według naszego
@@ -51,28 +87,29 @@ się różni, demo to pokazuje. Działka 2: `100403_2.0011.144` (gm. Góra Świ�
 2. **Wejście i zdjęcie** (scena „Działka z ewidencji na zdjęciu”): „To ta działka” wpisuje pełny identyfikator w pole „Działka” (numer
    można też wpisać), data, uprawa z listy alfabetycznej (14 grup, „Inna uprawa” na końcu; nad nią grupa „Podpowiedź z mapy upraw JRC
    2022”, gdy podpowiedź jest wiarygodna: warunek w „Modele i metody obliczeń”), „Oceń działkę”. Scena wybiera „Zboża jare” jak każdy
-   użytkownik. Najpierw zdjęcie z obrysem, nagłówek „gm. Dobrcz › obręb Dobrcz”, 21,53 ha; karta źródeł wypełnia się wierszami ze stanem i
-   czasem. Klik na zdjęciu raportu poza obrysem pokazuje obrys i numer sąsiedniej działki z propozycją „Otwórz raport tej działki” (ta
+   użytkownik. Najpierw zdjęcie z obrysem, nagłówek „gm. Dobrcz › obręb Dobrcz”, 21,53 ha; panel źródeł liczy się w jednej linii, a stan i czas każdego źródła stoją po rozwinięciu szuflady. Klik na zdjęciu raportu poza obrysem pokazuje obrys i numer sąsiedniej działki z propozycją „Otwórz raport tej działki” (ta
    sama data i uprawa).
-3. **Werdykt** (scena „Werdykt: bilans wobec progu z rozporządzenia”): plakietka „Bilans poniżej progu suszy (szacunek dla działki)” albo
-   „Bilans powyżej progu suszy (szacunek dla działki)”, bilans w mm jako największy element, zdanie „W tych 60 dniach wyparowało o X mm
-   więcej wody, niż spadło. To Y mm poniżej progu suszy dla zbóż jarych na tej glebie”, pasek z kreską progu, linia „opad P − parowanie E
-   = bilans (okres nn, dd.mm–dd.mm) · próg z Dz.U. 2019 poz. 739” i stałe zdanie „To nie jest urzędowe stwierdzenie suszy; we wniosku
-   liczy się ocena SMSR IUNG dla gminy”. Pod nim wiersz „Ocena SMSR dla gminy Dobrcz w tym okresie” z symbolem dla kategorii gleby
-   działki, wiersz stanu roślin (z datą zdjęcia albo „ocena roślin w toku”), zdanie odczytu werdyktu i roślin naraz, wiersz podatności
-   („gdyby rosły tu zboża jare, …”) i działanie nr 1 z numerem na zdjęciu. Scena sprawdza tekst plakietki, zdanie zastrzeżenia
-   i wartość z wiersza SMSR.
-4. **Skrót** (scena „Cały raport w skrócie”): ramka zgodności („przy takiej odległości od progu metoda zgadzała się z SMSR w K na 100
-   przypadków; odpowiedź „zawsze częstsza odpowiedź” w T na 100”, z `metrics.json`), pod nią 8 wierszy z liczbą (sekcje 1–8 poniżej),
-   każdy przewija do swojej sekcji.
+3. **Werdykt** (scena „Werdykt: bilans wobec progu z rozporządzenia”): góra ekranu to poziom A (sekcja „Ekran rolnika: dwa poziomy”):
+   nagłówek, werdykt zdaniem (np. „Susza: tak, nasz szacunek” albo „Bilans jest lepszy niż próg suszy”), dwa paski „zwykle X, teraz Y”,
+   działanie nr 1 z pinezką i terminem, zdanie o pewności z „przy wniosku liczy się ocena IUNG” i przyciski „Raport PDF” i „Pokaż
+   doradcy”. Bilans w mm z progiem z Dz.U. 2019 poz. 739 stoi raz, w rozwijanym wierszu bilansu (pasek z kreską progu, opad P −
+   parowanie E = bilans, dla tej gleby i uprawy), obok wiersza SMSR dla gminy z symbolem dla kategorii gleby, wiersza stanu roślin (z datą
+   zdjęcia albo „ocena roślin w toku”), zdania odczytu werdyktu i roślin naraz i wiersza podatności („gdyby rosły tu zboża jare, …”).
+   Stałe zdanie „To nie jest urzędowe stwierdzenie suszy; we wniosku liczy się ocena SMSR IUNG dla gminy” stoi pod werdyktem. Scena
+   sprawdza zdanie werdyktu, zdanie zastrzeżenia, a po kliknięciu strzałki bilansu liczbę z progiem.
+4. **Skrót** (scena „Cały raport w skrócie”): pod górą ekranu wiersze poziomu B z jedną liczbą albo słowem w tytule, każdy rozwija się
+   strzałką; ramka zgodności z SMSR z `metrics.json` („przy takiej odległości od progu metoda zgadzała się z SMSR w K na 100
+   przypadków; odpowiedź „zawsze częstsza odpowiedź” w T na 100”) stoi w wierszu „Jak policzyliśmy” i w widoku doradcy. Na końcu
+   raportu jedna linia „Jeszcze nie liczymy: …”.
 5. **Retencja i plan** (sceny „Gdzie zatrzymać wodę na działce”, „Plan działań: przełącznik „W planie””): klik w „Zatrzymanie wody”; nad
    działaniami lista rozpoznanych przyczyn z liczbami; mapa pokazuje strzałkę kierunku spadku ze spadkiem w %, dolny odcinek granicy
    z pasem trawy, rów i miejsca 1–3 (albo zdanie, że spadek jest za mały, by wskazać dolny odcinek); sekcja ma profil terenu i formalność
-   z cytatem przepisu. Przełączenie działania na „W planie” zmienia licznik planu z N na N+1 na osi czasu do następnego okna suszy; nad osią stoi
+   z cytatem przepisu; działania brzmią „rozważ …” z warunkiem i następnym krokiem. Przełączenie działania na „W planie” zmienia licznik planu z N na N+1 na osi czasu do następnego okna suszy; nad osią stoi
    zdanie prognozy przekroczenia progu z jednym zdaniem jej trafności obok odpowiedzi trywialnej, z `metrics.json`.
 6. **Trafność i źródła** (sceny „Zgodność z oceną państwa (SMSR)”, „Źródła, czasy i braki danych”, „Widok doradcy i raport PDF”): tabela
    2×2 z liczbą przypadków, pod nią trafność, trafność zrównoważona, czułość i precyzja dla suszy, każda obok wyniku odpowiedzi „zawsze
-   częstsza odpowiedź”, liczba gmino-lat i częstość suszy w SMSR; źródła z godziną, czasem i stanem, braki wprost; „Doradca” odsłania
+   częstsza odpowiedź”, liczba gmino-lat i częstość suszy w SMSR; źródła: na mapie jedna linia „✔ Dane: 10 z 10 źródeł · kopia z 21.11.2026 · Szczegóły”, po rozwinięciu szuflada z godziną, czasem
+   i stanem każdego źródła, braki wprost; „Doradca” odsłania
    wejścia, niepewność oraz CSI, POD, FAR i Peirce wobec „zawsze susza” i klimatologii gminy; „Raport PDF” otwiera widok do druku.
 7. **Data dzisiejsza** (scena „Raport na dziś: poza okresem monitoringu suszy”): działka 2, 21.11.2026, „Rośliny strączkowe”. Raport mówi
    „poza okresem monitoringu suszy (21.III–30.IX)”, werdykt i stan roślin mają status „nie dotyczy”, a w ich miejscu stoją wynik
@@ -133,12 +170,13 @@ w poprzednich latach z liczbą lat (odbudowa zapasu wody przed zimą) i działan
 
 ## Raport: sekcje w tej kolejności
 
-Kolejność jak w zadaniu: ocena → przyczyny → retencja → agrotechnika → nawadnianie. Każda sekcja: wykres (SVG z serwera), pod nim 2–3
+Poniższe sekcje to treść poziomu B ekranu rolnika i widoku doradcy; góra ekranu rolnika (poziom A) jest opisana w „Ekran rolnika:
+dwa poziomy”. Kolejność jak w zadaniu: ocena → przyczyny → retencja → agrotechnika → nawadnianie. Każda sekcja: wykres (SVG z serwera), pod nim 2–3
 zdania (co pokazuje, dlaczego ważne, gdzie patrzeć), potem „Jak to policzono”. Tekst to stałe szablony z podstawionymi wartościami,
 zalecenia wybierają reguły na wskaźnikach, model językowy nie bierze udziału w wyniku.
 
 0. **Werdykt i ocena bieżąca.** KBW = Σ opadu − Σ parowania (ET0 FAO-56) w każdym z 14 okresów rozporządzenia (21.III–20.V …
-   1.VIII–30.IX) zakończonych do daty analizy; okno kończy się na ostatniej pełnej dekadzie. Plakietka „Bilans poniżej progu suszy (szacunek dla działki)”, gdy w którymkolwiek okresie KBW < próg dla
+   1.VIII–30.IX) zakończonych do daty analizy; okno kończy się na ostatniej pełnej dekadzie. Werdykt „Bilans poniżej progu suszy (szacunek dla działki)” (na ekranie rolnika zdanie z kolorem i słowem „susza: tak” / „susza: nie”, „nasz szacunek”; stan lepszy niż próg: „bilans jest lepszy niż próg suszy”), gdy w którymkolwiek okresie KBW < próg dla
    grupy uprawy i kategorii gleby; na górze okres z najmniejszym zapasem (KBW − próg). Pod plakietką stałe zdanie: „To nie jest urzędowe
    stwierdzenie suszy; we wniosku liczy się ocena SMSR IUNG dla gminy”. Przed 20.V: bilans od 21.III do końca ostatniej pełnej dekady,
    „okres jeszcze trwa”, bez plakietki. Od 1.X do 20.III: status „nie dotyczy” i treść z akapitu „Poza sezonem” (rozdział „Jak łączymy
@@ -204,7 +242,8 @@ zalecenia wybierają reguły na wskaźnikach, model językowy nie bierze udział
 7. **Nawadnianie.** „Teraz tak / nie” z powodem (faza uprawy, woda w strefie korzeni wg FAO-56), dawka w mm i m³ na działkę (CDR 2025:
    20–25 mm na glebach lekkich, 30–35 mm na średnich), źródło wody z BDOT10k, pozwolenie powyżej 5 m³/dobę średniorocznie (art. 33 ust. 4
    pkt 1, art. 34 pkt 12).
-8. **Źródła i ograniczenia.** Źródło, co dało, godzina, czas, stan (jest / zapas / szacunek / brak / kopia z dnia), rozdzielczość; czego
+8. **Źródła i ograniczenia.** Na ekranie rolnika bez czasów pobrania i czasów per źródło (zostają po rozwinięciu panelu i w widoku doradcy);
+   braki to jedna linia „Jeszcze nie liczymy: …”. Źródło, co dało, godzina, czas, stan (jest / zapas / szacunek / brak / kopia z dnia), rozdzielczość; czego
    raport nie uwzględnia (drenowanie, wody gruntowe, faktyczna data siewu); źródło kategorii gleby i jej wpływ na wynik, odległość stacji.
 
 ## Modele i metody obliczeń
@@ -464,7 +503,8 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
   przejścia, zdjęcie z obrysem, werdykt z wykresem bilansu, plakietką i zastrzeżeniem, wiersz SMSR gminy dla daty analizy, wiersz stanu
   roślin z satelity, działania retencyjne z podstawy rozmieszczania (płaszczyzna spadku, dolny odcinek granicy, najniższe punkty,
   zagłębienia, najbliższy rów z BDOT10k; pas trawy, uprawa w poprzek stoku, niecka, zastawka) z formalnością z CSV, agrotechnika
-  i nawadnianie jako zdania z reguł, skrót, źródła i braki, widok do druku; ekran raportu: pasek ikon 56 px, mapa 560 px, reszta raport.
+  i nawadnianie jako zdania z reguł, skrót, źródła i braki, widok do druku; ekran raportu: pasek ikon 56 px, mapa 560 px, reszta raport; ekran rolnika w dwóch poziomach (A: 7 elementów, B: rozwijane
+  wiersze), panel „Skąd są dane” zwinięty do jednej linii, działania w języku „rozważ …”.
 - **L2 (ndz 02:00):** `smsr.*` w `metrics.json` z miarami dla rolnika i sekcja gminy, 10 sezonów i lista przyczyn, sprawdzenie miejsc
   na rowach i zbiornikach (podstawa wobec akumulacji D8 z marginesem 300 m, mediany NDMI z suchych okresów i losowych punktów) z wariantem
   zwycięskim w aplikacji, cytat O'Callaghan i Mark 1984 i zdanie o patencie w README, katalog działań CSV ze źródłami i kolejnością po
@@ -484,7 +524,7 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
   porównanie w README) → akumulacja spływu i siatka z marginesem 300 m (zostaje podstawa z L1, test rowów z najniższym i losowymi
   punktami w README) → bilans FAO-56 w nawadnianiu (zostaje prosta decyzja) → wykres gminy w sekcji 2 (wiersz SMSR zostaje) → stan planu w linku i PDF (przełącznik
   w raporcie należy do złotej ścieżki i zostaje).
-- **Nigdy nie tniemy:** złotej ścieżki, wskazania działki na mapie (obowiązkowy zakres zadania, pkt 3.3 ppkt 2), liczby zgodności z SMSR,
+- **Nigdy nie tniemy:** poziomu A ekranu rolnika (7 elementów, bez czasów pobrania i bez „kat. II”, „okres 4”), złotej ścieżki, wskazania działki na mapie (obowiązkowy zakres zadania, pkt 3.3 ppkt 2), liczby zgodności z SMSR,
   wiersza SMSR gminy i zdania zastrzeżenia pod werdyktem, trzech osobnych odpowiedzi bez jednej sklejonej liczby, działania retencyjnego
   nr 1 z miejscem, daty poza okresem monitoringu, jawnych braków danych, działania dla dowolnej działki.
 
@@ -549,3 +589,4 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
   `test_exceedance_forecast.py` test „okres minął” przeszedł na 15.09.2023, a data dzisiejsza daje klimatologię; doszły
   `test_three_answers.py`, `test_off_season.py`, `test_vulnerability.py`, `test_evaporation_formula.py` (xfail do zbudowania)
   (powód: krytyczna recenzja wizji; zmiana przyczyn będzie osobna).
+- nd 01:41, W08: ekran rolnika ma dwa poziomy (góra: najwyżej 7 elementów — nagłówek, werdykt zdaniem, dwa paski „zwykle / teraz”, działanie nr 1 z terminem, pewność, „Raport PDF” i „Pokaż doradcy”; reszta w wierszach rozwijanych), znikają powtórzenia liczb, czasy pobrania, „kat. II”, „okres 4”, rzymskie daty i ramki „Brak: …” (zamiast nich linia „Jeszcze nie liczymy: …”), panel „Skąd są dane” jest zwinięty do jednej linii, a działania brzmią „rozważ …”; widok doradcy bez zmian; dodany `tests/acceptance/test_farmer_screen.py` (xfail do zbudowania), żaden test nie został usunięty (powód: ekran rolnika miał za dużo elementów i powtórzeń, badanie interfejsu zatwierdzone przez właściciela 22.11).

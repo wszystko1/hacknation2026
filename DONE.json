@@ -60,14 +60,15 @@
       "name": "Prostota obsługi",
       "weight": 15,
       "required": true,
-      "evidence": "Trzy pola (działka, data, uprawa z alfabetycznej listy 14 grup i „Inna uprawa”; nad nią podpowiedź z mapy upraw JRC 2022, gdy jedna klasa mapy pokrywa co najmniej połowę obrysu); działkę można wpisać numerem albo wskazać klikiem na mapie obok pola numeru (mapa podkładowa i ortofotomapa GUGiK z przybliżaniem, bez bibliotek z CDN): klik zamienia się na działkę ewidencyjną przez ULDK GetParcelByXY, mapa pokazuje obrys i numer do potwierdzenia („To ta działka” / „Wskaż inną”), a klik w sąsiednią działkę na zdjęciu raportu proponuje przejście do niej; zdjęcie działki z obrysem do potwierdzenia, ekran raportu: pasek ikon 56 px, mapa 560 px (na ekranie węższym niż 1180 px 44%), reszta szerokości to raport, główna treść; wynik jednym zdaniem z liczbą, tekst co najmniej 16 px (raport 18 px), widok rolnika bez żargonu (KBW, ewapotranspiracja, NDVI, NDMI, CSI, POD, FAR, Peirce, Brier, BSS tylko w widoku doradcy), błędy wejścia opisane przy polu po polsku.",
+      "evidence": "Trzy pola (działka, data, uprawa z alfabetycznej listy 14 grup i „Inna uprawa”; nad nią podpowiedź z mapy upraw JRC 2022, gdy jedna klasa mapy pokrywa co najmniej połowę obrysu); działkę można wpisać numerem albo wskazać klikiem na mapie obok pola numeru (mapa podkładowa i ortofotomapa GUGiK z przybliżaniem, bez bibliotek z CDN): klik zamienia się na działkę ewidencyjną przez ULDK GetParcelByXY, mapa pokazuje obrys i numer do potwierdzenia („To ta działka” / „Wskaż inną”), a klik w sąsiednią działkę na zdjęciu raportu proponuje przejście do niej; zdjęcie działki z obrysem do potwierdzenia, ekran raportu: pasek ikon 56 px, mapa 560 px (na ekranie węższym niż 1180 px 44%), reszta szerokości to raport, główna treść; wynik jednym zdaniem z liczbą, tekst co najmniej 16 px (raport 18 px), widok rolnika bez żargonu (KBW, ewapotranspiracja, NDVI, NDMI, CSI, POD, FAR, Peirce, Brier, BSS tylko w widoku doradcy), błędy wejścia opisane przy polu po polsku. Ekran rolnika ma dwa poziomy: u góry najwyżej 7 elementów (nagłówek z glebą słowami, werdykt zdaniem z kolorem i słowem, dwa paski „zwykle / teraz”, działanie nr 1 z pinezką i terminem, pewność z „przy wniosku liczy się ocena IUNG”, „Raport PDF” i „Pokaż doradcy”), reszta w wierszach rozwijanych; bez czasów pobrania, „kat. II”, „okres 4”, rzymskich dat i ramek „Brak: …” (jedna linia „Jeszcze nie liczymy: …”); panel „Skąd są dane” zwinięty do jednej linii; działania w języku „rozważ …”.",
       "checks": [
         {"kind": "scene", "target": "Wskazanie działki na mapie"},
         {"kind": "scene", "target": "Działka z ewidencji na zdjęciu"},
         {"kind": "scene", "target": "Werdykt: bilans wobec progu z rozporządzenia"},
         {"kind": "test", "target": "tests/acceptance/test_plain_language.py"},
         {"kind": "test", "target": "tests/acceptance/test_map_pick.py"},
-        {"kind": "test", "target": "tests/acceptance/test_report_layout.py"}
+        {"kind": "test", "target": "tests/acceptance/test_report_layout.py"},
+        {"kind": "test", "target": "tests/acceptance/test_farmer_screen.py"}
       ]
     },
     {
