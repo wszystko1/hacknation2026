@@ -76,9 +76,6 @@ Wersja online działa z `HN_LIVE_ONLY=1`: każda działka, także dwie działki 
 Adres działającej wersji: https://70-34-247-151.sslip.io/ (kroki, logi i koszty serwera: [docs/DEPLOY.md](docs/DEPLOY.md)).
 Wersja online działa na żywo dla dowolnej działki w Polsce, bez logowania.
 
-## Dostęp dla jury do repozytorium
-
-Repozytorium jest prywatne, a dostęp dla jury zapewnia się według instrukcji opublikowanej na platformie konkursowej.
 
 ## Funkcje
 
