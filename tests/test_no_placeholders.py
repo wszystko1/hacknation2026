@@ -55,8 +55,9 @@ def test_demo_report_route_has_no_placeholder() -> None:
 
 def test_missing_parts_carry_the_gap_sentence_in_the_report() -> None:
     r = report()
-    for sentence in (r.forecast.sentence, r.crop_condition.words):
-        assert sentence.startswith("Brak:") and " bo " in sentence
+    assert r.crop_condition.words.startswith("Brak:") and " bo " in r.crop_condition.words
+    # The exceedance forecast is computed now, so it is a value, not a gap.
+    assert r.forecast.state == "ok" and not r.forecast.sentence.startswith("Brak:")
     # SMSR agreement is measured now (metrics.json), so it is a value, not a gap.
     assert r.agreement.available and not r.agreement.sentence.startswith("Brak:")
     # The commune's SMSR row is read now (frozen demo page), so it is a value, not a gap.
