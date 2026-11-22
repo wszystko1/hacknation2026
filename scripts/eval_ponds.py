@@ -1,5 +1,10 @@
 """Basin check: does the score of a place single out BDOT10k ponds among random places of the same grid?
 
+In three sentences (for the jury): (1) for 50 parcels with a ditch we take the real ponds from BDOT10k; (2) in each
+parcel's height grid we draw a few cells inside the ponds and 25 random cells outside them (a fixed seed, so anybody gets
+the same draw); (3) each cell gets the score the app uses to look for a place for water, and the AUC tells how often a
+cell in a pond scores higher than a random one (0.5 = the score is no better than chance, 1.0 = always higher).
+
 `make eval ONLY=ponds` writes into metrics.json, for the parcels of demo/data/eval/ditch_parcels.csv (height grid with
 a ~300 m margin from scripts/fetch_retention_sample.py, pond outlines from scripts/fetch_ponds.py):
 
@@ -136,6 +141,13 @@ def cell_scores(
     return out
 
 
+def draw_cells(rng: random.Random, mask: np.ndarray, n: int) -> list[tuple[int, int]]:
+    """Up to `n` cells drawn at random (without repeats) from the True cells of `mask`."""
+    rows, cols = np.nonzero(mask)
+    picks = rng.sample(range(len(rows)), min(n, len(rows)))
+    return [(int(rows[i]), int(cols[i])) for i in picks]
+
+
 def measure_ponds(samples: list[tuple], ndmi: float | None = None) -> dict[str, float | int]:
     """`samples`: (grid, ponds) per parcel, `grid` an ElevationGrid and `ponds` outlines in EPSG:2180.
 
@@ -154,19 +166,14 @@ def measure_ponds(samples: list[tuple], ndmi: float | None = None) -> dict[str, 
         known = np.isfinite(z)
         in_ponds = pond_mask(grid, ponds)
         cells_pos: list[tuple[int, int]] = []
-        for outline in ponds:
+        for outline in ponds:  # inside every pond: up to PER_POND random cells
             one = pond_mask(grid, [outline]) & known
-            rows, cols = np.nonzero(one)
-            if not len(rows):
-                continue
-            n_ponds += 1
-            picks = rng.sample(range(len(rows)), min(PER_POND, len(rows)))
-            cells_pos += [(int(rows[i]), int(cols[i])) for i in picks]
+            if one.any():
+                n_ponds += 1
+                cells_pos += draw_cells(rng, one, PER_POND)
         if not cells_pos:
             continue
-        rows, cols = np.nonzero(known & ~in_ponds)
-        picks = rng.sample(range(len(rows)), min(RANDOM_PER_GRID, len(rows)))
-        cells_neg = [(int(rows[i]), int(cols[i])) for i in picks]
+        cells_neg = draw_cells(rng, known & ~in_ponds, RANDOM_PER_GRID)  # outside every pond: RANDOM_PER_GRID random cells
         acc = _build_surface(grid).flow.acc_ha.reshape(grid.rows, grid.cols)
         for bucket, cells in ((pos, cells_pos), (neg, cells_neg)):
             got = cell_scores(grid, cells, acc)
