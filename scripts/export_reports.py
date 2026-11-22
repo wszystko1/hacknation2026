@@ -17,7 +17,11 @@ from run_demo import ROOT, free_port, launch, start_server, stop_server, up  # n
 
 OUT = ROOT / "docs" / "raporty"
 PARCELS = {
-    "dzialka-189-13-dobrcz-2023-07-20": {"dzialka": "040303_2.0002.189/13", "data": "2023-07-20", "uprawa": "zboza_jare"},
+    "dzialka-189-13-dobrcz-2023-07-20": {
+        "dzialka": "040303_2.0002.189/13",
+        "data": "2023-07-20",
+        "uprawa": "zboza_jare",
+    },
     "dzialka-144-gora-sw-malgorzaty-2026-11-21": {
         "dzialka": "100403_2.0011.144",
         "data": "2026-11-21",
@@ -43,9 +47,16 @@ def export(out_dir: Path = OUT) -> list[Path]:
             for name, params in PARCELS.items():
                 page.goto(f"{base}/raport/druk?{urlencode(params)}", wait_until="networkidle", timeout=60000)
                 page.wait_for_selector("#tabela-zrodel", state="attached")
-                page.evaluate("Promise.all([...document.images].map(i => i.complete || new Promise(r => { i.onload = i.onerror = r; })))")
+                page.evaluate(
+                    "Promise.all([...document.images].map(i => i.complete || new Promise(r => { i.onload = i.onerror = r; })))"
+                )
                 path = out_dir / f"{name}.pdf"
-                page.pdf(path=str(path), format="A4", print_background=True, margin={"top": "14mm", "bottom": "14mm", "left": "14mm", "right": "14mm"})
+                page.pdf(
+                    path=str(path),
+                    format="A4",
+                    print_background=True,
+                    margin={"top": "14mm", "bottom": "14mm", "left": "14mm", "right": "14mm"},
+                )
                 written.append(path)
             browser.close()
     finally:

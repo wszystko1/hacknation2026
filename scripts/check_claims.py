@@ -27,7 +27,9 @@ ROOT = Path(__file__).resolve().parent.parent
 METRIC_WORDS = re.compile(
     r"precyzj|czułoś|trafnoś|skuteczno|dokładno|accuracy|precision|recall|\bF1\b|f1|AUC|błęd|"
     r"fałszyw|false|latenc|opóźnien|czas odpowiedzi|przypadk|rekord|próbk|sample|ms\b|sekund|minut|"
-    r"oszczędno|szybciej|razy\b|x\b", re.I)
+    r"oszczędno|szybciej|razy\b|x\b",
+    re.I,
+)
 NUMBER = re.compile(r"(?<![\w.])(\d+(?:[.,]\d+)?)\s*(%|proc)?")
 TEST_CLAIM = re.compile(r"(\d+)\s*(?:test(?:y|ów|s)?\b|przypadk\w* testow)", re.I)
 
@@ -76,15 +78,20 @@ def known_numbers() -> set[str]:
 
 def collected_tests() -> int | None:
     try:
-        r = subprocess.run(["uv", "run", "pytest", "--collect-only", "-q"], cwd=ROOT,
-                           capture_output=True, text=True, timeout=120)
+        r = subprocess.run(
+            ["uv", "run", "pytest", "--collect-only", "-q"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
     except (OSError, subprocess.TimeoutExpired):
         return None
     text = r.stdout + r.stderr
     m = re.search(r"(\d+) tests? collected", text)
     if m:
         return int(m.group(1))
-    per_file = re.findall(r"^\S+\.py: (\d+)$", text, flags=re.M)     # pytest -qq format
+    per_file = re.findall(r"^\S+\.py: (\d+)$", text, flags=re.M)  # pytest -qq format
     if per_file:
         return sum(int(n) for n in per_file)
     return sum(1 for line in text.splitlines() if "::" in line) or None
@@ -96,11 +103,12 @@ def strict() -> bool:
 
     def git(*args: str) -> subprocess.CompletedProcess:
         return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+
     if git("status", "--porcelain", "--", "README.md").stdout.strip():
-        return True                                   # edited right now
+        return True  # edited right now
     base = git("merge-base", "HEAD", "main").stdout.strip()
     if base and git("diff", "--quiet", base, "HEAD", "--", "README.md").returncode == 1:
-        return True                                   # this branch changed the README
+        return True  # this branch changed the README
     return False
 
 
@@ -133,17 +141,23 @@ def main() -> int:
             value = float(raw.replace(",", "."))
             if value in (0, 1, 2, 3, 4, 5, 10, 24, 100) and not pct and not is_decimal:
                 continue
-            if TEST_CLAIM.search(line[m.start():m.start() + 30]):
+            if TEST_CLAIM.search(line[m.start() : m.start() + 30]):
                 continue
             if not forms(value) & known:
-                problems.append(f"README.md:{n}: number {raw}{pct or ''} not found in metrics.json / docs/DANE.md -> {line.strip()[:110]}")
+                problems.append(
+                    f"README.md:{n}: number {raw}{pct or ''} not found in metrics.json / docs/DANE.md -> {line.strip()[:110]}"
+                )
     if problems and not strict():
-        print(f"check_claims WARN: {len(problems)} README number(s) not in metrics.json (README unchanged here; "
-              "the README pass at the next checkpoint updates them)")
+        print(
+            f"check_claims WARN: {len(problems)} README number(s) not in metrics.json (README unchanged here; "
+            "the README pass at the next checkpoint updates them)"
+        )
         print("\n".join(problems[:5]))
         return 0
     if problems:
-        print("check_claims: unverified claims (write the number into metrics.json from a script, or drop it):")
+        print(
+            "check_claims: unverified claims (write the number into metrics.json from a script, or drop it):"
+        )
         print("\n".join(problems))
         return 1
     print("check_claims OK")

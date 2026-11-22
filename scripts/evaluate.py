@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 METRICS = ROOT / "metrics.json"
-EVALUATIONS = ["smsr", "soil", "forecast", "parcels", "retention", "ponds", "wet_zones"]
+EVALUATIONS = ["smsr", "soil", "forecast", "robustness", "retention", "ponds", "wet_zones"]
 
 
 def load(name: str):

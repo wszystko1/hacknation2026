@@ -1,32 +1,24 @@
-"""Robustness: how long a report takes for parcels nobody prepared, and how many finish within 30 s.
+"""The sample of 50 parcels (demo/data/eval/parcels50.csv) and the helpers the timing run shares.
 
-`make eval ONLY=parcels` builds the report of each row of demo/data/eval/parcels50.csv (50 parcels from 16
-voivodeships; dates in the past, outside the season and today) with an empty download cache, one after another,
-and writes robustness.report_ok_under_30s_share, p50_s, p95_s and n_parcels. A report counts as ok when it
-is built within 30 s and has a verdict (a report that says "no weather" is built, but not ok).
+The timing run itself is scripts/eval_robustness.py; this file draws the sample and reads it.
 
 Rows without a parcel id hold a random point; the id is found with ULDK GetParcelByXY. `python
 scripts/eval_parcels.py sample` draws the points again (fixed seed), asks ULDK for the parcel under each
 and writes the CSV with the ids, so that the next run does not depend on the point lookup.
-Needs the network; without it `run()` returns nothing and metrics.json keeps its values.
+Needs the network.
 """
 
 from __future__ import annotations
 
 import csv
-import os
 import random
-import shutil
 import sys
-import time
 from datetime import date, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CSV_PATH = ROOT / "demo" / "data" / "eval" / "parcels50.csv"
-WORK = ROOT / "data" / "raw" / "eval_parcels"
 COLUMNS = ["dzialka", "wojewodztwo", "lon", "lat", "data", "uprawa"]
-LIMIT_S = 30.0
 SEED = 20261121
 TODAY = "dzis"  # the date column holds this word for "the day the evaluation runs"
 
@@ -48,12 +40,14 @@ BOXES = {
 }  # fmt: skip
 
 
-def read_rows(path: Path = CSV_PATH) -> list[dict[str, str]]:
+def read_rows(path: Path | None = None) -> list[dict[str, str]]:
+    path = path or CSV_PATH
     with path.open(encoding="utf-8", newline="") as f:
         return list(csv.DictReader(f))
 
 
-def write_rows(rows: list[dict[str, str]], path: Path = CSV_PATH) -> None:
+def write_rows(rows: list[dict[str, str]], path: Path | None = None) -> None:
+    path = path or CSV_PATH
     with path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=COLUMNS, lineterminator="\n")
         writer.writeheader()
@@ -163,66 +157,8 @@ def percentile(values: list[float], p: float) -> float:
     return ordered[low] + (ordered[high] - ordered[low]) * (pos - low)
 
 
-def measure(rows: list[dict[str, str]], today: date | None = None) -> dict[str, float | int]:
-    """Build every row's report with an empty cache and time it. Returns {} when no parcel could be found."""
-    from app.models import CropGroup, ReportRequest
-    from app.report import build_report
-
-    today = today or date.today()
-    shutil.rmtree(WORK / "cache", ignore_errors=True)
-    previous = os.environ.get("GEODATA_CACHE_DIR")
-    times, ok, no_weather, built, codes = [], 0, 0, 0, set()
-    try:
-        for i, row in enumerate(rows, start=1):
-            pid = row["dzialka"] or parcel_of_point(float(row["lon"]), float(row["lat"]))
-            if not pid:
-                print(f"  {i:2d}  {row['wojewodztwo']}: no parcel under the point, counted as failed")
-                times.append(LIMIT_S)
-                continue
-            codes.add(pid[:2])
-            day = today if row["data"] == TODAY else date.fromisoformat(row["data"])
-            req = ReportRequest(parcel_id=pid, day=day, crop=CropGroup(row["uprawa"]))
-            os.environ["GEODATA_CACHE_DIR"] = str(WORK / "cache")  # cold: the parcel is downloaded again too
-            started = time.perf_counter()
-            try:
-                report = build_report(req)
-                state = report.verdict.state
-                built += 1
-            except Exception as exc:  # noqa: BLE001 - a failed report is a result, not a crash of the evaluation
-                state = f"failed: {type(exc).__name__}"
-            took = time.perf_counter() - started
-            times.append(took)
-            no_weather += state == "no_data"
-            is_ok = took <= LIMIT_S and not state.startswith("failed") and state != "no_data"
-            ok += is_ok
-            print(f"  {i:2d}  {pid:28s} {row['data']:10s} {took:5.1f} s  {state}")
-    finally:
-        if previous is None:
-            os.environ.pop("GEODATA_CACHE_DIR", None)
-        else:
-            os.environ["GEODATA_CACHE_DIR"] = previous
-    if not built:
-        return {}
-    return {
-        "robustness.n_parcels": len(rows),
-        "robustness.n_voivodeships": len(codes),
-        "robustness.n_no_weather": no_weather,
-        "robustness.report_ok_under_30s_share": round(ok / len(rows), 4),
-        "robustness.p50_s": round(percentile(times, 0.5), 1),
-        "robustness.p95_s": round(percentile(times, 0.95), 1),
-    }
-
-
-def run() -> dict[str, float | int]:
-    if not CSV_PATH.is_file():
-        return {}
-    if str(ROOT) not in sys.path:
-        sys.path.insert(0, str(ROOT))
-    return measure(read_rows())
-
-
 if __name__ == "__main__":
     if sys.argv[1:] == ["sample"]:
         sample()
     else:
-        print(run())
+        print("usage: python scripts/eval_parcels.py sample  (the timing run is scripts/eval_robustness.py)")

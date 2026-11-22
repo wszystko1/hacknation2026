@@ -41,8 +41,13 @@ def up(url: str, timeout_s: float) -> bool:
 
 
 def start_server(port: int) -> subprocess.Popen:
-    return subprocess.Popen(["uv", "run", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port)],
-                            cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, start_new_session=True)
+    return subprocess.Popen(
+        ["uv", "run", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port)],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
 
 
 def stop_server(server: subprocess.Popen) -> None:
@@ -84,13 +89,17 @@ def main() -> int:
             return 1
         scenes = load_scenes()
         from playwright.sync_api import sync_playwright
+
         with sync_playwright() as pw:
             browser = launch(pw)
             page = browser.new_page(viewport={"width": 1280, "height": 800}, locale="pl-PL")
             fast_pauses(page)
             errors: list[str] = []
             page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"[:300]))
-            page.on("console", lambda m: errors.append(f"console.error: {m.text}"[:300]) if m.type == "error" else None)
+            page.on(
+                "console",
+                lambda m: errors.append(f"console.error: {m.text}"[:300]) if m.type == "error" else None,
+            )
             for title, fn in scenes:
                 t = time.time()
                 try:

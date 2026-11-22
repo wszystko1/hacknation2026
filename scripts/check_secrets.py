@@ -19,9 +19,13 @@ PATTERNS = {
     "GitHub token": re.compile(r"\bgh[pousr]_[A-Za-z0-9]{30,}"),
     "Google API key": re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b"),
     "private key": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
-    "password in code": re.compile(r"(?i)\b(password|passwd|secret|api_key|token)\s*[:=]\s*[\"'][^\"'\s]{8,}[\"']"),
+    "password in code": re.compile(
+        r"(?i)\b(password|passwd|secret|api_key|token)\s*[:=]\s*[\"'][^\"'\s]{8,}[\"']"
+    ),
 }
-SKIP = re.compile(r"\.(png|jpe?g|gif|webp|pdf|zip|gz|parquet|xlsx?|lock|min\.js)$|^scripts/check_secrets\.py$")
+SKIP = re.compile(
+    r"\.(png|jpe?g|gif|webp|pdf|zip|gz|parquet|xlsx?|lock|min\.js)$|^scripts/check_secrets\.py$"
+)
 
 
 def tracked() -> list[str]:

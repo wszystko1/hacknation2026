@@ -33,7 +33,7 @@ def strip_root_blocks(css: str) -> str:
     """Blank out `:root { ... }` blocks (the tokens), keeping line numbers."""
     out, i = [], 0
     for m in re.finditer(r":root[^{]*\{[^}]*\}", css):
-        out.append(css[i:m.start()])
+        out.append(css[i : m.start()])
         out.append(re.sub(r"[^\n]", " ", m.group(0)))
         i = m.end()
     out.append(css[i:])
@@ -48,19 +48,25 @@ def main() -> int:
         text = strip_root_blocks(css.read_text(encoding="utf-8", errors="ignore"))
         for n, line in enumerate(text.splitlines(), 1):
             if COLOR.search(line):
-                errors.append(f"ERROR {css.relative_to(ROOT)}:{n} colour literal outside the tokens; "
-                              f"use var(--token) or add a token in :root -> {line.strip()[:100]}")
+                errors.append(
+                    f"ERROR {css.relative_to(ROOT)}:{n} colour literal outside the tokens; "
+                    f"use var(--token) or add a token in :root -> {line.strip()[:100]}"
+                )
     templates = ROOT / "app" / "templates"
     for html in sorted(templates.rglob("*.html")) if templates.exists() else []:
         for n, line in enumerate(html.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
             if INLINE_STYLE.search(line):
-                errors.append(f"ERROR {html.relative_to(ROOT)}:{n} inline style; give the element a class "
-                              f"in app.css -> {line.strip()[:100]}")
+                errors.append(
+                    f"ERROR {html.relative_to(ROOT)}:{n} inline style; give the element a class "
+                    f"in app.css -> {line.strip()[:100]}"
+                )
             for m in EXTERNAL.finditer(line):
                 host = m.group(2).lower()
                 if host not in hosts:
-                    errors.append(f"ERROR {html.relative_to(ROOT)}:{n} UI dependency from {host}; vendor it into "
-                                  "app/static/ or list its host under Allowed UI dependencies")
+                    errors.append(
+                        f"ERROR {html.relative_to(ROOT)}:{n} UI dependency from {host}; vendor it into "
+                        "app/static/ or list its host under Allowed UI dependencies"
+                    )
     if errors:
         print("\n".join(errors))
         print(f"check_ui: {len(errors)} error(s); rules in docs/DESIGN.md")

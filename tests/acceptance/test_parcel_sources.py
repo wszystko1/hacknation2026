@@ -62,7 +62,9 @@ class Network:
     def endless(self) -> object:
         def chunks():
             yield b"0\n"
-            while self.streamed < HUGE:  # stands for an endless stream, but ends so a bad client cannot hang the suite
+            while (
+                self.streamed < HUGE
+            ):  # stands for an endless stream, but ends so a bad client cannot hang the suite
                 self.streamed += CHUNK
                 yield b"01" * (CHUNK // 2)
 

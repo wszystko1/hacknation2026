@@ -54,8 +54,9 @@ def run_check(check: dict, metrics: dict, demo: dict) -> tuple[bool, str]:
         return ok, target if ok else f"brak {target}"
     if kind == "test":
         try:
-            r = subprocess.run(["uv", "run", "pytest", "-q", target], cwd=ROOT, capture_output=True,
-                               text=True, timeout=240)
+            r = subprocess.run(
+                ["uv", "run", "pytest", "-q", target], cwd=ROOT, capture_output=True, text=True, timeout=240
+            )
         except subprocess.TimeoutExpired:
             return False, f"{target}: timeout"
         return r.returncode == 0, f"{target}: " + (r.stdout.strip().splitlines() or ["?"])[-1]
@@ -84,18 +85,30 @@ def main() -> int:
         results = [run_check(ch, metrics, demo) for ch in c.get("checks", [])]
         passed = sum(1 for ok, _ in results if ok)
         status = "red" if not results or passed == 0 else ("green" if passed == len(results) else "amber")
-        rows.append({"id": c.get("id"), "name": c.get("name"), "weight": c.get("weight", 0),
-                     "required": c.get("required", False), "status": status,
-                     "evidence": c.get("evidence", ""), "checks": [d for _, d in results]})
+        rows.append(
+            {
+                "id": c.get("id"),
+                "name": c.get("name"),
+                "weight": c.get("weight", 0),
+                "required": c.get("required", False),
+                "status": status,
+                "evidence": c.get("evidence", ""),
+                "checks": [d for _, d in results],
+            }
+        )
     total = sum(r["weight"] or 0 for r in rows) or 1
     score = sum((r["weight"] or 0) * {"green": 1, "amber": 0.5, "red": 0}[r["status"]] for r in rows) / total
     out = {"score_evidence": round(score, 3), "criteria": rows}
     (ROOT / "artifacts").mkdir(exist_ok=True)
-    (ROOT / "artifacts" / "grade.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    (ROOT / "artifacts" / "grade.json").write_text(
+        json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     icon = {"green": "✅", "amber": "🟡", "red": "❌"}
     md = ["| Kryterium (waga) | Stan | Dowód |", "|---|---|---|"]
     for r in rows:
-        md.append(f"| {r['name']} ({r['weight']}%) | {icon[r['status']]} | {'; '.join(r['checks']) or r['evidence']} |")
+        md.append(
+            f"| {r['name']} ({r['weight']}%) | {icon[r['status']]} | {'; '.join(r['checks']) or r['evidence']} |"
+        )
     (ROOT / "artifacts" / "grade.md").write_text("\n".join(md) + "\n", encoding="utf-8")
     print("\n".join(md))
     print(f"\nPokrycie kryteriów dowodami (ważone): {score:.0%}")
