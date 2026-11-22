@@ -1,14 +1,10 @@
-{# Left column: the parcel photo with the overlay, the selection bar, the legend and "Skąd są dane". #}
+{# Left column (map styles: app/static/maplayers.css, behaviour: maplayers.js, neighbour.js): the parcel photo with the overlay, the selection bar, the legend and "Skąd są dane". #}
 {% set m = report.map %}
 <style>
   .map-ui .mlegend { align-self: flex-end; }
   .map[data-neighbour] { cursor: pointer; }
   .mo-neighbour-casing { fill: none; stroke: var(--casing); stroke-width: 7; stroke-linejoin: round; }
   .mo-neighbour { fill: none; stroke: var(--outline); stroke-width: 3; stroke-linejoin: round; stroke-dasharray: 12 8; }
-  .mo-slope-casing { fill: none; stroke: var(--flow-casing); stroke-width: 9; stroke-linecap: round; }
-  .mo-slope { fill: none; stroke: var(--outline); stroke-width: 5; stroke-linecap: round; }
-  .mo-slope-head { fill: var(--outline); stroke: var(--flow-casing); stroke-width: 2; stroke-linejoin: round; }
-  .mo-lower-edge { fill: none; stroke: var(--strip); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
   .map-reason { margin: var(--s2) 0 0; font-size: var(--fs-base); }
   .nb-card { margin: 0; padding: var(--s3) var(--s4); background: var(--card-on-map); color: var(--text); border-radius: var(--radius);
     box-shadow: var(--shadow-map); font-size: var(--fs-base); max-width: 100%; }
@@ -18,65 +14,58 @@
   .nb-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: var(--s3); }
   .nb-actions a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 650; }
 </style>
+<link rel="stylesheet" href="/static/maplayers.css">
 <div class="mapcol">
   <div class="map-form">{% include "report/_pick.html" %}</div>
   <div class="mapstage">
-  <div class="map{% if m and m.width < 0.5 * m.height %} map--tall{% endif %}"{% if m %} data-neighbour data-parcel="{{ report.parcel.id }}" data-day="{{ report.request.day.isoformat() }}" data-crop="{{ report.request.crop.value }}"
+  <div class="map"{% if m %} data-neighbour data-parcel="{{ report.parcel.id }}" data-day="{{ report.request.day.isoformat() }}" data-crop="{{ report.request.crop.value }}"
        data-width="{{ m.width }}" data-height="{{ m.height }}" data-m-per-px="{{ m.m_per_px }}"
+       data-outline-bbox="{{ m.outline_px[0] | map(attribute=0) | min }},{{ m.outline_px[0] | map(attribute=1) | min }},{{ m.outline_px[0] | map(attribute=0) | max }},{{ m.outline_px[0] | map(attribute=1) | max }}"
        data-origin-2180="{{ m.origin_2180 | join(',') }}" data-corners-4326="{{ m.corners_4326 | map('join', ',') | join(' ') }}"{% endif %}>
     {% if m %}
+    <div class="map-pan">
     <img src="{{ m.image_url }}" width="{{ m.width }}" height="{{ m.height }}" alt="Ortofotomapa działki {{ report.parcel.number }}">
-    <svg viewBox="0 0 {{ m.width }} {{ m.height }}" preserveAspectRatio="xMidYMid {{ 'meet' if m.width < 0.5 * m.height else 'slice' }}" role="img"
-         aria-label="Obrys działki {{ report.parcel.number }}{% if m.outlet_label %}, punkt wypływu ({{ m.outlet_label }}){% endif %}{% if m.markers %} i miejsca działań {{ m.markers | map(attribute='n') | join(', ') }}{% endif %}">
+    <svg viewBox="0 0 {{ m.width }} {{ m.height }}" preserveAspectRatio="xMidYMid meet" role="img"
+         aria-label="Obrys działki {{ report.parcel.number }}{% if m.markers %} i miejsca działań {{ m.markers | map(attribute='n') | join(', ') }}{% endif %}">
       {% set ring = m.outline_px[0] %}
       {% set pts = ring | map('join', ',') | join(' ') %}
       <path class="mo-scrim" d="M0 0H{{ m.width }}V{{ m.height }}H0Z M{{ ring | map('join', ' ') | join(' L') }}Z"/>
-      <g data-layer="basin">{% for b in m.basins_px %}<polygon class="mo-basin" points="{{ b | map('join', ',') | join(' ') }}"/>{% endfor %}</g>
-      <g data-layer="line">{% for d in m.ditches_px %}<polygon class="mo-ditch" points="{{ d | map('join', ',') | join(' ') }}"/>{% endfor %}</g>
+      <g data-layer="water">{% for b in m.basins_px %}<polygon class="mo-water" points="{{ b | map('join', ',') | join(' ') }}"/>{% endfor %}
+      {% for d in m.ditches_px %}<polygon class="mo-water" points="{{ d | map('join', ',') | join(' ') }}"/>{% endfor %}</g>
       <g data-layer="outline"><polygon class="mo-casing" points="{{ pts }}"/>
       <polygon class="mo-outline" points="{{ pts }}"/></g>
       <g class="mo-neighbours"></g>
-      <g data-layer="flow">
-      {% for f in m.flow_px %}
-      <polyline class="mo-flow-casing" points="{{ f | map('join', ',') | join(' ') }}"/>
-      <polyline class="mo-flow" points="{{ f | map('join', ',') | join(' ') }}"/>
+      <g data-layer="shapes">
+      {% for sh in m.shapes %}
+      {% set sp = sh.points | map('join', ',') | join(' ') %}
+      {% if sh.kind == 'line' %}<polyline class="mo-cand-casing" points="{{ sp }}"/><polyline class="mo-cand-line" points="{{ sp }}"/>
+      {% elif sh.kind == 'polygon' %}<polygon class="mo-cand-area" points="{{ sp }}"/>
+      {% elif sh.rows %}{% set rp = sh.rows | map('join', ',') | join(' ') %}<polyline class="mo-cand-casing" points="{{ rp }}"/><polyline class="mo-cand-line mo-cand-rows" points="{{ rp }}"/>{% endif %}
       {% endfor %}
-      {% for h in m.flow_heads_px %}<polygon class="mo-arrowhead" points="{{ h | map('join', ',') | join(' ') }}"/>{% endfor %}
       </g>
-      <g data-layer="outlet">
-      {% if m.outlet_px %}<circle class="mo-outlet" cx="{{ m.outlet_px[0] }}" cy="{{ m.outlet_px[1] }}" r="7"/>{% endif %}
-      {% if m.outlet_label and m.outlet_label_xy %}
-      <rect class="mo-label-bg" x="{{ m.outlet_label_xy[0] }}" y="{{ m.outlet_label_xy[1] }}" width="{{ m.outlet_label_w }}" height="30" rx="6"/>
-      <text class="mo-label-sub" x="{{ m.outlet_label_xy[0] + 8 }}" y="{{ m.outlet_label_xy[1] + 21 }}">{{ m.outlet_label }}</text>
-      {% endif %}
-      </g>
-      <g data-layer="edge">
-      {% if m.lower_edge_px %}
-      <polyline class="mo-strip-casing" points="{{ m.lower_edge_px | map('join', ',') | join(' ') }}"/>
-      <polyline class="mo-lower-edge" points="{{ m.lower_edge_px | map('join', ',') | join(' ') }}"/>
-      {% endif %}
-      </g>
-      <g data-layer="slope">
-      {% if m.slope_arrow_px %}
-      <polyline class="mo-slope-casing" points="{{ m.slope_arrow_px | map('join', ',') | join(' ') }}"/>
-      <polyline class="mo-slope" points="{{ m.slope_arrow_px | map('join', ',') | join(' ') }}"/>
-      <polygon class="mo-slope-head" points="{{ m.slope_head_px | map('join', ',') | join(' ') }}"/>
-      {% endif %}
-      {% if m.slope_label and m.slope_label_xy %}
-      <rect class="mo-label-bg" x="{{ m.slope_label_xy[0] }}" y="{{ m.slope_label_xy[1] }}" width="{{ m.slope_label_w }}" height="30" rx="6"/>
-      <text class="mo-label-sub" x="{{ m.slope_label_xy[0] + 8 }}" y="{{ m.slope_label_xy[1] + 21 }}">{{ m.slope_label }}</text>
+      <g data-layer="slope" data-flat="{{ 1 if m.slope_flat else 0 }}">
+      {% if m.slope_main %}
+      {% for k in m.slope_grid %}{% with L = k.length %}<g class="mo-sa mo-sa--small" data-fixed transform="translate({{ k.x }} {{ k.y }}) rotate({{ k.angle }})"><path class="mo-sa-casing" d="M{{ -L / 2 }} 0H{{ L / 2 }}M{{ L / 2 - 5 }} -4L{{ L / 2 }} 0L{{ L / 2 - 5 }} 4"/><path class="mo-sa-line" d="M{{ -L / 2 }} 0H{{ L / 2 }}M{{ L / 2 - 5 }} -4L{{ L / 2 }} 0L{{ L / 2 - 5 }} 4"/></g>{% endwith %}{% endfor %}
+      {% with k = m.slope_main, L = m.slope_main.length %}<g class="mo-sa mo-sa--main" data-fixed transform="translate({{ k.x }} {{ k.y }}) rotate({{ k.angle }})"><path class="mo-sa-casing" d="M{{ -L / 2 }} 0H{{ L / 2 }}M{{ L / 2 - 11 }} -8L{{ L / 2 }} 0L{{ L / 2 - 11 }} 8"/><path class="mo-sa-line" d="M{{ -L / 2 }} 0H{{ L / 2 }}M{{ L / 2 - 11 }} -8L{{ L / 2 }} 0L{{ L / 2 - 11 }} 8"/></g>{% endwith %}
       {% endif %}
       </g>
       {% for k in m.markers %}
-      <g data-layer="marker-{{ k.n }}"><circle class="mo-marker" cx="{{ k.x }}" cy="{{ k.y }}" r="15"/>
-      <text class="mo-marker-text" x="{{ k.x }}" y="{{ k.y + 6 }}">{{ k.n }}</text></g>
+      <g class="mo-pin" data-layer="marker-{{ k.n }}" data-fixed transform="translate({{ k.x }} {{ k.y }})"><circle class="mo-marker" r="13"/>
+      <text class="mo-marker-text" y="5.5">{{ k.n }}</text></g>
       {% endfor %}
     </svg>
+    </div>
+    <div class="map-strip">
+      <span class="map-chip"{% if not m.slope_label %} hidden{% endif %}>{{ m.slope_label }}</span>
+      <span class="map-zoom-legend" hidden>{% for r in m.legend %}<span class="lg lg--{{ r.symbol }}"><i aria-hidden="true">{% if r.symbol == 'pin' %}1{% endif %}</i>{{ r.text }}</span>{% endfor %}</span>
+      <span class="map-zoom-tools" hidden><label for="map-zoom-range">Powiększenie <b data-zoom-value>1,0×</b></label><input id="map-zoom-range" type="range" min="1" max="3" step="0.1" value="1" aria-label="Powiększenie mapy od 1 do 3 razy"></span>
+      <button type="button" class="map-zoom-btn" data-zoom-open aria-label="Powiększ mapę"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M12 3h5v5M8 17H3v-5M17 3l-5.5 5.5M3 17l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Powiększ</span></button>
+      <button type="button" class="map-zoom-close" data-zoom-close hidden>Zamknij</button>
+    </div>
     {% else %}
     <div class="empty">Brak zdjęcia działki: ortofotomapa GUGiK nie odpowiedziała.</div>
     {% endif %}
   </div>
-  {% if m and m.runoff_reason %}<p class="map-reason">Spływ wody: {{ m.runoff_reason }}</p>{% endif %}
   <div class="map-ui">
     {% if m %}<div class="nb-card" data-nb-card role="status" aria-live="polite" hidden></div>{% endif %}
   </div>
@@ -104,11 +93,9 @@
   </details>
   {% if m %}
     <div class="mlegend">
-      <b>Warstwa na mapie</b>
-      {% for r in m.legend %}
-      <div><label class="layer"><input type="checkbox" checked data-layer-toggle="{{ 'marker-' ~ r.n if r.symbol == 'number' else r.symbol }}"><span class="layer-box" aria-hidden="true"></span>{% if r.symbol == 'number' %}<span class="nb">{{ r.n }}</span>{% elif r.symbol in ('flow', 'line', 'slope', 'edge') %}<span class="ar"></span>{% endif %}{{ r.text }}</label></div>
-      {% endfor %}
+      {% for r in m.legend %}<span class="lg lg--{{ r.symbol }}"><i aria-hidden="true">{% if r.symbol == 'pin' %}1{% endif %}</i>{{ r.text }}</span>{% endfor %}
     </div>
+    <p class="map-hint" data-nb-hint><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M5 2l11 8-5 1 3 6-2.5 1.2-3-6.2L5 16z" fill="currentColor"/></svg><span class="hint-mouse">Kliknij sąsiednią działkę na zdjęciu, aby ją ocenić.</span><span class="hint-touch">Dotknij sąsiedniej działki na zdjęciu, aby ją ocenić.</span></p>
     {% endif %}
   </div>
 </div>

@@ -803,7 +803,8 @@
    "loc": [
     "gsm-20200720",
     "gsm-poza-sezonem",
-    "kietrz"
+    "kietrz",
+    "dolnoslaskie-bez-progu"
    ],
    "owner": "p55",
    "priority": "P1",
@@ -875,6 +876,34 @@
    "owner": "p73",
    "priority": "P2",
    "reason": "«Głęboszowanie gleby zagęszczonej» bez pomiaru zageszczenia i przy bilansie powyzej progu (ocena-odpowiedzi-rolnik.md, S4)"
+  },
+  {
+   "check": "retention.fields",
+   "loc": "*",
+   "owner": "p73",
+   "priority": "P1",
+   "reason": "karty kandydatów retencji (pas trawy, miedź, zastawka) nie mają jeszcze w raporcie formalności, ryzyka i następnego kroku z katalogu (dane z p67 do wpięcia w karty)"
+  },
+  {
+   "check": "actions.max",
+   "loc": [
+    "gsm-poza-sezonem",
+    "pomorskie-rok-mokry"
+   ],
+   "owner": "p73",
+   "priority": "P2",
+   "reason": "za dużo działań na jednym raporcie (7–9 zamiast maks. 6–8); do ograniczenia i uporządkowania wg przyczyn"
+  },
+  {
+   "check": "actions.forbidden",
+   "loc": [
+    "lubuskie-gleba-lekka",
+    "pomorskie-rok-mokry",
+    "podlaskie-malo-opadu"
+   ],
+   "owner": "p73",
+   "priority": "P2",
+   "reason": "działania bez uzasadnienia w danych (regulator drenów bez danych o drenach; dawki nawadniania przy braku potrzeby)"
   }
  ]
 }

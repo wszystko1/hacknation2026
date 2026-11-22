@@ -2,8 +2,8 @@
    outline (dashed white) and offers a link to its report with the same date and crop. No libraries.
    pixel -> (lon, lat): the photo is about a kilometre wide, so the affine map through its three corners
    (data-corners-4326: top-left, top-right, bottom-left) is within centimetres of the projection; the same
-   arithmetic is app.mapview.px_to_lonlat. The photo is shown with object-fit: cover, so the click is first
-   mapped from the screen box to photo pixels. */
+   arithmetic is app.mapview.px_to_lonlat. The photo and the overlay share one scaled box (.map-pan), so a click is
+   first mapped from the screen to photo pixels. A pause of 250 ms over a neighbouring parcel draws its outline dashed. */
 (function () {
   "use strict";
   var SVG_NS = "http://www.w3.org/2000/svg";
@@ -38,12 +38,10 @@
       var dx = lon - c[0][0], dy = lat - c[0][1];
       return [(dx * e2[1] - dy * e2[0]) / det * width, (e1[0] * dy - e1[1] * dx) / det * height];
     }
-    function photoPixel(ev) { // screen -> photo pixel under object-fit: cover
-      var box = root.getBoundingClientRect(), scale = Math.max(box.width / width, box.height / height);
-      return [
-        (ev.clientX - box.left - (box.width - width * scale) / 2) / scale,
-        (ev.clientY - box.top - (box.height - height * scale) / 2) / scale
-      ];
+    var pan = root.querySelector(".map-pan") || root;
+    function photoPixel(ev) { // screen -> photo pixel: the photo's box (.map-pan) is scaled by one transform
+      var box = pan.getBoundingClientRect();
+      return [(ev.clientX - box.left) * width / box.width, (ev.clientY - box.top) * height / box.height];
     }
     function insideOwn(p) { // even-odd rule on the outline's pixels
       var inside = false;
@@ -130,7 +128,46 @@
           if (mine === request) fail("Nie mamy odpowiedzi serwera. Spróbuj jeszcze raz.");
         });
     });
-    document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && !card.hidden) close(); });
+    document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && !card.hidden && !document.querySelector(".map.is-zoomed-open")) close(); });
+
+    // hover: after a pause of 250 ms the parcel under the pointer is outlined (dashed); no tooltip, no covering of pins
+    var hoverGroup = document.createElementNS(SVG_NS, "g"), hoverTimer = null, hoverReq = 0, hoverCtl = null, hoverKey = "";
+    hoverGroup.setAttribute("class", "mo-hovers");
+    group.parentNode.insertBefore(hoverGroup, group.nextSibling);
+    function clearHover() { hoverGroup.textContent = ""; hoverKey = ""; }
+    function drawHover(rings) {
+      clearHover();
+      var path = "";
+      rings.forEach(function (ring) {
+        ring.forEach(function (p, i) { var q = toPixel(p[0], p[1]); path += (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1); });
+        path += "Z";
+      });
+      ["mo-hover-casing", "mo-hover"].forEach(function (cls) {
+        var e = document.createElementNS(SVG_NS, "path");
+        e.setAttribute("class", cls); e.setAttribute("fill-rule", "evenodd"); e.setAttribute("d", path);
+        hoverGroup.appendChild(e);
+      });
+    }
+    root.addEventListener("pointermove", function (ev) {
+      if (ev.pointerType !== "mouse" || root.classList.contains("is-dragging")) return;
+      clearTimeout(hoverTimer);
+      var px = photoPixel(ev);
+      if (px[0] < 0 || px[1] < 0 || px[0] > width || px[1] > height || insideOwn(px)) { if (hoverKey) clearHover(); return; }
+      hoverTimer = setTimeout(function () {
+        var p = toLonLat(px[0], px[1]), mine = ++hoverReq;
+        if (hoverCtl) hoverCtl.abort();
+        hoverCtl = new AbortController();
+        fetch("/api/dzialka?lon=" + p.lon.toFixed(7) + "&lat=" + p.lat.toFixed(7), { signal: hoverCtl.signal })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (a) {
+            if (mine !== hoverReq || !a || a.dzialka === d.parcel) { if (mine === hoverReq) clearHover(); return; }
+            if (a.dzialka !== hoverKey) { drawHover(a.obrys_4326); hoverKey = a.dzialka; }
+          })
+          .catch(function () { /* hover is optional */ });
+      }, 250);
+    });
+    root.addEventListener("pointerleave", function () { clearTimeout(hoverTimer); hoverReq++; clearHover(); });
+    root.addEventListener("click", function () { clearTimeout(hoverTimer); clearHover(); }, true);
   }
 
   var root = document.querySelector(".map[data-neighbour]");

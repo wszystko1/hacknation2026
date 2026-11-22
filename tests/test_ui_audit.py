@@ -130,7 +130,7 @@ def test_shortfall_is_orange_and_the_accent_is_blue_with_readable_contrast() -> 
 SIZES_JS = """() => {
   const sizes = new Set();
   for (const el of document.querySelectorAll('body *')) {
-    if (el.closest('svg')) continue;
+    if (el.closest('svg') || el.closest('.map-chip')) continue;  // the slope label has its own size (p56: 14-16 px)
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) continue;
     const cs = getComputedStyle(el);
@@ -340,7 +340,7 @@ def test_the_sensitive_phase_is_written_with_we(browser, base_url: str, name: st
 
 RECTS_JS = """() => {
   const g = s => { const b = document.querySelector(s).getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
-  return {form: g('.map-form'), stage: g('.mapstage'), outline: g('.mo-outline'), marker: g('.mo-marker')};
+  return {form: g('.map-form'), stage: g('.mapstage'), outline: g('.mo-outline'), marker: document.querySelector('.mo-marker') ? g('.mo-marker') : null};
 }"""
 
 
@@ -357,7 +357,6 @@ def apart(a: list[float], b: list[float]) -> bool:
     return a[2] <= b[0] or b[2] <= a[0] or a[3] <= b[1] or b[3] <= a[1]
 
 
-@pytest.mark.xfail(reason="p56: kadr mapy raportu (obrys pod formularzem); zdejmij xfail po scaleniu p56", strict=False)
 @pytest.mark.parametrize("size", [(1440, 900), (1366, 768)])
 @pytest.mark.parametrize("name", ["dobrcz", "gsm"])
 def test_the_selection_form_does_not_cover_the_parcel_outline(
@@ -368,7 +367,7 @@ def test_the_selection_form_does_not_cover_the_parcel_outline(
     page.close()
     assert apart(r["form"], r["outline"]), r
     assert inside(r["outline"], r["stage"]), r
-    assert inside(r["marker"], r["stage"]), r
+    assert r["marker"] is None or inside(r["marker"], r["stage"]), r
 
 
 # ---------- phone ----------

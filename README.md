@@ -122,6 +122,9 @@ Ocenę bieżącą liczy rachunek i reguły, bez uczenia maszynowego. Raport nie 
 
 ## Dowody
 
+**Jakość jedną komendą.** `make jakosc` (albo `uv run python scripts/jakosc.py`) wypisuje na jednej stronie zmierzone liczby (zgodność z SMSR, CSI, czułość i precyzja, prognoza, gleba, retencja, czas raportu) wraz z tym, czego nie dowodzą, i uruchamia ręcznie dobrane „złote lokalizacje” (15 działek z oczekiwaniami eksperckimi; znane wady oznaczone XFAIL z powodem). Na działającej aplikacji: `uv run python scripts/jakosc.py --online https://ADRES`; przeliczenie pomiarów (sieć): `--przelicz`.
+
+
 Liczba główna: **krzywa kalibracji**. Gdy bilans działki leży co najmniej 25 mm poniżej progu, SMSR potwierdza suszę w 92,3% przypadków
 (przedział 95%: 88,5–95,1%; 3799 symboli). Przy marginesie do 10 mm od progu zgodność to 55,2%, czyli rzut monetą, i raport mówi to wprost.
 Próba: 149 gmin, 1017 gmino-lat (2020–2026), 566130 symboli „+” lub „-”; susza to 4,5% symboli.

@@ -1,0 +1,114 @@
+/* The report map: framing, overlay layers, pins, slope arrows, legend, zoom overlay, loading overlay.
+   Overrides the cover-cropping of app.css (.map > img, .map > svg) without editing that file. */
+
+/* ---- frame: photo and overlay are one box scaled identically; never cropped ---- */
+.map { background: var(--map-bg, #2b3440); overflow: hidden; }
+.map > .map-pan { position: absolute; inset: 0; }
+.map > .map-pan > img, .map > .map-pan > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; }
+.map.is-fit > .map-pan { inset: auto; left: 0; top: 0; transform-origin: 0 0; will-change: transform; touch-action: none; }
+.map.is-fit > .map-pan > img { object-fit: fill; user-select: none; -webkit-user-drag: none; }
+.map--tall > img { object-fit: contain; }
+.map[data-neighbour] { cursor: pointer; }
+.map.is-zoomed { cursor: grab; }
+.map.is-dragging { cursor: grabbing; }
+
+/* ---- overlay strokes keep their screen width at every zoom ---- */
+.map svg .mo-casing, .map svg .mo-outline, .map svg .mo-water, .map svg .mo-cand-casing, .map svg .mo-cand-line,
+.map svg .mo-cand-area, .map svg .mo-neighbour, .map svg .mo-neighbour-casing, .map svg .mo-hover { vector-effect: non-scaling-stroke; }
+.map svg .mo-outline { stroke-width: 3; fill: var(--outline-fill, rgba(42, 98, 201, .16)); }
+.map svg .mo-casing { stroke-width: 6; }
+.map svg .mo-water { fill: none; stroke: #4aa3ff; stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; }
+.map svg polygon.mo-water { fill: rgba(74, 163, 255, .28); }
+.map svg .mo-cand-casing { fill: none; stroke: rgba(10, 40, 20, .75); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.map svg .mo-cand-line { fill: none; stroke: #9fe0a8; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.map svg .mo-cand-rows { stroke-dasharray: 10 6; }
+.map svg .mo-cand-area { fill: rgba(159, 224, 168, .38); stroke: #9fe0a8; stroke-width: 3; stroke-linejoin: round; }
+.map svg .mo-neighbour, .map svg .mo-hover { fill: none; stroke: #fff; stroke-width: 3; stroke-dasharray: 10 7; }
+.map svg .mo-hover { stroke-opacity: .9; pointer-events: none; }
+.map svg .mo-neighbour-casing { stroke-width: 6; }
+.map svg .mo-hover-casing { fill: none; stroke: rgba(0, 0, 0, .5); stroke-width: 6; vector-effect: non-scaling-stroke; pointer-events: none; }
+
+/* ---- slope arrows: white, drawn at a fixed screen size (data-fixed, scaled by maplayers.js) ---- */
+.mo-sa path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.mo-sa-casing { stroke: rgba(8, 20, 40, .6); }
+.mo-sa-line { stroke: #fff; }
+.mo-sa--main .mo-sa-casing { stroke-width: 6.5; }
+.mo-sa--main .mo-sa-line { stroke-width: 4; }
+.mo-sa--small { opacity: .72; }
+.mo-sa--small .mo-sa-casing { stroke-width: 3.6; }
+.mo-sa--small .mo-sa-line { stroke-width: 2; }
+[data-layer="slope"][data-flat="1"] .mo-sa--main .mo-sa-casing { stroke-width: 4.5; }
+[data-layer="slope"][data-flat="1"] .mo-sa--main .mo-sa-line { stroke-width: 2.4; opacity: .85; }
+[data-layer="slope"][data-flat="1"] .mo-sa--small { opacity: .5; }
+[data-layer="slope"][data-flat="1"] .mo-sa--small .mo-sa-line { stroke-width: 1.6; }
+
+/* ---- pins: 26 px, no tail, constant at every zoom ---- */
+.map svg .mo-marker { fill: var(--accent, #2a62c9); stroke: #fff; stroke-width: 2.5; }
+.map svg .mo-marker-text { fill: #fff; font: 700 15px var(--font, system-ui); text-anchor: middle; }
+.mo-pin { pointer-events: none; }
+
+/* ---- the strip under the photo: slope label, zoom button, in the zoom overlay also legend and slider ---- */
+.map-strip { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; padding: 6px 10px; min-height: 40px; pointer-events: none; }
+.map-strip > * { pointer-events: auto; }
+.map-chip { background: rgba(28, 38, 51, .93); color: #fff; font: 600 15px/1.3 var(--font, system-ui); padding: 3px 8px; border-radius: 6px; }
+.map-chip[hidden], .map-zoom-legend[hidden], .map-zoom-tools[hidden], .map-zoom-close[hidden] { display: none; }
+.map-zoom-btn, .map-zoom-close { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; margin-left: auto; cursor: pointer;
+  background: rgba(28, 38, 51, .93); color: #fff; border: 1px solid rgba(255, 255, 255, .25); border-radius: 8px; font: 600 13px var(--font, system-ui); }
+.map-zoom-btn:focus-visible, .map-zoom-close:focus-visible, .map-zoom-tools input:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.map.is-zoomed-open .map-zoom-btn { display: none; }
+.map-zoom-tools { display: inline-flex; align-items: center; gap: 10px; color: #fff; font: 500 14px var(--font, system-ui); background: rgba(28, 38, 51, .93); padding: 4px 10px; border-radius: 8px; }
+.map-zoom-tools input { width: min(240px, 40vw); accent-color: #9fc2ff; }
+.map-zoom-legend { display: inline-flex; flex-wrap: wrap; gap: 4px 16px; color: #fff; font: 500 14px var(--font, system-ui); background: rgba(28, 38, 51, .93); padding: 4px 10px; border-radius: 8px; }
+.map.is-zoomed-open { position: fixed; inset: 0; z-index: 1000; height: auto; border-radius: 0; }
+.map.is-zoomed-open .map-strip { min-height: 56px; }
+
+/* ---- legend: at most four entries in one row, one symbol type each, no checkboxes ---- */
+.mlegend { flex-wrap: wrap; gap: 2px 16px; padding-top: 4px; padding-bottom: 4px; align-items: center; }
+.lg { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.4; }
+.lg i { flex: none; display: inline-block; font-style: normal; }
+.lg--outline i { width: 22px; height: 12px; border: 2.5px solid #1b2430; border-radius: 2px; background: rgba(42, 98, 201, .16); }
+.lg--slope i { width: 24px; height: 2px; background: #1b2430; position: relative; }
+.lg--slope i::after { content: ""; position: absolute; right: -1px; top: -4px; border: 5px solid transparent; border-left: 8px solid #1b2430; border-right: 0; }
+.lg--line i { width: 22px; height: 4px; background: #4aa3ff; border-radius: 2px; }
+.lg--pin i { width: 24px; height: 24px; border-radius: 50%; background: var(--accent, #2a62c9); color: #fff; font-weight: 700; font-size: 13px; display: inline-grid; place-items: center; }
+.map-zoom-legend .lg { font-size: 14px; }
+.map-zoom-legend .lg--outline i { border-color: #fff; }
+.map-zoom-legend .lg--slope i { background: #fff; }
+.map-zoom-legend .lg--slope i::after { border-left-color: #fff; }
+
+/* ---- hint about the neighbouring parcel ---- */
+.map-hint, .map-reason { max-width: none; }
+.map-hint { display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px var(--s4, 16px); font-size: 13px; line-height: 1.4; color: var(--text, #1b2430); background: var(--card-on-map, #fff); border-bottom: 1px solid var(--line, #dde3ea); }
+.map-hint svg { flex: none; color: var(--accent, #2a62c9); }
+.map-hint .hint-touch { display: none; }
+@media (hover: none) { .map-hint .hint-mouse { display: none; } .map-hint .hint-touch { display: inline; } }
+.map-reason { margin: 0; padding: 6px var(--s4, 16px); font-size: 13px; background: var(--card-on-map, #fff); border-bottom: 1px solid var(--line, #dde3ea); }
+@media (max-width: 760px) {
+  .map-hint, .map-reason { padding: 8px 12px; }
+  .mlegend { display: flex; padding: 6px 12px; }
+}
+
+/* ---- loading overlay after a click that fetches a parcel ---- */
+.busy { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: 16px; background: rgba(15, 22, 32, .62); }
+.busy[hidden] { display: none; }
+.busy-box { display: flex; align-items: center; gap: 14px; max-width: 460px; padding: 18px 22px; background: #fff; color: #1b2430; border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .35); font: 600 16px/1.4 var(--font, system-ui); }
+.busy-box::before { content: ""; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 4px solid #d5dce6; border-top-color: var(--accent, #2a62c9); animation: busyspin 0.9s linear infinite; }
+.busy-box.is-late::before { display: none; }
+.busy-box button { margin-left: 8px; min-height: 40px; padding: 0 14px; border-radius: 8px; border: 0; background: var(--accent, #2a62c9); color: #fff; font: 600 15px var(--font, system-ui); cursor: pointer; }
+@keyframes busyspin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .busy-box::before { animation-duration: 3s; } }
+
+/* ---- candidate card under an action: Efekt, Gdzie, Ile, Ryzyko i termin, Formalność ---- */
+.recs .card { grid-column: 2 / 4; margin-top: 6px; }
+.recs .card-row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 0 12px; margin: 0 0 6px; font-size: 16px; line-height: 1.5; }
+.recs .card-row b { font-weight: 650; color: var(--muted, #5a6676); font-size: 16px; }
+.recs .card-row small { font-size: 13px; color: var(--muted, #5a6676); }
+.recs .title { font-size: 18px; }
+@media (max-width: 760px) { .recs .card-row { grid-template-columns: 1fr; gap: 0; } }
+
+/* ---- the same pin in the cards and the summary: a 24 px circle, no tail ---- */
+.pin svg { display: none; }
+.pin b { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent, #2a62c9); color: #fff; font-size: 13px; font-weight: 700; line-height: 1; }
+.mapcol.has-zoom { z-index: 1000; overflow: visible; }

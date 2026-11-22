@@ -1,4 +1,4 @@
-"""The parcel photo with the SVG overlay: outline, outlet point, flow lines, ditches, numbered action markers.
+"""The parcel photo with the SVG overlay: outline, ditches, candidate shapes, slope arrows, numbered pins.
 
 Everything the overlay draws is converted from EPSG:2180 metres to the pixels of the orthophoto here, so the
 template only prints coordinates. A layer that has nothing to draw is absent from the legend.
@@ -9,6 +9,7 @@ from __future__ import annotations
 import math
 from urllib.parse import urlencode
 
+import numpy as np
 from pydantic import BaseModel
 from pyproj import Transformer
 
@@ -21,33 +22,50 @@ Point = tuple[float, float]
 LINE_KINDS = {"ditch", "stream", "canal"}  # drawn as lines in mo-ditch; "water_body" is drawn as a basin
 ARROW_LEN = 16.0
 ARROW_HALF_WIDTH = 7.0
-LABEL_CHAR_W = 11.0  # approximate width of one character of the 19-unit label font, in image pixels
-LABEL_H = 30.0
+MAIN_ARROW_LEN = 56.0  # screen px
+GRID_MIN, GRID_MAX = 6, 12  # small local-fall arrows in the outline
+ARROW_MIN_PX, ARROW_MAX_PX = 10.0, 28.0
+GRADIENT_RESOLUTION_PCT = 0.1  # below this the height model cannot give a direction
+FLAT_PCT = 1.0  # below this the arrows are drawn lighter and the label says "teren płaski"
+PIN_CLEAR_PX = 30.0  # small arrows keep this far from a pin (photo pixels)
 EDGE_MARGIN_PX = 1.5
 MAX_NUDGE_PX = 4.0
 
 
 class LegendRow(BaseModel):
-    symbol: str  # css class of the symbol in "Warstwa na mapie": "outline", "line", "flow", "number"
+    symbol: str  # css class of the legend symbol: "outline", "slope", "line", "pin"
     text: str
-    n: int | None = None  # the action number for symbol "number"
+
+
+class SlopeArrow(BaseModel):
+    """A slope arrow of fixed screen length: placed at (x, y) of the photo, turned by `angle` (degrees, clockwise
+    from east in the SVG's y-down space), `length` px long on the screen at any zoom (app/static/maplayers.js)."""
+
+    x: float
+    y: float
+    angle: float
+    length: float
+
+
+class Shape(BaseModel):
+    """A candidate's geometry in photo pixels: a line (strip, balk) or a filled polygon (depression, pond)."""
+
+    n: int
+    kind: str  # "line" or "polygon"
+    points: list[tuple[float, float]]
+    rows: list[tuple[float, float]] = []  # tillage across the slope: a short line along the rows, through the pin
 
 
 class MapOverlay(MapView):
-    """MapView plus what only the photo needs: basins, arrow heads, the outlet label and the legend rows."""
+    """MapView plus what only the photo needs: candidate shapes, slope arrows, the label and the legend rows."""
 
     basins_px: list[list[Point]] = []
-    flow_heads_px: list[list[Point]] = []  # one triangle per flow line, at its end
-    outlet_label: str = ""  # "zlewnia 12,4 ha"
-    outlet_label_xy: Point | None = None  # top-left of the label's background box
-    outlet_label_w: float = 0.0
-    runoff_reason: str = ""  # shown instead of flow arrows: "spadek 0,3% jest za mały, …"
-    slope_arrow_px: list[Point] = []  # tail and tip of the arrow along the fall, from the parcel's centre
-    slope_head_px: list[Point] = []
-    slope_label: str = ""  # "spadek 2,0%"
-    slope_label_xy: Point | None = None
-    slope_label_w: float = 0.0
-    lower_edge_px: list[Point] = []  # the lower boundary segment, a thick line
+    shapes: list[Shape] = []
+    runoff_reason: str = ""  # one sentence for a flat parcel: what the flatness means for the farmer
+    slope_main: SlopeArrow | None = None  # the plane's direction of the fall, one per map
+    slope_grid: list[SlopeArrow] = []  # 6-12 small arrows of the local fall from the terrain model
+    slope_flat: bool = False  # slope below the usual threshold: lighter and thinner arrows
+    slope_label: str = ""  # "spadek 2,9%" or "Teren płaski · spadek 0,5%"
     legend: list[LegendRow] = []
     # What a click on the photo needs to turn a pixel into a point on the earth (app/static/neighbour.js):
     origin_2180: Point = (0.0, 0.0)  # EPSG:2180 (x, y) of pixel (0, 0), the top-left corner
@@ -151,16 +169,7 @@ def inside_outline(ring: list[Point], p: Point) -> Point:
     return p
 
 
-def _flow_lines(ctx: ReportContext, width: int, height: int) -> list[list[Point]]:
-    """Concentrated flow lines from the runoff analysis; none when the analysis gave a reason instead."""
-    if ctx.runoff_reason:
-        return []
-    lines = []
-    for line in ctx.flow_2180:
-        px = [p for p in (to_px(ctx, x, y) for x, y in line) if p is not None]
-        if len(px) >= 2 and _in_image(px, width, height):
-            lines.append(px)
-    return lines
+NO_SLOPE_SENTENCE = "spadek działki nie jest wyznaczony: brak modelu terenu dla tej działki"
 
 
 def _water(ctx: ReportContext, width: int, height: int) -> tuple[list[list[Point]], list[list[Point]]]:
@@ -180,48 +189,138 @@ def _water(ctx: ReportContext, width: int, height: int) -> tuple[list[list[Point
     return lines, basins
 
 
-def _outlet(ctx: ReportContext) -> Point | None:
-    """The outlet of the runoff analysis; the lowest point of the outline when there is none."""
-    if ctx.outlet_2180 is not None:
-        return to_px(ctx, *ctx.outlet_2180)
+def _ring_center(ring: list[Point]) -> Point:
+    """A point well inside the outline: the lattice point farthest from the edge (a centroid can lie outside)."""
+    xs, ys = [p[0] for p in ring], [p[1] for p in ring]
+    best, best_p = -1.0, (sum(xs) / len(xs), sum(ys) / len(ys))
+    steps = 24
+    for i in range(steps + 1):
+        for j in range(steps + 1):
+            q = (min(xs) + (max(xs) - min(xs)) * i / steps, min(ys) + (max(ys) - min(ys)) * j / steps)
+            if _inside(ring, q):
+                d = _edge_distance(ring, q)
+                if d > best:
+                    best, best_p = d, q
+    return round(best_p[0], 1), round(best_p[1], 1)
+
+
+def _angle(deg_from_north: float) -> float:
+    """Azimuth (0 north = up, 90 east = right) -> SVG rotation (0 = pointing right, clockwise)."""
+    return round((deg_from_north - 90.0) % 360.0, 1)
+
+
+def _grid_of(ctx: ReportContext):
     terrain = ctx.data.terrain.data if ctx.data.terrain.usable else None
-    if terrain and terrain.lowest_outline_point_2180:
-        return to_px(ctx, *terrain.lowest_outline_point_2180)
-    return None
+    if terrain is None:
+        return None
+    return terrain.grid or terrain.catchment_grid
 
 
-SLOPE_ARROW_PX = 70.0
-NO_SLOPE_SENTENCE = "spadek działki nie jest wyznaczony: brak modelu terenu dla tej działki"
+def _local_fall(grid, x: float, y: float, smooth: int = 2) -> tuple[float, float] | None:
+    """(slope in %, azimuth of the fall) at an EPSG:2180 point from a box-smoothed height model; None without heights."""
+    z = np.array(grid.z, dtype=float).reshape(grid.rows, grid.cols)
+    col = int((x - grid.x0) / grid.step_m)
+    row = int((grid.y_top - y) / grid.step_m)
+    r0, r1 = max(row - smooth, 0), min(row + smooth + 1, grid.rows)
+    c0, c1 = max(col - smooth, 0), min(col + smooth + 1, grid.cols)
+    if r1 - r0 < 3 or c1 - c0 < 3:
+        return None
+    block = z[r0:r1, c0:c1]
+    if np.isnan(block).any():
+        return None
+    gy, gx = np.gradient(block, grid.step_m)  # gy: per row = towards the south; gx: towards the east
+    dzdx, dzdy = float(gx.mean()), -float(gy.mean())  # y north
+    pct = 100.0 * math.hypot(dzdx, dzdy)
+    return pct, math.degrees(math.atan2(-dzdx, -dzdy)) % 360.0
 
 
-def _slope_arrow(ctx: ReportContext, outline: list[Point]) -> list[Point]:
-    """Tail (centre of the outline's box) and tip of the arrow that points downhill; empty when the fall is unknown."""
-    if ctx.downhill_deg is None:
-        return []
-    xs, ys = [p[0] for p in outline], [p[1] for p in outline]
-    cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
-    az = math.radians(ctx.downhill_deg)  # 0 north = up on the photo, 90 east = right
-    dx, dy = math.sin(az), -math.cos(az)
-    half = SLOPE_ARROW_PX / 2
-    return [
-        (round(cx - dx * half, 1), round(cy - dy * half, 1)),
-        (round(cx + dx * half, 1), round(cy + dy * half, 1)),
-    ]
+def _lattice(ring: list[Point], avoid: list[Point]) -> list[Point]:
+    """GRID_MIN..GRID_MAX points spread evenly inside the outline, away from the pins."""
+    xs, ys = [p[0] for p in ring], [p[1] for p in ring]
+    area = abs(sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(ring, ring[1:] + ring[:1], strict=True))) / 2
+    step = math.sqrt(max(area, 1.0) / 9.0)
+    margin = min(6.0, 0.15 * math.sqrt(max(area, 1.0)))
+    best: list[Point] = []
+    for _ in range(40):
+        pts: list[Point] = []
+        x0 = (min(xs) + max(xs)) / 2 - step * round((max(xs) - min(xs)) / step / 2)
+        y0 = (min(ys) + max(ys)) / 2 - step * round((max(ys) - min(ys)) / step / 2)
+        gx = x0
+        while gx <= max(xs):
+            gy = y0
+            while gy <= max(ys):
+                q = (round(gx + step / 2, 1), round(gy + step / 2, 1))
+                if _inside(ring, q) and _edge_distance(ring, q) >= margin:
+                    pts.append(q)
+                gy += step
+            gx += step
+        near = [q for q in pts if all(math.hypot(q[0] - a[0], q[1] - a[1]) >= PIN_CLEAR_PX for a in avoid)]
+        use = near if len(near) >= GRID_MIN else pts
+        best = use
+        if GRID_MIN <= len(use) <= GRID_MAX:
+            return use
+        step *= 1.12 if len(use) > GRID_MAX else 0.9
+    return best[:GRID_MAX]
 
 
-def _lower_edge_px(ctx: ReportContext, width: int, height: int) -> list[Point]:
-    if ctx.downhill_deg is None:
-        return []
-    px = [p for p in (to_px(ctx, x, y) for x, y in ctx.lower_edge_2180) if p is not None]
-    return px if len(px) >= 2 and _in_image(px, width, height) else []
+def _arrow_length(slope_pct: float) -> float:
+    return round(min(ARROW_MAX_PX, max(ARROW_MIN_PX, 10.0 + 4.0 * slope_pct)), 1)
 
 
-def _box(text: str, anchor: Point, offset: Point, width: int, height: int) -> tuple[Point, float]:
-    """Top-left of a label box next to `anchor`, moved so that the box stays inside the photo."""
-    w = round(len(text) * LABEL_CHAR_W + 16, 1)
-    x = min(max(4.0, anchor[0] + offset[0]), max(4.0, width - w - 4.0))
-    y = min(max(4.0, anchor[1] + offset[1]), max(4.0, height - LABEL_H - 4.0))
-    return (round(x, 1), round(y, 1)), w
+def _slope_arrows(
+    ctx: ReportContext, ring: list[Point], pins: list[Point]
+) -> tuple[SlopeArrow | None, list[SlopeArrow]]:
+    """The plane's arrow and the small local ones. Nothing when the fall is below what the height model resolves."""
+    if ctx.downhill_deg is None or ctx.slope_pct is None or ctx.slope_pct < GRADIENT_RESOLUTION_PCT:
+        return None, []
+    cx, cy = _ring_center(ring)
+    main = SlopeArrow(x=cx, y=cy, angle=_angle(ctx.downhill_deg), length=MAIN_ARROW_LEN)
+    grid = _grid_of(ctx)
+    small: list[SlopeArrow] = []
+    for px in _lattice(ring, pins + [(cx, cy)]):
+        az, pct = ctx.downhill_deg, ctx.slope_pct
+        if grid is not None:
+            o = ctx.data.ortho.data
+            x2180 = o.bbox_2180[0] + px[0] * o.m_per_px
+            y2180 = o.bbox_2180[3] - px[1] * o.m_per_px
+            local = _local_fall(grid, x2180, y2180)
+            if local is not None and local[0] >= GRADIENT_RESOLUTION_PCT:
+                pct, az = local
+        small.append(SlopeArrow(x=px[0], y=px[1], angle=_angle(az), length=_arrow_length(pct)))
+    return main, small
+
+
+def _shape_center(points: list[Point], kind: str) -> Point:
+    if kind == "polygon":
+        return round(sum(p[0] for p in points) / len(points), 1), round(sum(p[1] for p in points) / len(points), 1)
+    total = sum(math.dist(a, b) for a, b in zip(points, points[1:], strict=False))
+    run = 0.0
+    for a, b in zip(points, points[1:], strict=False):
+        d = math.dist(a, b)
+        if run + d >= total / 2 and d > 0:
+            t = (total / 2 - run) / d
+            return round(a[0] + (b[0] - a[0]) * t, 1), round(a[1] + (b[1] - a[1]) * t, 1)
+        run += d
+    return points[0]
+
+
+def _candidate_shape(ctx: ReportContext, a) -> tuple[Shape | None, Point | None]:
+    """The drawn shape of an action's candidate and the pin position at its middle (None, None without geometry)."""
+    g = a.candidate.geometry if a.candidate else None
+    if g is None:
+        return None, None
+    px = [p for p in (to_px(ctx, x, y) for x, y in g.coordinates) if p is not None]
+    if len(px) != len(g.coordinates):
+        return None, None
+    if g.type == "point":
+        pin = px[0]
+        rows: list[Point] = []
+        if g.azimuth_deg is not None:
+            az = math.radians(g.azimuth_deg)
+            dx, dy = math.sin(az) * 30, -math.cos(az) * 30
+            rows = [(round(pin[0] - dx, 1), round(pin[1] - dy, 1)), (round(pin[0] + dx, 1), round(pin[1] + dy, 1))]
+        return (Shape(n=a.n, kind="point", points=px, rows=rows), pin)
+    return Shape(n=a.n, kind=g.type, points=px), _shape_center(px, g.type)
 
 
 def map_view(ctx: ReportContext) -> MapOverlay | None:
@@ -229,50 +328,41 @@ def map_view(ctx: ReportContext) -> MapOverlay | None:
     if o is None:
         return None
     outline = [[(float(c), float(r)) for c, r in ring] for ring in o.polygon_px]
-    outlet = _outlet(ctx)
-    flow = _flow_lines(ctx, o.width, o.height)
-    arrow = _slope_arrow(ctx, outline[0])
-    arrow_head_px = (arrow_head(arrow) or []) if arrow else []
-    lower = _lower_edge_px(ctx, o.width, o.height)
-    slope_label = f"spadek {dec(ctx.slope_pct, 1)}%" if arrow and ctx.slope_pct is not None else ""
-    slope_label_xy, slope_label_w = (
-        _box(slope_label, arrow[1], (12, -LABEL_H - 4), o.width, o.height) if slope_label else (None, 0.0)
-    )
-    reason = "" if arrow else (ctx.runoff_reason or NO_SLOPE_SENTENCE)
-    heads = [h for h in (arrow_head(line) for line in flow) if h]
     ditches, basins = _water(ctx, o.width, o.height)
-    markers = []
+    markers, shapes = [], []
     for a in ctx.actions:
-        if a.place is not None:
-            px = a.place.px or to_px(ctx, a.place.x_2180, a.place.y_2180)
-            if px:
-                x, y = inside_outline(outline[0], px)
-                markers.append(MapMarker(n=a.n, x=x, y=y, kind=a.place.kind))
+        shape, pin = _candidate_shape(ctx, a)
+        if shape is not None:
+            shapes.append(shape)
+        if pin is None and a.place is not None:
+            pin = a.place.px or to_px(ctx, a.place.x_2180, a.place.y_2180)
+        if (pin is not None and (a.place is not None or shape is not None)):
+            x, y = inside_outline(outline[0], pin) if shape is None or shape.kind == "point" else pin
+            markers.append(MapMarker(n=a.n, x=x, y=y, kind=a.place.kind if a.place else a.title))
+    main, small = _slope_arrows(ctx, outline[0], [(k.x, k.y) for k in markers])
+    flat = ctx.slope_pct is not None and ctx.slope_pct < FLAT_PCT
     label = f"{ctx.parcel.number} · {ha(ctx.parcel.area_ha)}"
-    outlet_label = (
-        f"zlewnia {dec(ctx.outlet_catchment_ha, 1)} ha"
-        if outlet and ctx.outlet_catchment_ha is not None
-        else ""
-    )
-    outlet_label_xy, outlet_label_w = (
-        _box(outlet_label, outlet, (20, -LABEL_H - 6), o.width, o.height)
-        if outlet_label and outlet
-        else (None, 0.0)
-    )
-    legend = [LegendRow(symbol="outline", text=f"obrys działki {label}")]
-    if outlet and not any(m.kind == "punkt wypływu" for m in markers):
-        legend.append(LegendRow(symbol="outlet", text="punkt wypływu"))
-    if arrow:
+    slope_label = ""
+    reason = ""
+    if main is not None and ctx.slope_pct is not None:
+        slope_label = f"Teren płaski · spadek {dec(ctx.slope_pct, 1)}%" if flat else f"spadek {dec(ctx.slope_pct, 1)}%"
+        if flat:
+            reason = (
+                f"spadek {dec(ctx.slope_pct, 1)}% to teren płaski: woda nie spływa w jedną stronę, "
+                "więc działania dotyczą całej działki, a nie jednego miejsca."
+            )
+    elif ctx.slope_pct is not None:
+        slope_label = "teren płaski, kierunek spadku nieznaczący"
+        reason = "teren płaski: kierunek spadku jest poniżej rozdzielczości modelu terenu, więc działania dotyczą całej działki."
+    else:
+        reason = ctx.runoff_reason or NO_SLOPE_SENTENCE
+    legend = [LegendRow(symbol="outline", text=f"obrys {ctx.parcel.number}")]
+    if main is not None:
         legend.append(LegendRow(symbol="slope", text="kierunek spadku"))
-    if lower:
-        legend.append(LegendRow(symbol="edge", text="dolny odcinek granicy"))
-    if flow:
-        legend.append(LegendRow(symbol="flow", text="linia spływu wody"))
-    if ditches:
-        legend.append(LegendRow(symbol="line", text="rów lub ciek (BDOT10k)"))
-    if basins:
-        legend.append(LegendRow(symbol="basin", text="zbiornik wodny (BDOT10k)"))
-    legend += [LegendRow(symbol="number", text=m.kind, n=m.n) for m in markers]
+    if ditches or basins:
+        legend.append(LegendRow(symbol="line", text="rów, ciek lub zbiornik"))
+    if markers:
+        legend.append(LegendRow(symbol="pin", text="miejsce działania"))
     origin = (o.bbox_2180[0], o.bbox_2180[3])
     corners = [
         _TO_4326.transform(origin[0] + col * o.m_per_px, origin[1] - row * o.m_per_px)
@@ -285,23 +375,16 @@ def map_view(ctx: ReportContext) -> MapOverlay | None:
         height=o.height,
         m_per_px=o.m_per_px,
         outline_px=outline,
-        outlet_px=outlet,
         ditches_px=ditches,
-        flow_px=flow,
         markers=markers,
         label=label,
         basins_px=basins,
-        flow_heads_px=heads,
-        outlet_label=outlet_label,
-        outlet_label_xy=outlet_label_xy,
-        outlet_label_w=outlet_label_w,
+        shapes=shapes,
         runoff_reason=reason,
-        slope_arrow_px=arrow,
-        slope_head_px=arrow_head_px,
+        slope_main=main,
+        slope_grid=small,
+        slope_flat=flat,
         slope_label=slope_label,
-        slope_label_xy=slope_label_xy,
-        slope_label_w=slope_label_w,
-        lower_edge_px=lower,
         legend=legend,
         origin_2180=origin,
         corners_4326=[(round(lon, 7), round(lat, 7)) for lon, lat in corners],

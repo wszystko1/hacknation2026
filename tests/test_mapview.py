@@ -1,4 +1,4 @@
-"""The photo overlay: outline, outlet, flow lines, BDOT10k water, markers, legend of the layers that are present."""
+"""The photo overlay: outline, BDOT10k water, candidate shapes, pins, legend of the layers that are present."""
 
 from __future__ import annotations
 
@@ -83,7 +83,8 @@ def test_marker_of_action_1_lies_inside_the_outline(params: dict) -> None:
     first = markers[0]
     ring = m.outline_px[0]
     assert _inside(ring, (first.x, first.y))
-    assert _edge_distance(ring, (first.x, first.y)) >= 1.5
+    if action.candidate.geometry.type != "line":  # a strip lies on the lower boundary: its pin stands on it
+        assert _edge_distance(ring, (first.x, first.y)) >= 1.5
 
 
 def test_at_least_one_demo_parcel_shows_a_numbered_marker_inside_the_outline() -> None:
@@ -108,85 +109,62 @@ def test_a_point_on_the_boundary_moves_a_few_pixels_in_and_an_inner_point_stays(
 # ---------------------------------------------------------------- water from BDOT10k
 
 
-def test_ditch_at_the_parcel_edge_is_drawn_as_mo_ditch() -> None:
+def test_ditch_and_water_body_are_drawn_as_blue_mo_water_and_listed_once() -> None:
     m = built(GSM).map
     assert len(m.ditches_px) >= 1  # BDOT10k ditch 0.7 m from parcel 144
     html = page(GSM)
-    assert 'class="mo-ditch"' in svg(html)
-    assert "rów lub ciek (BDOT10k)" in html
+    assert 'class="mo-water"' in svg(html)
+    assert "rów, ciek lub zbiornik" in html
+    assert 'class="mo-basin"' not in svg(html) and "mo-ditch" not in svg(html)
 
 
-def test_water_body_is_a_basin_and_a_missing_layer_is_missing_from_the_legend() -> None:
-    html = page(DOBRCZ)
-    assert 'class="mo-basin"' in svg(html) and 'class="mo-ditch"' not in svg(html)
-    legend = re.search(r'<div class="mlegend">.*?</div>\s*</div>', html, flags=re.S).group(0)
-    assert "zbiornik wodny" in legend
-    for absent in ("rów lub ciek", "linia spływu"):
-        assert absent not in legend
+def test_the_legend_has_at_most_four_rows_with_four_different_symbols_and_no_checkboxes() -> None:
+    for params in (DOBRCZ, GSM):
+        m = built(params).map
+        assert len(m.legend) <= 4
+        assert len({r.symbol for r in m.legend}) == len(m.legend)
+        assert 'type="checkbox"' not in page(params).split('class="mlegend"')[1].split("</div>")[0]
 
 
-# ---------------------------------------------------------------- outlet and flow lines
+# ---------------------------------------------------------------- candidate shapes, pins, no other arrows
 
 
-def test_outlet_falls_back_to_the_lowest_boundary_point() -> None:
-    from app.datasource import frozen_copy
+def test_a_strip_is_a_line_with_a_casing_and_the_pin_stands_in_the_middle() -> None:
+    m = built(GSM).map
+    lines = [sh for sh in m.shapes if sh.kind == "line"]
+    assert lines and all(len(sh.points) >= 2 for sh in lines)
+    html = svg(page(GSM))
+    assert "mo-cand-casing" in html and "mo-cand-line" in html
+    for sh in lines:
+        pin = next(k for k in m.markers if k.n == sh.n)
+        xs, ys = [p[0] for p in sh.points], [p[1] for p in sh.points]
+        assert min(xs) - 1 <= pin.x <= max(xs) + 1 and min(ys) - 1 <= pin.y <= max(ys) + 1
 
-    data = frozen_copy(DOBRCZ["dzialka"], date(2023, 7, 20))
-    x, y = data.terrain.data.lowest_outline_point_2180
-    o = data.ortho.data
-    m = built(DOBRCZ).map
-    assert m.outlet_px == (
-        round((x - o.bbox_2180[0]) / o.m_per_px, 1),
-        round((o.bbox_2180[3] - y) / o.m_per_px, 1),
+
+def test_a_polygon_candidate_is_filled_and_a_pin_numbers_run_from_one() -> None:
+    from app.mapview import _candidate_shape
+    from app.models import Action, Candidate, Geometry
+
+    ctx = app.report.build_context(
+        ReportRequest(parcel_id=GSM["dzialka"], day=date.fromisoformat(GSM["data"]), crop=GSM["uprawa"])
     )
-    assert m.outlet_label == ""
-
-
-def test_outlet_comes_from_the_runoff_analysis_with_its_catchment(monkeypatch) -> None:
-    cx, cy = centre_2180(DOBRCZ)
-    runoff_set(monkeypatch, outlet_2180=(cx, cy), outlet_catchment_ha=12.4)
-    m = built(DOBRCZ).map
-    from app.datasource import frozen_copy
-
-    o = frozen_copy(DOBRCZ["dzialka"], date(2023, 7, 20)).ortho.data
-    assert m.outlet_px == (
-        round((cx - o.bbox_2180[0]) / o.m_per_px, 1),
-        round((o.bbox_2180[3] - cy) / o.m_per_px, 1),
+    cx, cy = centre_2180(GSM)
+    ring = [(cx - 5, cy - 5), (cx + 5, cy - 5), (cx + 5, cy + 5), (cx - 5, cy + 5)]
+    action = Action.model_construct(
+        n=1, candidate=Candidate(geometry=Geometry(type="polygon", coordinates=ring)), place=None
     )
-    assert m.outlet_label == "zlewnia 12,4 ha"
-    html = page(DOBRCZ)
-    assert "zlewnia 12,4 ha" in svg(html)
-    assert 'class="mo-outlet"' in svg(html)
+    shape, pin = _candidate_shape(ctx, action)
+    assert shape.kind == "polygon" and pin is not None
+    for params in (DOBRCZ, GSM):
+        numbers = [k.n for k in built(params).map.markers]
+        assert numbers == list(range(1, len(numbers) + 1))
 
 
-def test_flow_lines_come_from_the_runoff_analysis_and_end_in_an_arrow(monkeypatch) -> None:
-    cx, cy = centre_2180(DOBRCZ)
-    line = [(cx + 40, cy + 60), (cx + 10, cy + 20), (cx - 30, cy - 50)]
-    # An analysis that found a line leaves no "reason for no arrows" behind.
-    runoff_set(monkeypatch, flow_2180=[line], runoff_reason="")
-    m = built(DOBRCZ).map
-    assert len(m.flow_px) == 1 and len(m.flow_px[0]) == 3
-    assert m.flow_px[0][0][0] > m.flow_px[0][-1][0]  # drawn from the east end to the west end
-    assert len(m.flow_heads_px) == 1
-    html = page(DOBRCZ)
-    assert 'class="mo-flow"' in svg(html) and 'class="mo-arrowhead"' in svg(html)
-    assert "linia spływu wody" in html
-
-
-def test_without_flow_lines_the_svg_has_no_arrows() -> None:
-    m = built(DOBRCZ).map
-    assert m.flow_px == [] and m.flow_heads_px == []
-    assert "mo-arrowhead" not in svg(page(DOBRCZ)) and "mo-flow" not in svg(page(DOBRCZ))
-
-
-def test_a_reason_instead_of_arrows(monkeypatch) -> None:
-    cx, cy = centre_2180(DOBRCZ)
-    reason = "spadek 0,3% jest za mały, by wskazać linię spływu"
-    runoff_set(monkeypatch, flow_2180=[[(cx, cy), (cx - 40, cy - 40)]], runoff_reason=reason)
-    assert built(DOBRCZ).map.flow_px == []
-    html = page(DOBRCZ)
-    assert "mo-arrowhead" not in svg(html)
-    assert f"Spływ wody: {reason}" in html
+def test_there_is_exactly_one_main_slope_arrow_and_no_flow_or_outlet_arrows() -> None:
+    for params in (DOBRCZ, GSM):
+        html = svg(page(params))
+        assert html.count("mo-sa--main") == 1
+        assert "mo-flow" not in html and "mo-arrowhead" not in html and "mo-outlet" not in html
 
 
 def test_arrow_head_points_along_the_last_segment() -> None:

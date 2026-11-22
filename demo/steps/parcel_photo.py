@@ -18,20 +18,19 @@ def _fits(page, selector: str) -> tuple[int, int]:
 
 
 def screen_point(page, lon: float, lat: float) -> tuple[float, float]:
-    """Page coordinates of a point of the earth on the report photo (shown with object-fit: cover).
+    """Page coordinates of a point of the earth on the report photo (the photo's box .map-pan is scaled by one transform).
 
     Same arithmetic as app/static/neighbour.js, run from the corners the page publishes in data-corners-4326.
     """
     return page.evaluate(
         """([lon, lat]) => {
-          const m = document.querySelector('.map'), box = m.getBoundingClientRect();
+          const m = document.querySelector('.map'), box = (m.querySelector('.map-pan') || m).getBoundingClientRect();
           const w = +m.dataset.width, h = +m.dataset.height;
           const c = m.getAttribute('data-corners-4326').split(' ').map(p => p.split(',').map(Number));
           const e1 = [c[1][0] - c[0][0], c[1][1] - c[0][1]], e2 = [c[2][0] - c[0][0], c[2][1] - c[0][1]];
           const det = e1[0] * e2[1] - e1[1] * e2[0], dx = lon - c[0][0], dy = lat - c[0][1];
           const col = (dx * e2[1] - dy * e2[0]) / det * w, row = (e1[0] * dy - e1[1] * dx) / det * h;
-          const s = Math.max(box.width / w, box.height / h);
-          return [box.left + (box.width - w * s) / 2 + col * s, box.top + (box.height - h * s) / 2 + row * s];
+          return [box.left + col * box.width / w, box.top + row * box.height / h];
         }""",
         [lon, lat],
     )

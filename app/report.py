@@ -100,7 +100,7 @@ def number_actions(actions: list[Action], plan_numbers: list[int], day: date | N
     def early(a: Action) -> int:
         return 0 if season_start and a.due is not None and a.due < season_start else 1
 
-    ranked = sorted(actions, key=lambda a: (early(a), order[a.group]))
+    ranked = sorted(actions, key=lambda a: (early(a), a.place is None, order[a.group]))  # pins on the map are 1..n
     return [
         a.model_copy(update={"n": i, "in_plan": i in plan_numbers}) for i, a in enumerate(ranked, start=1)
     ]

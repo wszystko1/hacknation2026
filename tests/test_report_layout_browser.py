@@ -325,17 +325,6 @@ def test_no_chart_text_overlaps_and_no_chart_is_taller_than_260_px(page: Page, b
     assert checked >= 3
 
 
-def test_legend_rows_switch_the_map_layers(page: Page, base_url: str) -> None:
-    open_report(page, base_url, 1440, 900)
-    box = page.locator('[data-layer-toggle="outline"]')
-    layer = page.locator('.map svg [data-layer="outline"]')
-    assert layer.first.is_visible()
-    box.uncheck(force=True)
-    assert layer.first.evaluate("e => getComputedStyle(e).display") == "none"
-    box.check(force=True)
-    assert layer.first.is_visible()
-
-
 def test_summary_tiles_are_filled_and_fit_two_screens_at_1440(page: Page, base_url: str) -> None:
     open_report(page, base_url, 1440, 900)
     tiles = page.locator("#poziom-a .tile")

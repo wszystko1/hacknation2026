@@ -440,6 +440,8 @@ def _when(row: CatalogRow, due: date | None, now: bool | None, in_season: bool) 
 
 def _source(row: CatalogRow) -> str:
     doc = row.source_doc.split(",")[0].split(";")[0].strip()
+    if "zespołu" in doc.lower():
+        doc = "wartość orientacyjna"
     parts = [doc]
     if row.source_page:
         parts.append(f"s. {row.source_page}")

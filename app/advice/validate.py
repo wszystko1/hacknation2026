@@ -40,13 +40,13 @@ _STEPS: list[Confidence] = ["niska", "średnia", "wysoka"]
 def _risk_external(ratio: float) -> str:
     return (
         f"zlewnia zewnętrzna jest {ratio:.1f} razy większa niż działka "
-        f"(próg {EXTERNAL_CATCHMENT_RATIO:g}; propozycja zespołu): duży dopływ z cudzych gruntów"
+        f"(próg {EXTERNAL_CATCHMENT_RATIO:g}; wartość orientacyjna): duży dopływ z cudzych gruntów"
     )
 
 
 def _risk_boundary(distance: float) -> str:
     return (
-        f"miejsce {distance:.0f} m od granicy (próg {MIN_BOUNDARY_DISTANCE_M:g} m; propozycja zespołu): "
+        f"miejsce {distance:.0f} m od granicy (próg {MIN_BOUNDARY_DISTANCE_M:g} m; wartość orientacyjna): "
         "skutek może wyjść na sąsiednią działkę"
     )
 

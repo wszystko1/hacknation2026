@@ -55,10 +55,10 @@ def set_terrain_fields(ctx: ReportContext, inp: PlacementInput) -> None:
         ctx.runoff_reason = "brak siatki wysokości dla działki"
         return
     ctx.slope_pct = round(plane.slope_pct, 2)
+    ctx.downhill_deg = round(plane.downhill_deg, 1)  # the map draws the fall of a flat parcel too
     if pl._too_flat(plane):
         ctx.runoff_reason = f"spadek {pl._slope_text(plane.slope_pct)}% jest za mały, by wskazać dolny odcinek granicy"
     else:
-        ctx.downhill_deg = round(plane.downhill_deg, 1)
         edge = pl.lower_edge(inp)
         ctx.lower_edge_2180 = [list(p) for p in edge.points_2180] if edge else []
     outlet = next((c for c in find_places(inp) if c.kind == "punkt wypływu"), None)

@@ -281,18 +281,36 @@ _DOSE = re.compile(r"\s*\(([^()]*m³[^()]*)\)")
 _DEADLINE = re.compile(r"\s*Termin:.*$")
 
 
+FLAT_WHERE = "Teren płaski: działanie dotyczy całej działki, bez wskazywania jednego miejsca."
+
+
 def _card_fields(a: Action, text: str, effect: str) -> list[tuple[str, str]]:
-    """The bullets of an action card: what, where / how much, when, effect, formality (at most five)."""
+    """The bullets of an action card in the order of the map legend: effect, where, how much, risk and time, formality."""
     text = _DEADLINE.sub("", text).strip()
     doses = _DOSE.findall(text)
     text = _DOSE.sub("", text).strip()
-    fields = [("Co zrobić", text)] if text else []
-    if doses:
-        fields.append(("Gdzie / ile", doses[0]))
-    if a.when and not a.when.startswith("Brak"):
-        fields.append(("Kiedy", plain(a.when)))
-    if effect:
-        fields.append(("Efekt", effect))
+    fields = [("Efekt", effect or text)] if (effect or text) else []
+    if a.place is not None:
+        fields.append(("Gdzie", plain(a.place.description) if a.place.description else plain(a.place.kind)))
+    elif "teren płaski" in a.no_place_reason:
+        fields.append(("Gdzie", FLAT_WHERE))
+    else:
+        fields.append(("Gdzie", "cała działka"))
+    candidate = a.candidate
+    ranges = (
+        "; ".join(
+            f"{k.replace('_', ' ')} {dec_range(r.low, r.high)} {r.unit}" for k, r in candidate.parameters.items()
+        )
+        if candidate and candidate.parameters
+        else ""
+    )
+    if doses or ranges:
+        fields.append(("Ile", doses[0] if doses else ranges))
+    when = plain(a.when) if a.when and not a.when.startswith("Brak") else ""
+    risks = "; ".join(candidate.risks) if candidate and candidate.risks else ""
+    risk_when = " · ".join(x for x in (risks, f"termin: {when}" if when else "") if x)
+    if risk_when:
+        fields.append(("Ryzyko i termin", risk_when))
     if a.legal is not None:
         fields.append(
             (
@@ -301,6 +319,13 @@ def _card_fields(a: Action, text: str, effect: str) -> list[tuple[str, str]]:
             )
         )
     return fields[:5]
+
+
+def dec_range(low: float, high: float) -> str:
+    def one(x: float) -> str:
+        return dec(x, 0 if float(x).is_integer() else 1)
+
+    return one(low) if low == high else f"{one(low)}–{one(high)}"
 
 
 def _action_line(a: Action, report: Report, *, plan_switch: bool = False) -> Line:

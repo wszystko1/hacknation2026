@@ -32,6 +32,10 @@ grade:
 	$(UV) run python scripts/grade_done.py
 
 # Evaluations write metrics.json (the only writer). `make eval ONLY=smsr` runs one of them.
+# Quality of the verdicts, causes and advice on one page: numbers from metrics.json and the golden locations (see scripts/jakosc.py).
+jakosc: setup
+	$(UV) run python scripts/jakosc.py $(ARGS)
+
 eval: setup
 	$(UV) run python scripts/evaluate.py $(ONLY)
 
