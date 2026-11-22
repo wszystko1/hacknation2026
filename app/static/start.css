@@ -30,7 +30,7 @@ main.pickmap .pm-zoom button { width: 48px; min-height: 48px; border-radius: var
 main.pickmap .pm-zoom button:hover { background: var(--accent-soft); color: var(--accent-ink); }
 
 /* the state line and the confirmation card sit under the search card */
-main.pickmap .pm-state { left: var(--st-gap); bottom: var(--st-gap); width: var(--st-card-w); max-width: calc(100% - 2 * var(--st-gap)); }
+main.pickmap .pm-state { left: calc(2 * var(--st-gap) + var(--st-card-w)); bottom: var(--st-gap); width: var(--st-card-w); max-width: calc(100% - 4 * var(--st-gap) - var(--st-card-w) - 48px); }
 main.pickmap .pm-hint, main.pickmap .pm-error { border-radius: var(--radius-ui); font-size: var(--st-fs-m); padding: 10px var(--s3);
   box-shadow: var(--st-shadow); }
 main.pickmap .pm-hint { background: var(--st-glass); color: var(--text); border-left: 3px solid var(--accent); }

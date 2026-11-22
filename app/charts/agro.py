@@ -29,7 +29,7 @@ def _legend(body: list[str], y: int, items: Sequence[tuple[str, str]]) -> None:
     for cls, words in items:
         body.append(svg.rect(x, y - 13, 14, 14, cls))
         body.append(svg.text(x + 22, y, words, ""))
-        x += 30 + 9 * len(words)
+        x += 26 + 7 * len(words)
 
 
 def counts_svg(counts: Sequence[DecadeCount], label: str) -> str:
