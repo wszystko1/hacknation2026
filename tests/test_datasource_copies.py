@@ -87,3 +87,36 @@ def test_a_date_before_the_copy_is_served_by_cutting_the_weather(monkeypatch):
     monkeypatch.setenv("GEODATA_OFFLINE", "1")
     data, label = datasource.load("040303_2.0002.189/13", date(2016, 8, 10))
     assert label is not None and data.weather.data.dates[-1] == "2016-08-10"
+
+
+def test_live_only_skips_the_frozen_copy(monkeypatch):
+    calls = []
+
+    def fake_fetch(parcel_id, day, **kw):
+        calls.append((parcel_id, kw["offline"]))
+        return "live-result"
+
+    monkeypatch.setenv("HN_LIVE_ONLY", "1")
+    monkeypatch.setenv("GEODATA_OFFLINE", "0")
+    monkeypatch.setattr(datasource, "fetch_all", fake_fetch)
+    monkeypatch.setattr(datasource, "frozen_copy", lambda *a: pytest.fail("the copy must not be read"))
+    for target in DEMO_TARGETS:
+        assert datasource.load(target.parcel_id, target.day) == ("live-result", None)
+    assert len(calls) == len(DEMO_TARGETS) and not any(off for _, off in calls)
+
+
+def test_without_live_only_the_copy_is_returned(monkeypatch):
+    monkeypatch.delenv("HN_LIVE_ONLY", raising=False)
+    monkeypatch.setattr(datasource, "fetch_all", lambda *a, **k: pytest.fail("no query expected"))
+    target = DEMO_TARGETS[0]
+    result, label = datasource.load(target.parcel_id, target.day)
+    assert label and label.startswith("kopia danych z ")
+    assert result.parcel.data is not None
+
+
+def test_deploy_scripts_set_live_only():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "deploy"
+    assert "HN_LIVE_ONLY=1" in (root / "bootstrap.sh").read_text()
+    assert "HN_LIVE_ONLY=1" in (root / "deploy.sh").read_text()

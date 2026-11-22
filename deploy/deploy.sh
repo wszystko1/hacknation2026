@@ -64,6 +64,10 @@ rm -f "$RSYNC_OUT" deploy/.REVISION
 echo "== uv sync on server"
 ssh "${SSH_OPTS[@]}" "deploy@$IP" 'cd /srv/bilans/app && UV_PYTHON_INSTALL_DIR=/opt/uv-python /usr/local/bin/uv sync --frozen --no-dev --python 3.12 -q'
 
+echo "== live-only mode (HN_LIVE_ONLY=1: no copy from demo/data on the server)"
+ssh "${SSH_OPTS[@]}" "deploy@$IP" "sudo grep -q '^HN_LIVE_ONLY=1' /etc/bilans.env || echo 'HN_LIVE_ONLY=1' | sudo tee -a /etc/bilans.env >/dev/null" \
+  || echo "warn: could not set HN_LIVE_ONLY=1 in /etc/bilans.env; run deploy/bootstrap.sh again" >&2
+
 echo "== restart"
 # is-active is "active" as soon as the process exists, so wait until /health really answers (up to 60 s).
 ssh "${SSH_OPTS[@]}" "deploy@$IP" 'sudo systemctl restart bilans && for i in $(seq 1 30); do

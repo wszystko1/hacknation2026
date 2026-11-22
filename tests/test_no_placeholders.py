@@ -73,12 +73,13 @@ def test_missing_parts_carry_the_gap_sentence_in_the_report() -> None:
             assert section.reason.startswith("Brak:") and " bo " in section.reason, section.id
 
 
-def test_action_one_stays_but_its_sentence_and_term_are_a_gap() -> None:
+def test_action_one_stays_with_a_sentence_a_reason_for_no_place_and_a_seasonal_term() -> None:
     r = report()
     a1 = r.action_1
     assert a1 is not None and a1.n == 1
-    assert a1.sentence.startswith("Brak:") and " bo " in a1.sentence
-    assert a1.when.startswith("Brak:") and " bo " in a1.when
+    assert not a1.sentence.startswith("Brak:") and "{" not in a1.sentence
+    assert a1.place is None and a1.no_place_reason.startswith("brak miejsca na działce, bo ")
+    assert a1.when and not a1.when.startswith("Brak:")
     # Tillage and irrigation actions are computed from indicators now: none is a placeholder.
     for a in (a for a in r.actions if a.group in {"uprawa", "nawadnianie"}):
         assert "Tu pojawi" not in a.sentence and not a.sentence.startswith("Brak:"), a.id

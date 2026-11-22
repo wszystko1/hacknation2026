@@ -1,11 +1,17 @@
-"""Retention actions (where to hold water on the parcel), each with a place or a reason and a formality."""
+"""Retention actions of a parcel: the terrain fields the map reads, then the chain from cause to action.
+
+`set_terrain_fields` fills the slope, the direction of the fall, the lower boundary segment and the outlet on the
+report context. Flow lines and the catchment of the outlet are set only when the D8 variant won the check
+(`outlet_method() == "d8"`): the other variants have no such number.
+"""
 
 from __future__ import annotations
 
-from datetime import date
-
-from app.advice.legal import legal_note
+from app.advice import placement as pl
+from app.advice.chain import build_chain, plane_of
+from app.advice.diagnosis import _cached
 from app.advice.placement import PlacementInput, find_places
+from app.advice.terrain_model import TerrainModel, build_terrain_model
 from app.context import ReportContext
 from app.models import Action
 
@@ -25,32 +31,57 @@ def placement_input(ctx: ReportContext) -> PlacementInput | None:
     )
 
 
+def terrain_model_of(ctx: ReportContext, inp: PlacementInput) -> TerrainModel:
+    """The terrain model of the parcel, computed once per report."""
+
+    def compute() -> TerrainModel:
+        terrain = ctx.data.terrain.data if ctx.data.terrain.usable else None
+        has_margin = bool(terrain and terrain.catchment_grid is not None)
+        reason = ""
+        if not has_margin:
+            note = (terrain.catchment_note if terrain else "") or "nie pobrano siatki zlewni"
+            note = note.removeprefix("Siatki zlewni nie pobrano: ")
+            reason = "siatki zlewni nie pobrano" + (f" ({note})" if note != "nie pobrano siatki zlewni" else "")
+        return build_terrain_model(inp, margin_grid=has_margin, missing_reason=reason)
+
+    return _cached(ctx, "terrain_model", compute)
+
+
+def set_terrain_fields(ctx: ReportContext, inp: PlacementInput) -> None:
+    """slope_pct, downhill_deg, lower_edge_2180, outlet_2180 where the terrain model has them; flow_2180 and
+    outlet_catchment_ha only for the D8 variant; runoff_reason when the slope is too small for a direction."""
+    plane = plane_of(inp)
+    if plane is None:
+        ctx.runoff_reason = "brak siatki wysokości dla działki"
+        return
+    ctx.slope_pct = round(plane.slope_pct, 2)
+    if pl._too_flat(plane):
+        ctx.runoff_reason = f"spadek {pl._slope_text(plane.slope_pct)}% jest za mały, by wskazać dolny odcinek granicy"
+    else:
+        ctx.downhill_deg = round(plane.downhill_deg, 1)
+        edge = pl.lower_edge(inp)
+        ctx.lower_edge_2180 = [list(p) for p in edge.points_2180] if edge else []
+    outlet = next((c for c in find_places(inp) if c.kind == "punkt wypływu"), None)
+    # the map falls back to the lowest boundary point itself; an outlet is set only when another variant won
+    if pl.outlet_method() != "lowest" and outlet is not None and outlet.place is not None:
+        ctx.outlet_2180 = (outlet.place.x_2180, outlet.place.y_2180)
+    if pl.outlet_method() == "d8":
+        run = pl.runoff(inp)
+        ctx.flow_2180 = [[(x, y) for x, y in line] for line in run.flow_lines]
+        if outlet is not None:
+            ctx.outlet_catchment_ha = outlet.catchment_ha
+        if run.reason and not ctx.runoff_reason:
+            ctx.runoff_reason = run.reason
+
+
 def retention_actions(ctx: ReportContext) -> list[Action]:
-    """One action at the outlet point; its sentence and term say what is missing until the action catalogue exists."""
+    """Where to hold water on this parcel: up to three actions, each with a candidate, risks and a formality."""
+    inp = placement_input(ctx)
+    if inp is None:
+        return []
+    set_terrain_fields(ctx, inp)
     if ctx.diagnosis is None or not ctx.diagnosis.causes:
         return []
-    inp = placement_input(ctx)
-    candidates = find_places(inp) if inp else []
-    outlet = next((c for c in candidates if c.kind == "punkt wypływu"), None)
-    day = ctx.request.day
+    model = terrain_model_of(ctx, inp)
     in_season = bool(ctx.verdict and ctx.verdict.state != "out_of_season")
-    # Earthworks are done in the dormant season: out of season the deadline is the day before 21.III.
-    due = None if in_season else date(day.year + 1 if day.month >= 10 else day.year, 3, 20)
-    return [
-        Action(
-            id="niecka-przy-wyplywie",
-            n=0,
-            group="retencja",
-            title="Niecka lub oczko przy punkcie wypływu",
-            sentence="Brak: opis działania z liczbami tej działki, bo katalog działań jeszcze nie jest wczytany.",
-            cause=ctx.diagnosis.causes[0].words,
-            when="Brak: termin, bo terminów działań jeszcze nie wyliczamy",
-            source="katalog NWRM N01 · CDR 2025",
-            legal=legal_note("niecka-przy-wyplywie"),
-            due=due,
-            place=outlet.place if outlet else None,
-            no_place_reason=""
-            if outlet and outlet.place
-            else f"brak miejsca na działce, bo {outlet.reason if outlet else 'brak obrysu'}",
-        )
-    ]
+    return build_chain(ctx.diagnosis.causes, ctx.request.day, in_season, model, inp, ctx.parcel.area_ha)

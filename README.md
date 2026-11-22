@@ -45,6 +45,7 @@ Skrypt `deploy\windows\start.bat` robi to samo i otwiera przeglądarkę (opis: `
 | Zmienna | Znaczenie |
 |---|---|
 | `HN_PORT` | port dla `python -m app` i `make serve` (domyślnie 8000); Linux/macOS: `HN_PORT=<port> make serve`, PowerShell: `$env:HN_PORT="<port>"` |
+| `HN_LIVE_ONLY=1` | wersja online: kopia z `demo/data/` nigdy nie jest używana, także dla dwóch działek demo; dane z pamięci podręcznej na dysku lub z zapytań na żywo (ustawiana w `deploy/`; w `start.*` domyślnie nie) |
 | `GEODATA_OFFLINE=1` | tryb offline: dane tylko z dysku (kopia demo i pamięć podręczna), bez zapytań do sieci |
 | `GEODATA_CACHE_DIR` | katalog pamięci podręcznej (domyślnie `data/raw/geodata_cache`) |
 | `GEODATA_WEATHER=imgw` | pogoda z archiwum IMGW zamiast Open-Meteo (wymaga indeksu `imgw-sync`) |
@@ -59,6 +60,10 @@ pogody z IMGW: `uv run python -m app.geodata imgw-sync` (jednorazowo, ok. 22 MB,
 
 Pozostałe: `make test` (pytest), `make lint`, serwer VPS: `deploy/deploy.sh <IP>` ([docs/DEPLOY.md](docs/DEPLOY.md)). Formularz startowy ma wpisaną
 przykładową działkę, datę i uprawę.
+
+## Dane na żywo a kopia
+
+Wersja online działa z `HN_LIVE_ONLY=1`: każda działka, także dwie działki demo, jest liczona z zapytań na żywo (lub z pamięci podręcznej na dysku po wcześniejszym zapytaniu), a kopia z `demo/data/` nie jest używana. Kopia służy tylko trybowi offline (`GEODATA_OFFLINE=1`, `make demo`) i testom; bez `HN_LIVE_ONLY` zachowanie jest takie jak dotąd. Po wdrożeniu `deploy/warm.sh` rozgrzewa dwie działki demo na żywo.
 
 ## Wersja demonstracyjna online
 

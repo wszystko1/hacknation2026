@@ -62,13 +62,40 @@ def centre_2180(params: dict) -> tuple[float, float]:
 
 @pytest.mark.parametrize("params", [DOBRCZ, GSM])
 def test_marker_of_action_1_lies_inside_the_outline(params: dict) -> None:
+    """A marker exists exactly when the first action has a place; a flat parcel gets the reason instead."""
     from app.mapview import _edge_distance, _inside
 
-    m = built(params).map
-    first = next(k for k in m.markers if k.n == 1)
+    report = built(params)
+    m = report.map
+    action = next(a for a in report.actions if a.n == 1)
+    has_place = action.candidate is not None and action.candidate.geometry is not None
+    markers = [k for k in m.markers if k.n == 1]
+    if not has_place:
+        assert markers == []
+        assert action.place is None
+        assert action.no_place_reason.startswith("brak miejsca na działce, bo ")
+        body = client.get("/api/raport", params=params).json()
+        served = body["action_1"]
+        assert served["place"] is None
+        assert served["no_place_reason"] == action.no_place_reason  # the reason travels with the action
+        return
+    assert len(markers) == 1
+    first = markers[0]
     ring = m.outline_px[0]
     assert _inside(ring, (first.x, first.y))
     assert _edge_distance(ring, (first.x, first.y)) >= 1.5
+
+
+def test_at_least_one_demo_parcel_shows_a_numbered_marker_inside_the_outline() -> None:
+    from app.mapview import _inside
+
+    placed = 0
+    for params in (DOBRCZ, GSM):
+        m = built(params).map
+        for k in m.markers:
+            assert _inside(m.outline_px[0], (k.x, k.y))
+            placed += 1
+    assert placed >= 1
 
 
 def test_a_point_on_the_boundary_moves_a_few_pixels_in_and_an_inner_point_stays() -> None:
@@ -135,7 +162,8 @@ def test_outlet_comes_from_the_runoff_analysis_with_its_catchment(monkeypatch) -
 def test_flow_lines_come_from_the_runoff_analysis_and_end_in_an_arrow(monkeypatch) -> None:
     cx, cy = centre_2180(DOBRCZ)
     line = [(cx + 40, cy + 60), (cx + 10, cy + 20), (cx - 30, cy - 50)]
-    runoff_set(monkeypatch, flow_2180=[line])
+    # An analysis that found a line leaves no "reason for no arrows" behind.
+    runoff_set(monkeypatch, flow_2180=[line], runoff_reason="")
     m = built(DOBRCZ).map
     assert len(m.flow_px) == 1 and len(m.flow_px[0]) == 3
     assert m.flow_px[0][0][0] > m.flow_px[0][-1][0]  # drawn from the east end to the west end

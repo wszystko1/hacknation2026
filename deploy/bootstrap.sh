@@ -109,9 +109,12 @@ if [ ! -f "$ENV_FILE" ]; then
 # Environment of bilans.service. No secrets here unless you add them yourself.
 GEODATA_CACHE_DIR=$CACHE_DIR
 UV_PYTHON_INSTALL_DIR=/opt/uv-python
+HN_LIVE_ONLY=1
 CONF
   chmod 644 "$ENV_FILE"
 fi
+# also for a server bootstrapped earlier: the online version always computes live (no copy from demo/data)
+grep -q '^HN_LIVE_ONLY=' "$ENV_FILE" || echo 'HN_LIVE_ONLY=1' >>"$ENV_FILE"
 
 echo "== systemd unit"
 cat >/etc/systemd/system/bilans.service <<UNIT
@@ -125,6 +128,7 @@ User=$APP_USER
 Group=$APP_USER
 WorkingDirectory=$APP_DIR
 EnvironmentFile=$ENV_FILE
+Environment=HN_LIVE_ONLY=1
 ExecStart=$APP_DIR/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
 Restart=always
 RestartSec=3

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Warm the server cache: ./deploy/warm.sh [URL] [MAX_PARCELS]  (default http://127.0.0.1:8000, 12)
+# Warm the server cache (the two demo parcels first, live when the server runs with HN_LIVE_ONLY=1): ./deploy/warm.sh [URL] [MAX_PARCELS]  (default http://127.0.0.1:8000, 12)
 # Sequential, 120 s per request, 20 min total.
 set -uo pipefail
 URL="${1:-http://127.0.0.1:8000}"; URL="${URL%/}"; MAX="${2:-12}"

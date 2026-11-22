@@ -18,7 +18,7 @@ Logowanie przez inne konto z sudo zamiast roota: `SSH_USER=ubuntu ./deploy/deplo
 - `deploy/bootstrap.sh`: uruchamiany na serwerze jako root (przez `deploy.sh`), idempotentny. Aktualizuje system i włącza
   automatyczne poprawki bezpieczeństwa, dodaje 2 GB swapu, zapora ufw (22/80/443), użytkownik `deploy` (bez hasła, sudo bez hasła,
   klucze skopiowane od roota), uv w przypiętej wersji i Python 3.12 (`/opt/uv-python`), Caddy z oficjalnego repozytorium,
-  katalogi `/srv/bilans/app` i `/var/lib/bilans/geodata_cache`, plik `/etc/bilans.env` (`GEODATA_CACHE_DIR`), usługa systemd `bilans`
+  katalogi `/srv/bilans/app` i `/var/lib/bilans/geodata_cache`, plik `/etc/bilans.env` (`GEODATA_CACHE_DIR`, `HN_LIVE_ONLY=1`: wersja online liczy zawsze na żywo, bez kopii z `demo/data`), usługa systemd `bilans`
   (uvicorn, 2 procesy, 127.0.0.1:8000) i Caddyfile (HTTPS, kompresja, nagłówki bezpieczeństwa, `Cache-Control` 5 min dla `/static`).
   Host: `<IP z myślnikami>.sslip.io` albo domena z drugiego argumentu.
 - `deploy/deploy.sh <IP> [domena] [--warm] [--bootstrap]`: sprawdza SSH, uruchamia bootstrap tylko gdy serwer jeszcze go nie miał

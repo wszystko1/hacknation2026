@@ -61,9 +61,14 @@ def frozen_copy(parcel_id: str, day: date) -> FetchResult | None:
     return None
 
 
+def live_only() -> bool:
+    """HN_LIVE_ONLY=1 (set on the online server): the committed copies in demo/data are never used."""
+    return os.environ.get("HN_LIVE_ONLY", "").strip() in {"1", "true", "yes"}
+
+
 def load(parcel_id: str, day: date, *, budget_s: float = LIVE_BUDGET_S) -> tuple[FetchResult, str | None]:
     """(data, copy label or None). Raises InvalidParcelId for a malformed id; ParcelNotFound shows as status."""
-    copy = frozen_copy(parcel_id, day)
+    copy = None if live_only() else frozen_copy(parcel_id, day)
     if copy is not None:
         return copy, _copy_label(copy)
     offline = os.environ.get("GEODATA_OFFLINE", "").strip() in {"1", "true", "yes"}
