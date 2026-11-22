@@ -10,7 +10,8 @@ PAUSE = 1500
 def evaluate(page, base_url: str, parcel: dict) -> None:
     """Type the parcel, the date and the crop on the start screen and click "Oceń działkę"."""
     page.goto(base_url + "/")
-    page.locator("#f-dzialka").click()
+    page.locator("#f-dzialka").click(click_count=3)  # the field is pre-filled: select it, then type over it
+    page.keyboard.press("Control+a")
     page.locator("#f-dzialka").press_sequentially(parcel["dzialka"], delay=25)
     page.locator("#f-data").fill(parcel["data"])
     page.locator("#f-uprawa").select_option(parcel["uprawa"])

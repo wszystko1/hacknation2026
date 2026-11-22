@@ -140,7 +140,8 @@ def test_a_click_outside_poland_gives_one_sentence_and_the_number_field_still_wo
     error.wait_for(state="visible")
     text = error.inner_text()
     assert "poza Polską" in text and len(re.findall(r"[.!?](?:\s|$)", text)) <= 2, text
-    assert page.input_value("input[name=dzialka]") == ""
+    # the form starts with the default parcel; a click outside Poland must not change it
+    assert page.input_value("input[name=dzialka]") == PARCEL
     page.locator("#f-dzialka").fill(PARCEL)
     page.locator("#f-data").fill("20.07.2023")
     page.locator("#f-uprawa").select_option("zboza_jare")

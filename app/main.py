@@ -64,6 +64,10 @@ EXAMPLES = [
 ]  # fmt: skip
 
 
+# What the start form holds before the user changes anything: one click on "Oceń działkę" gives a verdict.
+DEFAULT_FORM = {"dzialka": "040303_2.0002.189/13", "data": "2023-07-20", "uprawa": "zboza_jare"}
+
+
 def _common() -> dict:
     return {"crops": [(c.value, CROP_LABELS[c]) for c in CROP_CHOICES], "examples": EXAMPLES}
 
@@ -80,7 +84,8 @@ def health() -> dict:
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
-    return _start(request, {}, [])
+    # Only a key missing from the link gets its default; a parameter the user left empty stays empty.
+    return _start(request, DEFAULT_FORM | dict(request.query_params), [])
 
 
 log = logging.getLogger(__name__)

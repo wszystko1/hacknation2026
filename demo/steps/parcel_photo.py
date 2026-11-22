@@ -60,7 +60,7 @@ def scene(page, base_url: str) -> None:
     confirm.click()
     assert page.input_value("#f-dzialka") == PARCEL_1["dzialka"], page.input_value("#f-dzialka")
     page.wait_for_timeout(PAUSE // 2)
-    page.locator("#f-data").click()
+    page.locator("#f-data").click(click_count=3)  # the field is pre-filled: select it, then type over it
     page.locator("#f-data").press_sequentially(
         DATE_TYPED.replace(".", ""), delay=40
     )  # the mask adds the dots
