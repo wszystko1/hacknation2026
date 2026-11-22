@@ -485,6 +485,9 @@ class Action(BaseModel):
     place: Place | None = None
     no_place_reason: str = ""  # "brak miejsca na działce, bo teren płaski (spadek 0,3%)"
     in_plan: bool = False
+    risk_lines: list[str] = Field(default_factory=list)  # up to two risks from the catalogue: "text (źródło, rodzaj)"
+    not_when: str = ""  # "Nie stosuj, gdy: …"
+    next_step: str = ""  # "Następny krok: …"
 
 
 # ---------------------------------------------------------------- method quality and forecast

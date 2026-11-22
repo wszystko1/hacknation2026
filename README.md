@@ -144,7 +144,7 @@ Próba: 149 gmin, 1017 gmino-lat (2020–2026), 566130 symboli „+” lub „-�
 | zmierzone, słabe | przesunięcie progu o 53 mm | trafność zrównoważona 2026: 0,7727 → 0,9094; dopasowane do ocen IUNG, w werdykcie nieużyte | `smsr.balanced_accuracy_2026_shifted` |
 | zmierzone | czas raportu na 20 działkach z 15 województw (zimny start, dane na żywo) | mediana 12,5 s, 95. percentyl 17,6 s; 17 z 20 poniżej 30 s (0,85); 3 działki bez pogody | `robustness.*` |
 | zmierzone, słabe | retencja: najniższy punkt granicy leży do 30 m od rowu | 0,50 wobec 0,2456 dla losowego punktu granicy (50 działek z rowem; rów jest zagłębieniem w modelu terenu, więc wynik jest optymistyczny) | `retention.outlet_hit_lowest`, `retention.outlet_hit_random` |
-| zmierzone, słabe | retencja: miejsce niecki wobec istniejących zbiorników BDOT10k | AUC 0,902 (124 zbiorniki; okno 100 m; optymistyczne) | `retention.pond_auc_lowest` |
+| zmierzone, słabe | prosta miara „o ile miejsce leży niżej niż teren w oknie 100 m” odróżnia stawy z BDOT10k od losowych miejsc poza nimi (to nie jest dokładnie reguła, którą aplikacja wskazuje nieckę; test jest łatwy, bo staw jest zagłębieniem w modelu terenu) | AUC 0,902 (124 zbiorniki; bez przedziału ufności; optymistyczne) | `retention.pond_auc_lowest` |
 | nie zmierzone | zgodność miejsc zastawek z rzeczywistymi budowlami | pilot na BDOT10k (97 działek) nierozstrzygający: dane nie zawierają zastawek rolniczych; miejsca działań to kandydatury do weryfikacji w terenie | n/d |
 | nie zmierzone | zgodność upraw z mapą JRC | brak; mapa nie rozróżnia zbóż ozimych i jarych | brak `crop.rotation_agreement_jrc` |
 | nie zmierzone | zgodność z SMSR na działkach | brak; pomiar jest na gminach | n/d |

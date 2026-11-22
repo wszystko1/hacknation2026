@@ -5,5 +5,8 @@
   <p>{{ a.sentence }}{% if a.when %} Termin: {{ a.when }}.{% endif %}</p>
   {% if a.place %}<span class="src">miejsce: {{ a.place.description }}</span>{% elif a.no_place_reason %}<span class="src">{{ a.no_place_reason }}</span>{% endif %}
   {% if a.legal %}<span class="law"><b>{{ a.legal.formality }}</b>{% if a.legal.article %}: {{ a.legal.act }}, {{ a.legal.article }}{% endif %}</span>{% endif %}
+  {% for r in a.risk_lines %}<span class="src">Ryzyko: {{ r }}</span>{% endfor %}
+  {% if a.not_when %}<span class="src">Nie stosuj, gdy: {{ a.not_when }}</span>{% endif %}
+  {% if a.next_step %}<span class="src">Następny krok: {{ a.next_step }}</span>{% endif %}
   <span class="src">przyczyna: {{ a.cause }} · źródło: {{ a.source }}</span>
 </li>

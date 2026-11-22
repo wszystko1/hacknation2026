@@ -307,10 +307,15 @@ def _card_fields(a: Action, text: str, effect: str) -> list[tuple[str, str]]:
     if doses or ranges:
         fields.append(("Ile", doses[0] if doses else ranges))
     when = plain(a.when) if a.when and not a.when.startswith("Brak") else ""
-    risks = "; ".join(candidate.risks) if candidate and candidate.risks else ""
+    risk_list = [*(candidate.risks if candidate and candidate.risks else []), *a.risk_lines]
+    risks = "; ".join(risk_list)
     risk_when = " · ".join(x for x in (risks, f"termin: {when}" if when else "") if x)
     if risk_when:
         fields.append(("Ryzyko i termin", risk_when))
+    if a.not_when:
+        fields.append(("Nie stosuj, gdy", a.not_when))
+    if a.next_step:
+        fields.append(("Następny krok", a.next_step))
     if a.legal is not None:
         fields.append(
             (
@@ -318,7 +323,7 @@ def _card_fields(a: Action, text: str, effect: str) -> list[tuple[str, str]]:
                 f"{a.legal.formality}, {a.legal.article}" if a.legal.article else str(a.legal.formality),
             )
         )
-    return fields[:5]
+    return fields[:7]
 
 
 def dec_range(low: float, high: float) -> str:

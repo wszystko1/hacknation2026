@@ -450,6 +450,11 @@ def _source(row: CatalogRow) -> str:
     return " · ".join(parts)
 
 
+def risk_lines(row: CatalogRow) -> list[str]:
+    """The risks of an action for the card: the text and, in brackets, the kind of the source (a risk without a source is an opinion)."""
+    return [f"{r.text} ({r.kind or 'opinia'})" for r in row.risks[:2]]
+
+
 def _applies(row: CatalogRow, ctx: ReportContext) -> bool:
     if row.action_id in NOT_USED:
         return False
@@ -538,6 +543,9 @@ def field_actions(ctx: ReportContext) -> list[Action]:
                 due=due,
                 source=_source(row),
                 legal=legal_note(row.action_id) if row.legal_article else None,
+                risk_lines=risk_lines(row),
+                not_when=row.not_when,
+                next_step=row.next_step,
             )
         )
     return rank_actions(found, ctx.request.day)

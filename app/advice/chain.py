@@ -27,6 +27,7 @@ from app.advice import placement as pl
 from app.advice.catalog import CatalogRow, effect_text, load_catalog
 from app.advice.legal import legal_note
 from app.advice.mechanisms import Mechanism, has_opportunity, is_needed, load_mechanisms
+from app.advice.rules import risk_lines
 from app.advice.terrain_model import TerrainModel
 from app.advice.validate import validate
 from app.fmt import day as fmt_day
@@ -318,6 +319,9 @@ def build_chain(
                     legal=cand.legal,
                     place=place,
                     no_place_reason=reason if reason.startswith(NO_PLACE_PREFIX) else "",
+                    risk_lines=risk_lines(row),
+                    not_when=row.not_when,
+                    next_step=row.next_step,
                 )
             )
             break  # one action per mechanism: the first row that fits
