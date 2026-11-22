@@ -188,6 +188,20 @@ def _bar(cause: Cause) -> Bar | None:
     )
 
 
+def weather_bars(report: Report) -> list[Bar]:
+    """Rain and evaporation bars, "usually / now", for the summary tiles; none out of season."""
+    if report.verdict.state in ("out_of_season", "no_data", "no_threshold"):
+        return []
+    found = [_bar(c) for c in report.diagnosis.causes if c.code in WEATHER_CAUSES]
+    return [b for b in found if b is not None]
+
+
+def todo_items(report: Report) -> list[DoItem]:
+    """The one to three most urgent actions, earliest deadline first, for the "Co robić" tile."""
+    acts = sorted(report.actions, key=lambda a: (a.due is None, a.due or date.max, a.n))[:3]
+    return [DoItem(a.n, a.title, "", map_url(a), when_words(a)) for a in acts]
+
+
 def weather_bar(report: Report) -> Bar | None:
     """The first cause of the weather axis (too little rain or high evaporation); none out of season."""
     if report.verdict.state in ("out_of_season", "no_data", "no_threshold"):
@@ -218,10 +232,17 @@ def confidence(report: Report) -> list[str]:
     """Our estimate against the IUNG assessment of the commune, then the sentence that decides for a claim."""
     s = report.smsr
     if s.state == "ok":
-        first = f"IUNG dla gminy {s.commune}: {plain(s.words).split(',')[0]}."
+        first = f"Państwowa ocena IUNG dla gminy {s.commune}: {plain(s.words).split(',')[0]}."
     else:
         first = f"Oceny IUNG dla gminy {s.commune} w tym okresie nie mamy: {plain(s.reason)}"
-    return [first]
+    lines = [first]
+    a = report.agreement
+    if a.available and a.k_per_100 is not None:
+        level = "wysoka" if a.k_per_100 >= 85 else "średnia" if a.k_per_100 >= 60 else "niska"
+        lines.append(
+            f"Wiarygodność wyniku: {level}. Przy takim wyniku państwowa ocena IUNG potwierdza suszę w {a.k_per_100} na 100 przypadków."
+        )
+    return lines
 
 
 # ---------------------------------------------------------------- level B
@@ -238,6 +259,7 @@ class Line:
     plan_switch: bool = False
     planned: bool = False
     pin: bool = False
+    fields: list[tuple[str, str]] = field(default_factory=list)  # labelled bullets of an action card
 
 
 @dataclass
@@ -253,6 +275,32 @@ class Row:
         return self.kind in ("balance", "gmina") or bool(self.paragraphs or self.lines)
 
 
+_DOSE = re.compile(r"\s*\(([^()]*m³[^()]*)\)")
+_DEADLINE = re.compile(r"\s*Termin:.*$")
+
+
+def _card_fields(a: Action, text: str, effect: str) -> list[tuple[str, str]]:
+    """The bullets of an action card: what, where / how much, when, effect, formality (at most five)."""
+    text = _DEADLINE.sub("", text).strip()
+    doses = _DOSE.findall(text)
+    text = _DOSE.sub("", text).strip()
+    fields = [("Co zrobić", text)] if text else []
+    if doses:
+        fields.append(("Gdzie / ile", doses[0]))
+    if a.when and not a.when.startswith("Brak"):
+        fields.append(("Kiedy", plain(a.when)))
+    if effect:
+        fields.append(("Efekt", effect))
+    if a.legal is not None:
+        fields.append(
+            (
+                "Formalność",
+                f"{a.legal.formality}, {a.legal.article}" if a.legal.article else str(a.legal.formality),
+            )
+        )
+    return fields[:5]
+
+
 def _action_line(a: Action, report: Report, *, plan_switch: bool = False) -> Line:
     """An action with its sentence; the plan row shows only the title and the deadline."""
     text = calm(a.sentence, report)
@@ -260,10 +308,7 @@ def _action_line(a: Action, report: Report, *, plan_switch: bool = False) -> Lin
     if plan_switch:
         due = f"do {date_words(a.due)}" if a.due else when_words(a)
         return Line(a.title, n=a.n, due=due, plan_switch=True, planned=a.in_plan, pin=a.place is not None)
-    note = f"efekt: {effect}" if effect else ""
-    if text and "Termin:" not in text and a.when and not a.when.startswith("Brak"):
-        text = f"{text} Termin: {plain(a.when)}."
-    return Line(f"{a.title}. {text}".strip(), n=a.n, note=note, pin=a.place is not None)
+    return Line(a.title, n=a.n, pin=a.place is not None, fields=_card_fields(a, text, effect))
 
 
 def _balance_row(report: Report) -> Row:
@@ -391,8 +436,10 @@ def _method_row(report: Report) -> Row:
 
 
 def _slope_row(report: Report) -> Row:
-    paragraphs = [plain(report.map.runoff_reason)] if report.map and report.map.runoff_reason else []
     runoff = next((c for c in report.diagnosis.causes if c.code == "splyw"), None)
+    reason = plain(report.map.runoff_reason) if report.map and report.map.runoff_reason else ""
+    # "slope not determined" must not stand beside a determined slope
+    paragraphs = [reason] if reason and not (runoff and "nie jest wyznaczony" in reason) else []
     if runoff:
         paragraphs.append(f"Teren jest nachylony: {calm(runoff.words, report)}.")
     lines = [_action_line(a, report) for a in report.actions if a.group == "retencja"]
@@ -425,6 +472,10 @@ class FarmerView:
     verdict: VerdictItem
     bar: Bar | None
     do: DoItem | None
+    bars: list[Bar]
+    todo: list[DoItem]
+    dots: int | None
+    season_line: str
     confidence: list[str]
     rows: list[Row]
     missing_line: str
@@ -476,6 +527,12 @@ def build(report: Report) -> FarmerView:
         verdict=verdict_item(report),
         bar=weather_bar(report),
         do=do,
+        bars=weather_bars(report),
+        todo=todo_items(report),
+        dots=round(report.agreement.k_per_100 / 10)
+        if report.agreement.available and report.agreement.k_per_100 is not None
+        else None,
+        season_line=plain(report.vulnerability.sentence),
         confidence=confidence(report),
         rows=[r for r in all_rows if r.present],
         missing_line=missing,

@@ -23,14 +23,29 @@
     {% else %}
       {% for text in row.paragraphs %}<p>{{ text }}</p>{% endfor %}
       {% if row.kind == 'plan' %}<p class="cnt" id="licznik-planu"><b data-plan-count>{{ report.plan_count }}</b><span>z {{ report.actions | length }} działań w planie</span></p>{% endif %}
-      {% if row.lines %}
-      <ul class="b-lines">
+      {% if row.lines and row.kind == 'plan' %}
+      <ul class="timeline">
         {% for line in row.lines %}
-        <li{% if line.n and row.kind == 'plan' %} id="dzialanie-{{ line.n }}" data-plan-item="{{ line.n }}" class="{{ 'is-planned' if line.planned else '' }}"{% endif %}>
-          {% if line.n and line.pin %}<span class="pin" role="img" aria-label="Miejsce na mapie: {{ line.n }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22l-6-9V3h12v10z"/></svg><b>{{ line.n }}</b></span>{% else %}<span class="nb-gap" aria-hidden="true"></span>{% endif %}
-          <span>{{ line.text }}{% if line.note %} <span class="muted">{{ line.note }}</span>{% endif %}{% if row.kind == 'plan' %} <span class="muted">— {{ line.due }}</span>{% endif %}</span>
+        <li id="dzialanie-{{ line.n }}" data-plan-item="{{ line.n }}" class="{{ 'is-planned' if line.planned else '' }}">
+          <b class="tl-date">{{ line.due }}</b>
+          <span>{{ line.text }}</span>
           {% if line.plan_switch %}<label class="sw"><input type="checkbox" name="plan" value="{{ line.n }}" data-plan-switch {{ 'checked' if line.planned else '' }} aria-label="Działanie {{ line.n }} w planie"><span></span></label>{% endif %}
         </li>
+        {% endfor %}
+      </ul>
+      {% elif row.lines %}
+      <ul class="b-lines">
+        {% for line in row.lines %}
+        {% if line.fields %}
+        <li class="card">
+          <div class="card-h">{% if line.n and line.pin %}<span class="pin" role="img" aria-label="Miejsce na mapie: {{ line.n }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22l-6-9V3h12v10z"/></svg><b>{{ line.n }}</b></span> {% endif %}<b>{{ line.text }}</b></div>
+          <ul class="card-l">{% for label, value in line.fields %}<li><span class="k">{{ label }}:</span> {{ value }}</li>{% endfor %}</ul>
+        </li>
+        {% else %}
+        <li>
+          <span>{{ line.text }}{% if line.note %} <span class="muted">{{ line.note }}</span>{% endif %}</span>
+        </li>
+        {% endif %}
         {% endfor %}
       </ul>
       {% endif %}
@@ -38,12 +53,14 @@
 {% endmacro %}
 {# six groups of rows plus "Jak liczymy"; the first group of every tab is open #}
 {% set groups = [
-  ('bilans', 'Ile brakuje wody', ['bilans', 'parowanie'], 'przyczyny'),
-  ('dlaczego', 'Dlaczego i jak często', ['dlaczego', 'czesto', 'rosliny'], 'przyczyny'),
+  ('bilans', 'Bilans wody i próg suszy', ['bilans'], 'podsumowanie'),
+  ('skad', 'Skąd ten bilans', [], 'przyczyny'),
+  ('dlaczego', 'Dlaczego tak wyszło', ['dlaczego', 'parowanie', 'rosliny'], 'przyczyny'),
+  ('czesto', 'Jak często ta działka cierpi', ['czesto'], 'przyczyny'),
   ('zatrzymaj', 'Zatrzymaj wodę', ['zabiegi', 'spadek', 'formalnosci'], 'rekomendacje'),
   ('nawadnianie', 'Czy nawadniać', ['nawadnianie'], 'rekomendacje'),
   ('plan', 'Plan i terminy', ['plan'], 'rekomendacje'),
-  ('gmina', 'Jak bardzo to pewne', ['gmina'], 'wiarygodnosc'),
+  ('gmina', 'Wiarygodność wyniku', ['gmina'], 'wiarygodnosc'),
   ('jak', 'Jak liczymy', ['jak'], 'zrodla'),
 ] %}
 {% set by_id = {} %}{% for r in fv.rows %}{% set _ = by_id.update({r.id: r}) %}{% endfor %}
@@ -51,7 +68,7 @@
 <section id="poziom-b" class="level-b" aria-label="Szczegóły">
   {% for gid, title, rids, tab in groups %}
   {% set present = rids | select('in', by_id) | list %}
-  {% if present %}
+  {% if present or gid == 'skad' %}
   {% set first = tab not in seen_tabs %}{% set _ = seen_tabs.append(tab) %}
   <section class="b-group" id="wiersz-{{ gid }}" data-tab="{{ tab }}" aria-labelledby="h-{{ gid }}">
     <h3 id="h-{{ gid }}">{{ title }}</h3>
@@ -61,11 +78,11 @@
     {{ row_body(row) }}
     {% if present | length > 1 %}</div>{% endif %}
     {% endfor %}
-    {% set extra = {'bilans': 'przyczyny', 'dlaczego': 'historia'}.get(gid) %}
+    {% set extra = {'skad': 'przyczyny', 'czesto': 'historia'}.get(gid) %}
     {% if extra %}{% for sec in report.sections if sec.id == extra %}
     <div class="b-sub b-chart">
       {% if sec.chart_svg %}<div class="chart" tabindex="0" role="group" aria-label="Wykres: {{ sec.title }}">{{ sec.chart_svg | safe }}</div>{% endif %}
-      {% for t in sec.sentences %}<p>{{ t | plain }}</p>{% endfor %}
+      {% for t in (sec.sentences[:1] if gid == 'skad' else sec.sentences) %}<p>{{ t | plain }}</p>{% endfor %}
     </div>
     {% endfor %}{% endif %}
     {% if gid == 'gmina' %}{% for s in report.sections if s.id == 'gmina' and s.chart_svg %}{% set calib_part = 'chart' %}

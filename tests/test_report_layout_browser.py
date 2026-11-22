@@ -163,7 +163,8 @@ def test_summary_tab_is_active_by_default(page: Page, base_url: str) -> None:
     assert page.locator('[role=tab][aria-selected="true"]:visible').count() == 1
     assert visible_tabs(page) == ["podsumowanie"]
     assert page.locator("#zdanie-werdyktu").is_visible()
-    assert not page.locator("#poziom-b").is_visible()
+    assert page.locator("#poziom-b .b-group:visible").count() == 1  # only the balance bar
+    assert not page.locator("#wiersz-skad").is_visible()
 
 
 @pytest.mark.parametrize(
@@ -259,7 +260,11 @@ def test_section_headings_are_not_smaller_than_what_they_contain(page: Page, bas
     assert page.evaluate(size, "#poziom-b .b-sub > h4") >= page.evaluate(size, "#poziom-b .b-body p")
     assert page.evaluate(size, ".ledger > summary") >= page.evaluate(size, ".ledger .sources li")
     page.get_by_role("tab", name="Podsumowanie").click()
-    assert page.evaluate(size, "#poziom-a h2") >= page.evaluate(size, "#poziom-a .a-do p")
+    # summary tiles: the title is set apart by capitals and weight, the content is not smaller than 13 px
+    assert (
+        page.evaluate("getComputedStyle(document.querySelector('#poziom-a .tile h2')).textTransform")
+        == "uppercase"
+    )
 
 
 @pytest.mark.parametrize("name", ["przyczyny", "rekomendacje", "wiarygodnosc", "zrodla"])
@@ -283,7 +288,8 @@ CHART_JS = """() => {
       const b = t.getBBox(); return {s: t.textContent.trim(), x: b.x, y: b.y, w: b.width, h: b.height};
     }).filter(b => b.w > 0);
     const r = svg.getBoundingClientRect();
-    out.push({n, boxes, vb: [vb.x, vb.y, vb.width, vb.height], height: r.height, shown: r.height > 0});
+    const rects = [...svg.querySelectorAll('rect')].map(t => { const b = t.getBBox(); return {x: b.x, y: b.y, w: b.width, h: b.height}; });
+    out.push({n, rects, boxes, vb: [vb.x, vb.y, vb.width, vb.height], height: r.height, shown: r.height > 0});
   });
   return out;
 }"""
@@ -306,9 +312,37 @@ def test_no_chart_text_overlaps_and_no_chart_is_taller_than_260_px(page: Page, b
             for b in boxes:
                 assert b["x"] >= vx - 1 and b["y"] >= vy - 1, (tab, b["s"])
                 assert b["x"] + b["w"] <= vx + vw + 1 and b["y"] + b["h"] <= vy + vh + 1, (tab, b["s"])
+            for b in boxes:
+                for r in chart["rects"]:
+                    ox = min(b["x"] + b["w"], r["x"] + r["w"]) - max(b["x"], r["x"])
+                    oy = min(b["y"] + b["h"], r["y"] + r["h"]) - max(b["y"], r["y"])
+                    assert not (ox > 2 and oy > 2 and r["w"] > 3 and r["h"] > 3), (tab, b["s"], "over a bar")
             for i, a in enumerate(boxes):
                 for b in boxes[i + 1 :]:
                     ox = min(a["x"] + a["w"], b["x"] + b["w"]) - max(a["x"], b["x"])
                     oy = min(a["y"] + a["h"], b["y"] + b["h"]) - max(a["y"], b["y"])
                     assert not (ox > 2 and oy > 2), (tab, a["s"], b["s"])
     assert checked >= 3
+
+
+def test_legend_rows_switch_the_map_layers(page: Page, base_url: str) -> None:
+    open_report(page, base_url, 1440, 900)
+    box = page.locator('[data-layer-toggle="outline"]')
+    layer = page.locator('.map svg [data-layer="outline"]')
+    assert layer.first.is_visible()
+    box.uncheck(force=True)
+    assert layer.first.evaluate("e => getComputedStyle(e).display") == "none"
+    box.check(force=True)
+    assert layer.first.is_visible()
+
+
+def test_summary_tiles_are_filled_and_fit_two_screens_at_1440(page: Page, base_url: str) -> None:
+    open_report(page, base_url, 1440, 900)
+    tiles = page.locator("#poziom-a .tile")
+    assert tiles.count() >= 4
+    for i in range(tiles.count()):
+        assert tiles.nth(i).inner_text().strip(), f"tile {i} is empty"
+    bottom = page.evaluate(
+        "document.querySelector('#poziom-a').getBoundingClientRect().bottom + window.scrollY"
+    )
+    assert bottom <= 2 * 900

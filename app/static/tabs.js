@@ -17,11 +17,9 @@
           });
     panels.forEach(function (el) {
       var t = el.getAttribute("data-tab");
-      var on = t === name || (t === "all-details" && name !== "podsumowanie");
+      var on = t === name || false;
       el.hidden = !on;
     });
-    var b = document.getElementById("poziom-b");
-    if (b) b.hidden = name === "podsumowanie";
   }
 
   // hash -> tab: a tab name, an alias, or the id of an element inside a tab

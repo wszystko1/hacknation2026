@@ -8,7 +8,7 @@ from app.advice.diagnosis import SeasonWorst
 from app.charts import svg
 from app.fmt import dec
 
-HEIGHT = 370
+HEIGHT = 378
 LEFT, RIGHT = 74, 590
 TOP, BASE = 44, 244  # top of the tallest bar, the zero line
 NEAR_MM = 15.0  # a season this close above the threshold is drawn in the warning colour
@@ -55,11 +55,10 @@ def history_svg(seasons: Sequence[SeasonWorst], smsr: Mapping[int, str], label: 
     if smsr:
         body.append(svg.text(0, BASE + 46, "SMSR", "lbl-acc"))
     body.append(svg.text(0, BASE + 22, "sezon", ""))
-    y = HEIGHT - 50
-    for x, cls, words in (
-        (LEFT, "s-dry", "poniżej progu"),
-        (LEFT + 150, "s-warn", f"do {dec(NEAR_MM)} mm nad progiem"),
-        (LEFT + 360, "s-neu", "dalej od progu"),
+    for x, y, cls, words in (
+        (LEFT, HEIGHT - 62, "s-dry", "poniżej progu"),
+        (LEFT + 170, HEIGHT - 62, "s-warn", f"do {dec(NEAR_MM)} mm nad progiem"),
+        (LEFT, HEIGHT - 36, "s-neu", "dalej od progu"),
     ):
         body.append(svg.rect(x, y - 13, 14, 14, cls))
         body.append(svg.text(x + 22, y, words, ""))

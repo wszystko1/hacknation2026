@@ -32,3 +32,9 @@ def test_farmer_screen_does_not_mention_applications_or_subsidies() -> None:
     # decision of the owner 22.11.2026: the app helps farmers cope by themselves, it is not about aid
     for params in (DOBRCZ, GSM_TODAY):
         assert not re.search(r"wniosk|dopłat", farmer_text(html(params)), re.I)
+
+
+def test_farmer_screen_has_no_certainty_heading() -> None:
+    for params in (DOBRCZ, GSM_TODAY):
+        text = farmer_text(html(params))
+        assert "Pewność" not in text and "Jak bardzo to pewne" not in text

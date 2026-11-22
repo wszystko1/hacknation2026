@@ -16,8 +16,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 METRICS = ROOT / "metrics.json"
 EVALUATIONS = [
-    "smsr", "soil", "forecast", "robustness", "period_variants", "soil_sensitivity", "retention", "ponds",
-    "wet_zones",
+    "smsr", "causes", "soil", "forecast", "robustness", "period_variants", "soil_sensitivity", "retention",
+    "ponds", "wet_zones",
 ]  # fmt: skip
 
 
@@ -27,6 +27,7 @@ def load(name: str):
         return None
     spec = importlib.util.spec_from_file_location(f"eval_{name}", path)
     mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod  # dataclasses and pickling look the module up by name
     spec.loader.exec_module(mod)
     return mod
 

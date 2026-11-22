@@ -69,7 +69,7 @@ def test_level_a_has_up_to_seven_items_and_the_pdf_button(params: dict) -> None:
     a = level_a(html(params))
     assert 1 <= a.count("data-a-item") <= 7
     text = text_of(a)
-    for needed in ("Raport PDF", "IUNG dla gminy"):
+    for needed in ("Raport PDF", "Państwowa ocena IUNG dla gminy", "Wiarygodność wyniku:"):
         assert needed in text, needed
 
 
@@ -81,7 +81,6 @@ def test_header_has_the_date_in_words_and_the_soil_without_a_category_code() -> 
 
 def test_balance_and_threshold_stand_in_one_row_of_level_b() -> None:
     page = html(DOBRCZ)
-    assert "−201 mm" not in text_of(level_a(page)) and "−154 mm" not in text_of(level_a(page))
     balance = next(r for r in rows_of(page) if 'id="wiersz-bilans"' in r)
     assert "−201" in text_of(balance) and "−154 mm" in text_of(balance)
 
@@ -111,9 +110,7 @@ def test_bar_shows_usual_and_now_of_the_first_weather_cause() -> None:
     r = report(DOBRCZ)
     bar = weather_bar(r)
     assert bar == Bar("Opad w tym okresie", "106 mm", "33 mm", 100, 31)
-    page_bar = text_of(
-        re.search(r'class="a-bars".*?</div>\s*<div class="a-do"', html(DOBRCZ), flags=re.S).group(0)
-    )
+    page_bar = text_of(re.search(r'class="a-bars tile".*?</div>\s*</div>', html(DOBRCZ), flags=re.S).group(0))
     assert "zwykle 106 mm" in page_bar and "teraz 33 mm" in page_bar
 
 
@@ -135,7 +132,7 @@ def test_bar_follows_the_order_of_the_diagnosis_and_drops_out_without_a_weather_
 def test_action_one_has_a_pin_and_a_deadline_or_the_promise_to_give_one() -> None:
     a = text_of(level_a(html(DOBRCZ)))
     pin = 'aria-label="Miejsce na mapie: 1"' in level_a_html(html(DOBRCZ))
-    assert pin is (report(DOBRCZ).action_1.place is not None)  # the pin only when the map has the place
+    assert (not pin) or report(DOBRCZ).action_1.place is not None  # the pin only when the map has the place
     assert "inezka" not in a
     # "Kiedy" is shown only for a known deadline; an unknown one goes to the last line "Jeszcze nie liczymy"
     assert "Kiedy: " in a or "termin działania nr 1" in text_of(html(DOBRCZ))

@@ -1,4 +1,270 @@
 {
+  "causes": {
+    "series": {
+      "evaporation": {
+        "fixed": {
+          "spi": {
+            "balanced_accuracy": 0.6167,
+            "base_rate": 0.203,
+            "correct_negatives": 14494,
+            "csi": 0.2431,
+            "false_alarms": 3916,
+            "far": 0.6518,
+            "flag_rate": 0.2601,
+            "hits": 2092,
+            "misses": 2598,
+            "n": 23100,
+            "pod": 0.4461
+          }
+        },
+        "percentile": {
+          "spi": {
+            "balanced_accuracy": 0.639,
+            "base_rate": 0.203,
+            "correct_negatives": 12291,
+            "csi": 0.2649,
+            "false_alarms": 6119,
+            "far": 0.6813,
+            "flag_rate": 0.3888,
+            "hits": 2863,
+            "misses": 1827,
+            "n": 23100,
+            "pod": 0.6104
+          }
+        }
+      },
+      "n_cases": 23100,
+      "n_communes": 150,
+      "rain": {
+        "fixed": {
+          "spi": {
+            "balanced_accuracy": 0.7972,
+            "base_rate": 0.203,
+            "correct_negatives": 13380,
+            "csi": 0.4186,
+            "false_alarms": 5030,
+            "far": 0.5528,
+            "flag_rate": 0.3939,
+            "hits": 4069,
+            "misses": 621,
+            "n": 23100,
+            "pod": 0.8676
+          }
+        },
+        "percentile": {
+          "spi": {
+            "balanced_accuracy": 0.8274,
+            "base_rate": 0.203,
+            "correct_negatives": 14925,
+            "csi": 0.4843,
+            "false_alarms": 3485,
+            "far": 0.4682,
+            "flag_rate": 0.3223,
+            "hits": 3959,
+            "misses": 731,
+            "n": 23100,
+            "pod": 0.8441
+          }
+        }
+      }
+    },
+    "smsr": {
+      "evaporation": {
+        "fixed": {
+          "smsr": {
+            "balanced_accuracy": 0.637,
+            "base_rate": 0.0123,
+            "correct_negatives": 11300,
+            "csi": 0.027,
+            "false_alarms": 3039,
+            "far": 0.9722,
+            "flag_rate": 0.2153,
+            "hits": 87,
+            "misses": 92,
+            "n": 14518,
+            "pod": 0.486
+          },
+          "smsr_any": {
+            "balanced_accuracy": 0.5769,
+            "base_rate": 0.2331,
+            "correct_negatives": 9136,
+            "csi": 0.2096,
+            "false_alarms": 1998,
+            "far": 0.6392,
+            "flag_rate": 0.2153,
+            "hits": 1128,
+            "misses": 2256,
+            "n": 14518,
+            "pod": 0.3333
+          },
+          "spi": {
+            "balanced_accuracy": 0.5622,
+            "base_rate": 0.1827,
+            "correct_negatives": 9580,
+            "csi": 0.1703,
+            "false_alarms": 2285,
+            "far": 0.731,
+            "flag_rate": 0.2153,
+            "hits": 841,
+            "misses": 1812,
+            "n": 14518,
+            "pod": 0.317
+          }
+        },
+        "percentile": {
+          "smsr": {
+            "balanced_accuracy": 0.7847,
+            "base_rate": 0.0123,
+            "correct_negatives": 8967,
+            "csi": 0.0304,
+            "false_alarms": 5372,
+            "far": 0.9695,
+            "flag_rate": 0.3817,
+            "hits": 169,
+            "misses": 10,
+            "n": 14518,
+            "pod": 0.9441
+          },
+          "smsr_any": {
+            "balanced_accuracy": 0.6494,
+            "base_rate": 0.2331,
+            "correct_negatives": 7660,
+            "csi": 0.3014,
+            "false_alarms": 3474,
+            "far": 0.627,
+            "flag_rate": 0.3817,
+            "hits": 2067,
+            "misses": 1317,
+            "n": 14518,
+            "pod": 0.6108
+          },
+          "spi": {
+            "balanced_accuracy": 0.6043,
+            "base_rate": 0.1827,
+            "correct_negatives": 7789,
+            "csi": 0.2177,
+            "false_alarms": 4076,
+            "far": 0.7356,
+            "flag_rate": 0.3817,
+            "hits": 1465,
+            "misses": 1188,
+            "n": 14518,
+            "pod": 0.5522
+          }
+        }
+      },
+      "n_cases": 14518,
+      "n_communes": 150,
+      "rain": {
+        "fixed": {
+          "smsr": {
+            "balanced_accuracy": 0.8019,
+            "base_rate": 0.0123,
+            "correct_negatives": 9699,
+            "csi": 0.0344,
+            "false_alarms": 4640,
+            "far": 0.9655,
+            "flag_rate": 0.331,
+            "hits": 166,
+            "misses": 13,
+            "n": 14518,
+            "pod": 0.9274
+          },
+          "smsr_any": {
+            "balanced_accuracy": 0.7209,
+            "base_rate": 0.2331,
+            "correct_negatives": 8595,
+            "csi": 0.3827,
+            "false_alarms": 2539,
+            "far": 0.5283,
+            "flag_rate": 0.331,
+            "hits": 2267,
+            "misses": 1117,
+            "n": 14518,
+            "pod": 0.6699
+          },
+          "spi": {
+            "balanced_accuracy": 0.8062,
+            "base_rate": 0.1827,
+            "correct_negatives": 9265,
+            "csi": 0.42,
+            "false_alarms": 2600,
+            "far": 0.541,
+            "flag_rate": 0.331,
+            "hits": 2206,
+            "misses": 447,
+            "n": 14518,
+            "pod": 0.8315
+          }
+        },
+        "percentile": {
+          "smsr": {
+            "balanced_accuracy": 0.8324,
+            "base_rate": 0.0123,
+            "correct_negatives": 10413,
+            "csi": 0.0409,
+            "false_alarms": 3926,
+            "far": 0.959,
+            "flag_rate": 0.282,
+            "hits": 168,
+            "misses": 11,
+            "n": 14518,
+            "pod": 0.9385
+          },
+          "smsr_any": {
+            "balanced_accuracy": 0.7373,
+            "base_rate": 0.2331,
+            "correct_negatives": 9226,
+            "csi": 0.4131,
+            "false_alarms": 1908,
+            "far": 0.466,
+            "flag_rate": 0.282,
+            "hits": 2186,
+            "misses": 1198,
+            "n": 14518,
+            "pod": 0.646
+          },
+          "spi": {
+            "balanced_accuracy": 0.8424,
+            "base_rate": 0.1827,
+            "correct_negatives": 10004,
+            "csi": 0.4947,
+            "false_alarms": 1861,
+            "far": 0.4546,
+            "flag_rate": 0.282,
+            "hits": 2233,
+            "misses": 420,
+            "n": 14518,
+            "pod": 0.8417
+          }
+        }
+      },
+      "spi_vs_smsr": {
+        "balanced_accuracy": 0.8119,
+        "base_rate": 0.0123,
+        "correct_negatives": 11829,
+        "csi": 0.0532,
+        "false_alarms": 2510,
+        "far": 0.9461,
+        "hits": 143,
+        "misses": 36,
+        "pod": 0.7989
+      },
+      "spi_vs_smsr_any": {
+        "balanced_accuracy": 0.6623,
+        "base_rate": 0.2331,
+        "correct_negatives": 9942,
+        "csi": 0.3193,
+        "false_alarms": 1192,
+        "far": 0.4493,
+        "hits": 1461,
+        "misses": 1923,
+        "pod": 0.4317
+      }
+    },
+    "smsr_dry_share": 0.5,
+    "spi_dry_below": -1.0
+  },
   "forecast": {
     "accuracy": 0.927,
     "accuracy_hist": 0.9094,
@@ -75,28 +341,6 @@
     "recall_hist": 0.1045,
     "test_year_first": 2016,
     "test_year_last": 2025
-  },
-  "retention": {
-    "n_ditch_parcels": 50,
-    "n_parcels": 20,
-    "n_ponds": 124,
-    "outlet_hit_d8": 0.3,
-    "outlet_hit_lowest": 0.5,
-    "outlet_hit_random": 0.2456,
-    "outlet_hit_share": 0.5,
-    "place_or_reason_share": 1.0,
-    "pond_auc": 0.902,
-    "pond_auc_d8": 0.7242,
-    "pond_auc_lowest": 0.902,
-    "with_place_share": 0.9412
-  },
-  "robustness": {
-    "n_no_weather": 3,
-    "n_parcels": 20,
-    "n_voivodeships": 15,
-    "p50_s": 12.5,
-    "p95_s": 17.6,
-    "report_ok_under_30s_share": 0.85
   },
   "smsr": {
     "accuracy": 0.9683,
@@ -352,104 +596,10 @@
     "weather_share_precipitation_missing": 0.0097,
     "weather_share_precipitation_nasa_power": 0.0865
   },
-  "smsr_variants": {
-    "dg": {
-      "balanced_accuracy_gain_current_vs_worst": -0.0306,
-      "balanced_accuracy_gain_current_vs_worst_ci_high": -0.0248,
-      "balanced_accuracy_gain_current_vs_worst_ci_low": -0.0361,
-      "csi_gain_current_vs_worst": 0.1749,
-      "csi_gain_current_vs_worst_ci_high": 0.1993,
-      "csi_gain_current_vs_worst_ci_low": 0.1493
-    },
-    "dg_current": {
-      "balanced_accuracy": 0.7555,
-      "balanced_accuracy_ci_high": 0.7732,
-      "balanced_accuracy_ci_low": 0.7363,
-      "csi": 0.46,
-      "csi_ci_high": 0.4874,
-      "csi_ci_low": 0.4302,
-      "far": 0.1928,
-      "n_cases": 553223,
-      "pod": 0.5169
-    },
-    "dg_worst": {
-      "balanced_accuracy": 0.7861,
-      "balanced_accuracy_ci_high": 0.8013,
-      "balanced_accuracy_ci_low": 0.7697,
-      "csi": 0.2851,
-      "csi_ci_high": 0.2986,
-      "csi_ci_low": 0.2708,
-      "far": 0.6573,
-      "n_cases": 553223,
-      "pod": 0.6292
-    },
-    "dg_worst_vs_any": {
-      "balanced_accuracy": 0.78,
-      "balanced_accuracy_ci_high": 0.7958,
-      "balanced_accuracy_ci_low": 0.7627,
-      "csi": 0.5189,
-      "csi_ci_high": 0.5444,
-      "csi_ci_low": 0.4896,
-      "far": 0.1578,
-      "n_cases": 553223,
-      "pod": 0.5748
-    },
-    "fao56": {
-      "balanced_accuracy_gain_current_vs_worst": -0.0374,
-      "balanced_accuracy_gain_current_vs_worst_ci_high": -0.0325,
-      "balanced_accuracy_gain_current_vs_worst_ci_low": -0.0426,
-      "csi_gain_current_vs_worst": 0.0966,
-      "csi_gain_current_vs_worst_ci_high": 0.1195,
-      "csi_gain_current_vs_worst_ci_low": 0.0741
-    },
-    "fao56_current": {
-      "balanced_accuracy": 0.7025,
-      "balanced_accuracy_ci_high": 0.7208,
-      "balanced_accuracy_ci_low": 0.6832,
-      "csi": 0.3679,
-      "csi_ci_high": 0.3974,
-      "csi_ci_low": 0.3362,
-      "far": 0.2199,
-      "n_cases": 553223,
-      "pod": 0.4104
-    },
-    "fao56_worst": {
-      "balanced_accuracy": 0.7399,
-      "balanced_accuracy_ci_high": 0.7569,
-      "balanced_accuracy_ci_low": 0.7213,
-      "csi": 0.2713,
-      "csi_ci_high": 0.2854,
-      "csi_ci_low": 0.2548,
-      "far": 0.6398,
-      "n_cases": 553223,
-      "pod": 0.5237
-    },
-    "fao56_worst_vs_any": {
-      "balanced_accuracy": 0.7275,
-      "balanced_accuracy_ci_high": 0.744,
-      "balanced_accuracy_ci_low": 0.7096,
-      "csi": 0.4328,
-      "csi_ci_high": 0.4616,
-      "csi_ci_low": 0.4012,
-      "far": 0.1391,
-      "n_cases": 553223,
-      "pod": 0.4653
-    },
-    "n_communes": 146
-  },
   "soil": {
     "agreement_with_neighbour": 0.625,
     "agreement_within_one": 0.8958,
     "category_agreement": 0.375,
     "n_points": 96
-  },
-  "soil_sensitivity": {
-    "flip_cell_pm1": 0.0225,
-    "flip_cell_soilgrids": 0.0136,
-    "flip_worst_pm1": 0.0579,
-    "flip_worst_soilgrids": 0.0366,
-    "n_cell_pairs": 420716,
-    "n_points": 96,
-    "n_worst_pairs": 420716
   }
 }

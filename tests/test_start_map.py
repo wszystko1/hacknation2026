@@ -99,7 +99,10 @@ def test_search_card_and_button_are_in_view_and_the_map_fills_the_window(
     browser_page.set_viewport_size(size)
     browser_page.goto(base_url + "/")
     map_pick.tiles_loaded(browser_page)
-    for locator in (browser_page.locator("#start-card"), browser_page.get_by_role("button", name="Oceń działkę")):
+    for locator in (
+        browser_page.locator("#start-card"),
+        browser_page.get_by_role("button", name="Oceń działkę"),
+    ):
         locator.wait_for(state="visible")
         box = locator.bounding_box()
         assert box and box["y"] >= 0 and box["y"] + box["height"] <= size["height"], box
@@ -161,7 +164,9 @@ def test_a_click_outside_poland_gives_one_sentence_and_the_number_field_still_wo
     for _ in range(14):
         map_pick.drag(page, 300, 0)  # pan west to the edge of the allowed frame
     map_pick.tiles_loaded(page)
-    page.mouse.click(470, 600)  # at the frame edge the left half of the window lies outside Poland, right of the card
+    page.mouse.click(
+        470, 600
+    )  # at the frame edge the left half of the window lies outside Poland, right of the card
     error = page.locator(".pm-state .pm-error")
     error.wait_for(state="visible")
     text = error.inner_text()

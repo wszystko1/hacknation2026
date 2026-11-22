@@ -12,16 +12,16 @@ def hbar_svg(v: Verdict) -> str:
         return ""
     deficit = max(-v.kbw_mm, 0.0)
     thr = -v.threshold_mm if v.threshold_mm is not None else None
-    scale = max(deficit, thr or 0.0, 1.0) * 1.15
+    scale = max(deficit, thr or 0.0, 1.0) * 1.2
     x0, width = 20.0, 560.0
 
     def x(mm: float) -> float:
         return x0 + width * mm / scale
 
-    parts = [f'<rect class="hbar-track" x="{x0}" y="32" width="{width}" height="16" rx="5"/>']
+    parts = [f'<rect class="hbar-track" x="{x0}" y="32" width="{width}" height="16" rx="2"/>']
     if thr is not None and deficit > thr:
         parts.append(
-            f'<rect class="hbar-fill" x="{x0}" y="32" width="{x(thr) - x0:.1f}" height="16" rx="5"/>'
+            f'<rect class="hbar-fill" x="{x0}" y="32" width="{x(thr) - x0:.1f}" height="16" rx="2"/>'
         )
         parts.append(
             f'<rect class="hbar-over" x="{x(thr):.1f}" y="32" width="{x(deficit) - x(thr):.1f}" height="16"/>'
@@ -29,16 +29,19 @@ def hbar_svg(v: Verdict) -> str:
     else:
         cls = "hbar-fill hbar-fill--ok" if thr is not None else "hbar-fill"
         parts.append(
-            f'<rect class="{cls}" x="{x0}" y="32" width="{x(deficit) - x0:.1f}" height="16" rx="5"/>'
+            f'<rect class="{cls}" x="{x0}" y="32" width="{x(deficit) - x0:.1f}" height="16" rx="2"/>'
         )
     if thr is not None:
         parts.append(f'<rect class="hbar-thr" x="{x(thr) - 1.5:.1f}" y="26" width="3" height="28" rx="1.5"/>')
+        anchor = "end" if x(thr) > x0 + width / 2 else "start"
+        dx = -6 if anchor == "end" else 6
         parts.append(
-            f'<text class="lbl-thr" x="{x(thr):.1f}" y="22" text-anchor="middle">próg {dec(-thr)} mm</text>'
+            f'<text class="lbl-thr" x="{x(thr) + dx:.1f}" y="20" text-anchor="{anchor}">próg {dec(-thr)} mm</text>'
         )
     parts.append(f'<text x="{x0}" y="78">0 mm</text>')
+    anchor = "end" if x(deficit) > x0 + width / 2 else "start"
     parts.append(
-        f'<text class="lbl-val" x="{x(deficit):.1f}" y="78" text-anchor="middle">{dec(v.kbw_mm)}</text>'
+        f'<text class="lbl-val" x="{x(deficit):.1f}" y="78" text-anchor="{anchor}">{dec(v.kbw_mm)} mm</text>'
     )
     label = f"Bilans {dec(v.kbw_mm)} mm" + (
         f" wobec progu {dec(v.threshold_mm)} mm" if thr is not None else ""

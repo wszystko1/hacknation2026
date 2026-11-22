@@ -20,10 +20,9 @@ def scene(page, base_url: str) -> None:
     assert page.locator("#poziom-a [data-a-item]").count() <= 7
     assert "IUNG dla gminy" in page.locator("#pewnosc").inner_text()  # decision of the owner 22.11.2026
     page.wait_for_timeout(PAUSE)
-    # The number is not on the first level: it appears when the row is opened.
-    show_tab(page, "przyczyny")
+    # The balance row below the tiles carries the number and its caption.
+    show_tab(page, "podsumowanie")
     row = page.locator("#wiersz-bilans")
-    assert not re.search(r"−\d+\s*mm", top.inner_text())
     open_row(page, "bilans")
     number = row.locator(".big-number b").inner_text()
     assert str(round(abs(verdict["kbw_mm"]))) in number.replace("−", ""), number

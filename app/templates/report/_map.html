@@ -30,25 +30,32 @@
       {% set ring = m.outline_px[0] %}
       {% set pts = ring | map('join', ',') | join(' ') %}
       <path class="mo-scrim" d="M0 0H{{ m.width }}V{{ m.height }}H0Z M{{ ring | map('join', ' ') | join(' L') }}Z"/>
-      {% for b in m.basins_px %}<polygon class="mo-basin" points="{{ b | map('join', ',') | join(' ') }}"/>{% endfor %}
-      {% for d in m.ditches_px %}<polygon class="mo-ditch" points="{{ d | map('join', ',') | join(' ') }}"/>{% endfor %}
-      <polygon class="mo-casing" points="{{ pts }}"/>
-      <polygon class="mo-outline" points="{{ pts }}"/>
+      <g data-layer="basin">{% for b in m.basins_px %}<polygon class="mo-basin" points="{{ b | map('join', ',') | join(' ') }}"/>{% endfor %}</g>
+      <g data-layer="line">{% for d in m.ditches_px %}<polygon class="mo-ditch" points="{{ d | map('join', ',') | join(' ') }}"/>{% endfor %}</g>
+      <g data-layer="outline"><polygon class="mo-casing" points="{{ pts }}"/>
+      <polygon class="mo-outline" points="{{ pts }}"/></g>
       <g class="mo-neighbours"></g>
+      <g data-layer="flow">
       {% for f in m.flow_px %}
       <polyline class="mo-flow-casing" points="{{ f | map('join', ',') | join(' ') }}"/>
       <polyline class="mo-flow" points="{{ f | map('join', ',') | join(' ') }}"/>
       {% endfor %}
       {% for h in m.flow_heads_px %}<polygon class="mo-arrowhead" points="{{ h | map('join', ',') | join(' ') }}"/>{% endfor %}
+      </g>
+      <g data-layer="outlet">
       {% if m.outlet_px %}<circle class="mo-outlet" cx="{{ m.outlet_px[0] }}" cy="{{ m.outlet_px[1] }}" r="7"/>{% endif %}
       {% if m.outlet_label and m.outlet_label_xy %}
       <rect class="mo-label-bg" x="{{ m.outlet_label_xy[0] }}" y="{{ m.outlet_label_xy[1] }}" width="{{ m.outlet_label_w }}" height="30" rx="6"/>
       <text class="mo-label-sub" x="{{ m.outlet_label_xy[0] + 8 }}" y="{{ m.outlet_label_xy[1] + 21 }}">{{ m.outlet_label }}</text>
       {% endif %}
+      </g>
+      <g data-layer="edge">
       {% if m.lower_edge_px %}
       <polyline class="mo-strip-casing" points="{{ m.lower_edge_px | map('join', ',') | join(' ') }}"/>
       <polyline class="mo-lower-edge" points="{{ m.lower_edge_px | map('join', ',') | join(' ') }}"/>
       {% endif %}
+      </g>
+      <g data-layer="slope">
       {% if m.slope_arrow_px %}
       <polyline class="mo-slope-casing" points="{{ m.slope_arrow_px | map('join', ',') | join(' ') }}"/>
       <polyline class="mo-slope" points="{{ m.slope_arrow_px | map('join', ',') | join(' ') }}"/>
@@ -58,9 +65,10 @@
       <rect class="mo-label-bg" x="{{ m.slope_label_xy[0] }}" y="{{ m.slope_label_xy[1] }}" width="{{ m.slope_label_w }}" height="30" rx="6"/>
       <text class="mo-label-sub" x="{{ m.slope_label_xy[0] + 8 }}" y="{{ m.slope_label_xy[1] + 21 }}">{{ m.slope_label }}</text>
       {% endif %}
+      </g>
       {% for k in m.markers %}
-      <circle class="mo-marker" cx="{{ k.x }}" cy="{{ k.y }}" r="15"/>
-      <text class="mo-marker-text" x="{{ k.x }}" y="{{ k.y + 6 }}">{{ k.n }}</text>
+      <g data-layer="marker-{{ k.n }}"><circle class="mo-marker" cx="{{ k.x }}" cy="{{ k.y }}" r="15"/>
+      <text class="mo-marker-text" x="{{ k.x }}" y="{{ k.y + 6 }}">{{ k.n }}</text></g>
       {% endfor %}
     </svg>
     {% else %}
@@ -98,10 +106,10 @@
     <div class="mlegend">
       <b>Warstwa na mapie</b>
       {% for r in m.legend %}
-      <div>{% if r.symbol == 'number' %}<span class="nb">{{ r.n }}</span>{% elif r.symbol in ('flow', 'line', 'slope', 'edge') %}<span class="ar"></span>{% else %}<span class="nb nb--off">&nbsp;</span>{% endif %}{{ r.text }}</div>
+      <div><label class="layer"><input type="checkbox" checked data-layer-toggle="{{ 'marker-' ~ r.n if r.symbol == 'number' else r.symbol }}"><span class="layer-box" aria-hidden="true"></span>{% if r.symbol == 'number' %}<span class="nb">{{ r.n }}</span>{% elif r.symbol in ('flow', 'line', 'slope', 'edge') %}<span class="ar"></span>{% endif %}{{ r.text }}</label></div>
       {% endfor %}
     </div>
     {% endif %}
   </div>
 </div>
-{% if m %}<script src="/static/neighbour.js" defer></script>{% endif %}
+{% if m %}<script src="/static/neighbour.js" defer></script><script src="/static/maplayers.js" defer></script>{% endif %}

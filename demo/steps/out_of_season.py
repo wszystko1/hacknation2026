@@ -22,7 +22,7 @@ def scene(page, base_url: str) -> None:
     )
     assert page.locator("#poziom-a [data-a-item]").count() <= 7
     # The balance of the season just ended opens in its row.
-    show_tab(page, "przyczyny")
+    show_tab(page, "podsumowanie")
     open_row(page, "bilans")
     shown = page.locator("#wiersz-bilans .big-number b").inner_text()
     assert str(expected) in shown.replace("−", "-").lstrip("-"), (shown, expected)

@@ -5,7 +5,11 @@ import pytest
 
 from scripts.eval_smsr import strongest_baseline
 
-A, C, P = "smsr.baseline_csi_always_drought", "smsr.baseline_csi_climatology", "smsr.baseline_csi_nasa_power_grid"
+A, C, P = (
+    "smsr.baseline_csi_always_drought",
+    "smsr.baseline_csi_climatology",
+    "smsr.baseline_csi_nasa_power_grid",
+)
 
 
 def test_power_grid_wins():
