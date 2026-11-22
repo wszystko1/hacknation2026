@@ -1,0 +1,46 @@
+{# Farmer screen, level B: one <details> per row, one arrow per row. Every number stands in one row. #}
+{% set fv = report.farmer %}
+{% set v = report.verdict %}
+<section id="poziom-b" class="level-b" aria-label="Szczegóły">
+  <h2>Szczegóły</h2>
+  {% for row in fv.rows %}
+  <details class="b-row" id="wiersz-{{ row.id }}">
+    <summary>{{ row.title }}</summary>
+    <div class="b-body">
+    {% if row.kind == 'balance' %}
+      {% if v.kbw_mm is not none %}
+      <div class="big-number {{ 'big-number--dry' if v.state == 'below' else '' }}">
+        <b>{{ v.kbw_mm | dec }}<small>mm</small></b>
+        <div class="cap">{{ fv.balance_caption }}{% if v.threshold_mm is not none %}<br>próg suszy <strong>{{ v.threshold_mm | mm }}</strong>{% endif %}</div>
+      </div>
+      {{ hbar(v) | safe }}
+      {% else %}
+      <p>{{ v.sentence }}</p>
+      {% endif %}
+      {% for text in row.paragraphs %}<p id="opad-od-1x">{{ text }}</p>{% endfor %}
+    {% elif row.kind == 'gmina' %}
+      <p id="wiersz-smsr">{{ fv.confidence[0] }}</p>
+      {% if report.agreement.available %}
+      <div class="agree" id="zgodnosc-ramka"><i aria-hidden="true">✓</i><div>{{ report.agreement.sentence }}</div></div>
+      {% if fv.commune_measures %}<p>Trafność metody: {{ fv.commune_measures.accuracy }}; zawsze częstsza odpowiedź: {{ fv.commune_measures.majority }}.</p>{% endif %}
+      {% endif %}
+    {% else %}
+      {% for text in row.paragraphs %}<p>{{ text }}</p>{% endfor %}
+      {% if row.kind == 'plan' %}<p class="cnt" id="licznik-planu"><b data-plan-count>{{ report.plan_count }}</b><span>z {{ report.actions | length }} działań w planie</span></p>{% endif %}
+      {% if row.lines %}
+      <ul class="b-lines">
+        {% for line in row.lines %}
+        <li{% if line.n and row.kind == 'plan' %} id="dzialanie-{{ line.n }}" data-plan-item="{{ line.n }}" class="{{ 'is-planned' if line.planned else '' }}"{% endif %}>
+          {% if line.n %}<span class="nb">{{ line.n }}</span>{% endif %}
+          <span>{{ line.text }}{% if line.note %} <span class="muted">{{ line.note }}</span>{% endif %}{% if row.kind == 'plan' %} <span class="muted">— {{ line.due }}</span>{% endif %}</span>
+          {% if line.plan_switch %}<label class="sw"><input type="checkbox" name="plan" value="{{ line.n }}" data-plan-switch {{ 'checked' if line.planned else '' }} aria-label="Działanie {{ line.n }} w planie"><span></span></label>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    {% endif %}
+    </div>
+  </details>
+  {% endfor %}
+  {% if fv.missing_line %}<p class="muted" id="jeszcze-nie-liczymy">{{ fv.missing_line }}</p>{% endif %}
+</section>

@@ -28,7 +28,12 @@ def test_arrow_points_north_for_zero_degrees(monkeypatch) -> None:
 
 def test_lower_edge_is_drawn_and_listed(monkeypatch) -> None:
     cx, cy = centre_2180(DOBRCZ)
-    runoff_set(monkeypatch, downhill_deg=270.0, slope_pct=2.0, lower_edge_2180=[[cx - 30, cy - 30], [cx - 30, cy + 30]])
+    runoff_set(
+        monkeypatch,
+        downhill_deg=270.0,
+        slope_pct=2.0,
+        lower_edge_2180=[[cx - 30, cy - 30], [cx - 30, cy + 30]],
+    )
     html = page(DOBRCZ)
     assert 'class="mo-lower-edge"' in svg(html)
     assert "dolny odcinek granicy" in html and "kierunek spadku" in html
@@ -37,7 +42,13 @@ def test_lower_edge_is_drawn_and_listed(monkeypatch) -> None:
 def test_too_flat_has_no_arrow_and_no_edge_but_a_sentence(monkeypatch) -> None:
     cx, cy = centre_2180(DOBRCZ)
     reason = "spadek 0,3% jest za mały, by wskazać dolny odcinek granicy"
-    runoff_set(monkeypatch, downhill_deg=None, slope_pct=0.3, lower_edge_2180=[[cx, cy], [cx, cy + 9]], runoff_reason=reason)
+    runoff_set(
+        monkeypatch,
+        downhill_deg=None,
+        slope_pct=0.3,
+        lower_edge_2180=[[cx, cy], [cx, cy + 9]],
+        runoff_reason=reason,
+    )
     m = built(DOBRCZ).map
     assert m.slope_arrow_px == [] and m.lower_edge_px == []
     html = page(DOBRCZ)

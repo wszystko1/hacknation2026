@@ -4,8 +4,9 @@ from demo.steps.common import PAUSE
 
 
 def scene(page, base_url: str) -> None:
-    page.locator(".seg a", has_text="Doradca").click()
-    page.wait_for_selector("body.view-doradca")
+    if "view-doradca" not in (page.locator("body").get_attribute("class") or ""):
+        page.locator("#pokaz-doradcy").click()
+        page.wait_for_selector("body.view-doradca")
     block = page.locator("#zrodla .advisor")
     block.scroll_into_view_if_needed()
     assert block.is_visible()

@@ -129,7 +129,7 @@ def test_grass_is_compared_by_its_highest_greenness_so_far() -> None:
 @pytest.mark.parametrize("params", [DOBRCZ, GSM_TODAY], ids=["dobrcz", "gora-swietej-malgorzaty"])
 def test_report_row_is_a_dated_reading_or_a_stated_gap(params: dict) -> None:
     c = report(params).crop_condition
-    page = html(params)
+    page = html(params, widok="doradca")
     row = re.search(r'id="wiersz-satelita".*?</div>', page, re.S)
     assert row is not None and "Tu pojawi" not in row.group(0)
     if c.state == "ok":

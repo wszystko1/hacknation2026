@@ -157,7 +157,7 @@ def test_threshold_bar_labels_the_threshold_in_mm() -> None:
 
 
 def test_report_route_shows_badge_threshold_tick_and_no_placeholder() -> None:
-    section = verdict_html(html(DOBRCZ, gleba="II"))
+    section = verdict_html(html(DOBRCZ, gleba="II", widok="doradca"))
     assert BADGE_BELOW in section or BADGE_ABOVE in section
     assert 'class="hbar-thr"' in section
     assert THRESHOLD_LABEL.search(section)
@@ -169,7 +169,7 @@ def test_report_route_shows_badge_threshold_tick_and_no_placeholder() -> None:
 @pytest.mark.parametrize("params", [DOBRCZ, GSM_TODAY], ids=["dobrcz", "gora-swietej-malgorzaty"])
 @pytest.mark.parametrize("path", ["/raport", "/raport/druk"])
 def test_demo_parcels_have_no_placeholder_in_the_verdict(params: dict, path: str) -> None:
-    section = verdict_html(html(params, path=path))
+    section = verdict_html(html(params, path=path, **({"widok": "doradca"} if path == "/raport" else {})))
     assert "Tu pojawi" not in section
     sentence = sentence_html(section)
     assert re.search(r"\d+ mm", sentence)

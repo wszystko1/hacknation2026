@@ -21,7 +21,7 @@ def test_metrics_hold_the_measured_scores_as_numbers() -> None:
 
 
 def test_commune_section_of_the_report_has_a_value_in_every_score_cell() -> None:
-    page = html(DOBRCZ)
+    page = html(DOBRCZ, widok="doradca")
     start = page.index('id="gmina"')
     section = page[start : page.index("</section>", start)]
     cells = re.findall(r"<b>([^<]*)</b><span>(CSI|POD|FAR)</span>", section)

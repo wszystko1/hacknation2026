@@ -52,8 +52,15 @@ def _context_with_crop_map(status: str):
 
     req = ReportRequest(parcel_id=DOBRCZ["dzialka"], day=date(2023, 7, 20), crop=CropGroup.ZBOZA_JARE)
     ctx = build_context(req)
-    hint = CropHint(map_year=2022, classes=[CropClass(code=1, name="zboża jare", share=0.82)], dominant="zboża jare", pixels=900)
-    source = SourceResult(source="crop_hint", status=status, data=hint if status == "ok" else None, elapsed_ms=1200, error="x")
+    hint = CropHint(
+        map_year=2022,
+        classes=[CropClass(code=1, name="zboża jare", share=0.82)],
+        dominant="zboża jare",
+        pixels=900,
+    )
+    source = SourceResult(
+        source="crop_hint", status=status, data=hint if status == "ok" else None, elapsed_ms=1200, error="x"
+    )
     ctx.data = dataclasses.replace(ctx.data, crop_hint=source)
     assert datasource  # the copy of the demo parcel is what build_context loaded
     return ctx
@@ -81,7 +88,7 @@ def test_a_failed_crop_map_is_a_gap_with_a_reason_and_an_unrequested_one_has_no_
 
 
 def test_copy_rows_carry_the_date_of_the_copy() -> None:
-    page = html(DOBRCZ)
+    page = html(DOBRCZ, widok="doradca")
     assert "kopia z dnia 21.11.2026" in page
 
 
@@ -93,7 +100,7 @@ def test_the_report_names_what_it_does_not_cover_and_where_the_soil_category_com
 
 
 def test_resolution_is_only_in_the_adviser_block() -> None:
-    page = html(DOBRCZ)
+    page = html(DOBRCZ, widok="doradca")
     table = re.search(r'<table id="tabela-zrodel">.*?</table>', page, re.S)
     assert table and "Rozdzielczość" not in table.group(0) and "piksel źródłowy" not in table.group(0)
     assert "rozdzielczość źródeł" in page and "piksel źródłowy do 0,25 m" in page

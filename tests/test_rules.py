@@ -124,7 +124,7 @@ def test_section_seven_names_the_formula_it_stays_on() -> None:
 @pytest.mark.parametrize("params", PARCELS, ids=IDS)
 @pytest.mark.parametrize("path", ["/raport", "/raport/druk"])
 def test_soil_and_irrigation_sections_have_charts_and_no_placeholders(params: dict, path: str) -> None:
-    page = client.get(f"{path}?{query(params)}").text
+    page = client.get(f"{path}?{query(params, **({'widok': 'doradca'} if path == '/raport' else {}))}").text
     assert "Tu pojawi" not in page
     for sid in ("uprawa", "nawadnianie"):
         block = page[page.index(f'<section id="{sid}"') :]

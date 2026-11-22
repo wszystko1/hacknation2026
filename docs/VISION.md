@@ -85,8 +85,10 @@ się różni, demo to pokazuje. Działka 2: `100403_2.0011.144` (gm. Góra Świ�
 1. **Wskazanie na mapie** (scena „Wskazanie działki na mapie”): rolnik nie zna numeru. Scena przybliża okolice Dobrcza przyciskiem „+”
    i kółkiem myszy i klika pole; serwer zamienia punkt na działkę ewidencyjną (ULDK GetParcelByXY), mapa pokazuje biały obrys i kartę
    „Działka 189/13 · obręb Dobrcz · 21,53 ha” z przyciskami „To ta działka” i „Wskaż inną”. Scena kończy na karcie i sprawdza numer
-   i powierzchnię. Klik poza Polską albo bez odpowiedzi ULDK: jedno zdanie przy mapie, pole numeru działa dalej.
-2. **Wejście i zdjęcie** (scena „Działka z ewidencji na zdjęciu”): „To ta działka” wpisuje pełny identyfikator w pole „Działka” (numer
+   i powierzchnię. Klik poza Polską albo gdy nie odpowiada żadne źródło obrysu: jedno zdanie przy mapie, pole numeru działa dalej. Dowolna działka
+   z kraju działa także wtedy, gdy ULDK jest atrapą albo milczy (rozdział „Obrys działki: kolejność źródeł”).
+2. **Wejście i zdjęcie** (scena „Działka z ewidencji na zdjęciu”): formularz startowy ma wpisane domyślnie działkę 189/13 w Dobrczu,
+   datę 20.07.2023 i uprawę „Zboża jare”, więc jedno kliknięcie „Oceń działkę” daje wynik; każde pole można zmienić. „To ta działka” wpisuje pełny identyfikator w pole „Działka” (numer
    można też wpisać), data, uprawa z listy alfabetycznej (14 grup, „Inna uprawa” na końcu; nad nią grupa „Podpowiedź z mapy upraw JRC
    2022”, gdy podpowiedź jest wiarygodna: warunek w „Modele i metody obliczeń”), „Oceń działkę”. Scena wybiera „Zboża jare” jak każdy
    użytkownik. Najpierw zdjęcie z obrysem, nagłówek „gm. Dobrcz › obręb Dobrcz”, 21,53 ha; panel źródeł liczy się w jednej linii, a stan i czas każdego źródła stoją po rozwinięciu szuflady. Klik na zdjęciu raportu poza obrysem pokazuje obrys i numer sąsiedniej działki z propozycją „Otwórz raport tej działki” (ta
@@ -375,10 +377,18 @@ Liczba z walidacji: **CSI wyniku „pod progiem / nad progiem” względem symbo
 - Linie odniesienia: „zawsze brak” (CSI 0); „zawsze susza” (CSI równe częstości „+”, w latach takich jak 2026 wysokie); klimatologia
   gminy (susza, gdy w pozostałych latach 2020–2026 ta sama gmina, uprawa, kategoria i okres miały „+” w co najmniej połowie lat; widzi też
   lata późniejsze, więc sprzyja linii odniesienia); ten sam kod na samej siatce NASA POWER zamiast stacji IMGW.
-- Dowód, że metoda odróżnia się od odpowiedzi trywialnej: `smsr.csi_gain_vs_baseline` = CSI metody − większe z CSI „zawsze susza”
-  i klimatologii gminy, cel co najmniej 0,10. Częstość „+” (`smsr.base_rate`) stoi w raporcie i README obok CSI.
-- Do tego przedział 95% z bootstrapu po gminach, zgodność w koszykach odległości od progu (0–10, 10–25, 25–50, >50 mm; z nich zdanie
-  w ramce zgodności). `scripts/eval_smsr.py` (`make eval`) zapisuje klucze `smsr.*` w `metrics.json`.
+- Dowód, że metoda odróżnia się od odpowiedzi trywialnej: `smsr.csi_gain_vs_baseline` = CSI metody − największe z CSI „zawsze susza”,
+  klimatologii gminy i siatki NASA POWER (najmocniejsza linia, dziś siatka POWER, 0,15), cel co najmniej 0,10. Częstość „+” (`smsr.base_rate`) stoi w raporcie i README obok CSI.
+- **Krzywa kalibracji** (nagłówek liczb dla jury, `smsr.calibration`): margines = KBW − próg w mm (ujemny = bilans poniżej progu),
+  klasy −50, −25, −10, 0, 10, 25, 50, 100 mm; dla każdej klasy liczba symboli i odsetek przypadków, w których SMSR też pisze „+”,
+  w obu wariantach parowania. Czyta się ją tak: „gdy bilans jest o 25 mm i więcej poniżej progu, SMSR potwierdza suszę w 9 na 10
+  przypadków; gdy o 50 mm i więcej powyżej, w 1% lub rzadziej; blisko progu (±10 mm) to niecałe 2 na 3, więc wynik oznaczamy jako
+  niepewny”. Krzywa nie zależy od częstości suszy (4,5%), więc nie ma pułapki „zawsze brak suszy”. Skalar `smsr.confirm_share_margin_le_minus25` (odsetek „+” SMSR przy marginesie −25 mm i niżej, cel co najmniej 0,8) trafia do oceny. Obok **tabela po latach**
+  (`smsr.by_year`: CSI i liczba symboli „+” osobno dla 2020–2026), bo wynik waha się między latami i kilka lat suszy daje większość
+  „+”. Zdanie w ramce zgodności bierze liczbę z klasy marginesu działki z tej krzywej, nie ze stałych koszyków. Przedziały 95%
+  z bootstrapu po gminach, nie po latach; README to mówi.
+- Zgodność w koszykach odległości od progu (0–10, 10–25, 25–50, >50 mm) zostaje jako miara pomocnicza; nie stoi w nagłówku, bo klasa
+  ponad 50 mm to większość symboli i odpowiedź „zawsze brak suszy” trafia w niej prawie tak samo. `scripts/eval_smsr.py` (`make eval`) zapisuje klucze `smsr.*` w `metrics.json`.
 - Miary dla rolnika (widok rolnika i raport): trafność (`smsr.accuracy`), trafność zrównoważona (`smsr.balanced_accuracy`), czułość
   (`smsr.recall`) i precyzja (`smsr.precision`) dla suszy, zawsze obok wyniku odpowiedzi „zawsze częstsza odpowiedź”
   (`smsr.accuracy_majority`; jej trafność zrównoważona to 0,5). CSI, POD, FAR, Peirce, Brier i BSS z kalibracją stoją w README i w
@@ -386,6 +396,14 @@ Liczba z walidacji: **CSI wyniku „pod progiem / nad progiem” względem symbo
 - Pomocnicze: `soil.category_agreement` (reguła gleby wobec mapy IUNG w ok. 100 punktach); z testu 50 losowych działek z 16 województw
   (daty historyczne, poza sezonem i dzisiejsza): `retention.place_or_reason_share`, `retention.with_place_share` (działanie retencyjne
   z miejscem albo jawne „brak miejsca, bo …”), `robustness.report_ok_under_30s_share`, `robustness.p50_s`, `robustness.p95_s`.
+- **Czas i kompletność raportu na 20 dowolnych działkach** (`robustness.report_ok_under_30s_share`, `robustness.n_parcels` = 20):
+  `scripts/eval_robustness.py` generuje raport dla 20 działek z `parcels50.csv` z różnych województw i zlicza te, których rdzeń
+  (obrys, werdykt, pogoda) jest gotowy w mniej niż 30 s; wynik w `metrics.json`, bez wpisywania ręcznego.
+- **Tabela w README „zmierzone / zmierzone, słabe / nie zmierzone”:** każda liczba stoi w jednym z trzech stanów, z jednostką
+  (symbol, gmino-rok, działka) i zdaniem, co z niej wynika; nad tabelą jedna linia „Czego nie zmierzyliśmy”. Nagłówek rozdziału to
+  krzywa kalibracji, CSI wobec najmocniejszej linii i BSS prognozy; trafność 96,8% wobec 95,5% stoi tylko w tabeli, w parze z trafnością
+  zrównoważoną, i nigdy w nagłówku (różnica 1,3 punktu przy 4,5% suszy). Słabe: kategoria gleby 37,5% dotyczy zapasu SoilGrids,
+  nie warstwy IUNG; retencja „nie zmierzone”, dopóki nie ma `retention.*`; przesunięcie progu sprawdzone na jednym roku.
 
 ## Sprawdzenie miejsc retencji
 
@@ -414,6 +432,26 @@ częstości historycznej; zalecenie z przyczyn i warunku, retencyjne z miejscem 
 granicy, zagłębienia, rów) sprawdzonym wobec rowów i zbiorników z BDOT10k obok losowych punktów, akumulacja spływu i wilgotne strefy
 z satelity tylko po wygranej, formalność z cytatem przepisu; ten sam numer i data dają zawsze ten sam raport; braki
 danych wprost; działanie sprawdzone na 50 losowych działkach, także z datą listopadową.
+
+## Obrys działki: kolejność źródeł
+
+Obrys i numer dowolnej działki z kraju pochodzą z pierwszego źródła, które odpowie poprawnie: (1) kopia lokalna 50 działek z 16
+województw i obu działek demo (`demo/data/map/parcels.json`, poniżej 1 MB, pobierana na VPS skryptem `scripts/freeze_parcels.py`
+z `demo/data/eval/parcels50.csv`); (2) ULDK GUGiK (3,5 s, bez ponowień); (3) zapas: EGiB WFS usługa zbiorcza GUGiK, warstwa
+`ms:dzialki` (5 s; po identyfikatorze filtr `ID_DZIALKI`, po punkcie BBOX 2 m z kontrolą, że punkt leży w obrysie; kolejność osi
+w EPSG:2180 jest N, E); (4) przy kliknięciu na mapie, gdy (2) i (3) zawiodą, KIEG GetFeatureInfo daje identyfikator i nazwy (bez
+geometrii, więc obrys tylko z kopii lokalnej); (5) uczciwy komunikat, że usługi GUGiK nie odpowiedziały, z listą działek mających kopię.
+Powód: w sali ULDK może przekierować na atrapę (`integracja01.gugik.gov.pl/resp/uldk.php`: nagłówek 4 GiB, `text/html`,
+`Content-Disposition: attachment`, nieskończony strumień hex).
+- **Strażnik ULDK** (`app/geodata/uldk_guard.py`): przekierowania wyłączone; odpowiedź z hosta innego niż `uldk.gugik.gov.pl` albo
+  ze statusem 3xx jest atrapą; wymagany `Content-Type: text/plain` i drugi wiersz z polami rozdzielonymi „|”, z geometrią zaczynającą
+  się od `SRID=2180;POLYGON` lub `SRID=2180;MULTIPOLYGON`; czytanie strumieniowo z limitem 2 MB i łącznym limitem czasu; po pierwszej
+  atrapie wyłącznik na 5 minut (kolejne zapytania idą od razu do zapasu).
+- Te same strażniki stoją w `app/inputs.py` (`_by_name_from_uldk`, obręb + numer) i w `app/picker/routes.py` (klik); inaczej atrapa
+  wejdzie tamtędy. `app/geodata/parcel_wfs.py` buduje ten sam `Parcel` co ULDK, a pole powierzchni liczy z geometrii.
+- Tabela źródeł raportu pokazuje, skąd jest obrys: „kopia lokalna”, „ULDK” albo „EGiB WFS”.
+- Kryteria: przy atrapie obrys działki spoza kopii przychodzi z zapasu w mniej niż 9 s, a kolejne w mniej niż 5,5 s (wyłącznik);
+  żadne zapytanie o obrys nie czyta ponad 2 MB. Nie zmierzono z sieci sali; test jest na atrapach HTTP (httpx.MockTransport).
 
 ## Dane
 
@@ -466,8 +504,11 @@ Małe, typowane, z testami i opisem w `docs/PYTANIA_JURY.md`:
    zagłębienia, rów i z nich miejsca działań albo „brak miejsca, bo …”; rozszerzenie (akumulacja D8, mediana NDMI) za tym samym
    interfejsem, wybierane wynikiem sprawdzenia miejsc. Typowane wejście (obrys, siatka wysokości, wody z BDOT10k) i wyjście (lista
    miejsc z rodzajem, położeniem, długością albo kierunkiem i powodem); moduł da się wymienić bez zmian w reszcie raportu.
+3b. `app/geodata/uldk_guard.py` + `app/geodata/parcel_wfs.py`: strażnik odpowiedzi ULDK i zapas EGiB WFS (rozdział „Obrys działki:
+   kolejność źródeł”); testy na atrapach HTTP: 302 na obcy host, nieskończony strumień, `text/html`, zły format, wyłącznik, zapas
+   na WFS, oba źródła padają, kolejność osi.
 4. `app/validation/agreement.py`: tabela 2×2, trafność, trafność zrównoważona, czułość, precyzja, CSI, POD, FAR, Peirce, linie
-   odniesienia, bootstrap po gminach; wołany przez `scripts/eval_smsr.py`.
+   odniesienia, bootstrap po gminach, krzywa kalibracji i tabela po latach; wołany przez `scripts/eval_smsr.py`.
 5. `app/forecast/exceedance.py`: częstość historyczna, dopełnianie przebiegami i model za jednym typowanym interfejsem, stany „ok”,
    „okres minął”, „brak progu”, klimatologia poza sezonem; podział po latach i miary (Brier, BSS, kalibracja) w
    `scripts/eval_forecast.py`; test, że rok Y nie widzi lat ≥ Y.
@@ -514,6 +555,7 @@ raporty do zgłoszenia robi `scripts/export_reports.py` (Playwright, `page.pdf`)
 | Mapa JRC myli uprawę na działce | podpowiedź tylko przy pokryciu ≥ 50% obrysu, nigdy wybór za użytkownika; pierwsza do cięcia |
 | L1 nie stoi o 20:00 | kolejność cięcia z „Drabiny cięć”; lista „Nigdy nie tniemy” zostaje |
 | Jury poda numer w innym formacie albo nie zna numeru | pełny identyfikator, obręb + numer (ULDK GetParcelByIdOrNr z listą), współrzędne, klik na mapie startowej (ULDK GetParcelByXY) |
+| W sali ULDK przekierowuje na atrapę (4 GiB, `text/html`, nieskończony strumień) | strażnik bez przekierowań, host, typ, format, limit 2 MB i czasu, wyłącznik na 5 minut; zapas EGiB WFS; kopia lokalna 50 działek; uczciwy komunikat; zapas nie jest sprawdzony z sieci sali (też GUGiK, ta sama podsieć) |
 | Kafle GUGiK albo ULDK GetParcelByXY nie odpowiadają w czasie pokazu | kafle i odpowiedzi ULDK dla okolic działek demo zamrożone w `demo/data/`; pole numeru działa bez mapy; zdanie przy mapie mówi, co się stało |
 
 ## Otwarte decyzje
@@ -560,6 +602,11 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
   Cięcie w tej kolejności: test łańcucha na demo i jego scena → detektor uprawy w poprzek stoku → walidacje inne niż zlewnia ucięta
   i płaskość (zostają te dwie) → karta kandydata w wierszu rozwijanym (zostaje zdanie „rozważ …” z geometrią na mapie).
   Zostają zawsze: oś przyczyny, mechanizmy z CSV, `Candidate` jako źródło tekstu i mapy, cytaty prawa.
+- **Dowolna działka i liczby dla jury (nd, po ekranie rolnika; start po scaleniu ekranu rolnika):** (1) strażnik ULDK, zapas WFS,
+  kopia lokalna, tabela źródeł; (2) krzywa kalibracji i tabela po latach, poprawiona linia bazowa, test 20 działek, tabela
+  „zmierzone / słabe / nie zmierzone” w README; (3) domyślne dane formularza startowego. Cięcie: domyślne dane są najtańsze i zostają;
+  potem klik z KIEG GetFeatureInfo → tabela po latach → test 20 działek (zostaje 10 działek z benchmarku); strażnik ULDK i krzywa
+  kalibracji zostają zawsze.
 - **Kolejność cięcia:** podpowiedź uprawy → sprawdzian płodozmianu na mapach JRC (grupy zostają) → korekta względem IUNG
   (zostaje próg z rozporządzenia) → reakcja NDVI w suche lata w podatności → wilgotne strefy z satelity (zostają podstawa i akumulacja) → test zbiorników
   (`retention.pond_auc`; niecka zostaje w najniższym punkcie albo zagłębieniu) → model prognozy w aplikacji (zostaje dopełnianie,
@@ -568,7 +615,7 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
   w raporcie należy do złotej ścieżki i zostaje).
 - **Nigdy nie tniemy:** poziomu A ekranu rolnika (7 elementów, bez czasów pobrania i bez „kat. II”, „okres 4”), złotej ścieżki, wskazania działki na mapie (obowiązkowy zakres zadania, pkt 3.3 ppkt 2), liczby zgodności z SMSR,
   wiersza SMSR gminy i zdania zastrzeżenia pod werdyktem, trzech osobnych odpowiedzi bez jednej sklejonej liczby, działania retencyjnego
-  nr 1 z miejscem, daty poza okresem monitoringu, jawnych braków danych, działania dla dowolnej działki.
+  nr 1 z miejscem, daty poza okresem monitoringu, jawnych braków danych, działania dla dowolnej działki (także przy atrapie ULDK: strażnik i zapas WFS).
 
 ## Historia zmian
 
@@ -633,3 +680,4 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
   (powód: krytyczna recenzja wizji; zmiana przyczyn będzie osobna).
 - nd 01:41, W08: ekran rolnika ma dwa poziomy (góra: najwyżej 7 elementów — nagłówek, werdykt zdaniem, dwa paski „zwykle / teraz”, działanie nr 1 z terminem, pewność, „Raport PDF” i „Pokaż doradcy”; reszta w wierszach rozwijanych), znikają powtórzenia liczb, czasy pobrania, „kat. II”, „okres 4”, rzymskie daty i ramki „Brak: …” (zamiast nich linia „Jeszcze nie liczymy: …”), panel „Skąd są dane” jest zwinięty do jednej linii, a działania brzmią „rozważ …”; widok doradcy bez zmian; dodany `tests/acceptance/test_farmer_screen.py` (xfail do zbudowania), żaden test nie został usunięty (powód: ekran rolnika miał za dużo elementów i powtórzeń, badanie interfejsu zatwierdzone przez właściciela 22.11).
 - nd 02:00, W09: działania retencyjne wynikają z łańcucha przyczyna (oś pogoda / miejsce / uprawa, ranking w mm tylko dla pogody) → mechanizm (9 wierszy `mechanisms.csv`, w sezonie potrzeba ORAZ możliwość) → kandydat z geometrią (pas trawy, miedza, uprawa w poprzek stoku, niecka; reszta „potencjał do weryfikacji”, bez miejsca „brak miejsca na działce, bo …” z niską pewnością) → walidacja (zlewnia ucięta, zlewnia zewnętrzna, granica, drenaż, rozdzielczość) → działanie „rozważ …, jeśli …; następny krok …”, a regulator drenów to art. 395 pkt 16 i 395a (regulacja istniejącego urządzenia: pkt 12), przebudowa rowu pkt 15; w `tests/acceptance/test_water_law.py` oczekiwanie dla `dreny-regulowany-odplyw` zmienione z „nic nie trzeba, art. 395 pkt 12” na „powiadomienie Wód Polskich, art. 395 pkt 16”, doszedł `tests/acceptance/test_cause_chain.py` (xfail do zbudowania), żaden test nie został usunięty (powód: przyczyny i działania łączył tylko tekst, a mapa nie miała danych o spadku i spływie).
+- nd 02:45, W10: dowolna działka mimo atrapy ULDK (strażnik odpowiedzi, zapas EGiB WFS, kopia lokalna 50 działek, źródło obrysu w tabeli źródeł), liczby dla jury (krzywa kalibracji i tabela po latach w `smsr.*`, linia bazowa `csi_gain_vs_baseline` na najmocniejszej linii NASA POWER, test czasu na 20 działkach, tabela „zmierzone / słabe / nie zmierzone” bez nagłówka 96,8% wobec 95,5%) i domyślna działka, data i uprawa w formularzu startowym; usunięte testy: żaden (powód: atrapa ULDK w sali i zarzut zawyżonej linii bazowej z badań z 22.11)

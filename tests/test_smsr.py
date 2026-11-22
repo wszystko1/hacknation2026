@@ -121,7 +121,7 @@ def test_unknown_soil_category_has_no_row_and_says_why(monkeypatch: pytest.Monke
 @pytest.mark.parametrize("params", [DOBRCZ, GSM_TODAY], ids=["dobrcz", "gora-swietej-malgorzaty"])
 @pytest.mark.parametrize("path", ["/raport", "/raport/druk"])
 def test_report_routes_show_the_row_not_a_placeholder(path: str, params: dict) -> None:
-    page = html(params, path=path)
+    page = html(params, path=path, **({"widok": "doradca"} if path == "/raport" else {}))
     r = report(params)
     assert "Tu pojawi" not in page
     assert f"Ocena SMSR dla gminy {r.smsr.commune} w tym okresie" in page
@@ -197,4 +197,6 @@ def test_row_without_a_page_is_one_sentence_with_a_reason(empty_dirs: Path, net)
     assert r.smsr.reason == "Brak: ocena SMSR dla gminy Dobrcz, bo wykaz IUNG nie odpowiedział"
     row = next(s for s in r.sources if s.key == "smsr")
     assert row.status == "missing" and row.reason == r.smsr.reason
-    assert "Brak: ocena SMSR dla gminy Dobrcz, bo wykaz IUNG nie odpowiedział" in html(DOBRCZ)
+    assert "Brak: ocena SMSR dla gminy Dobrcz, bo wykaz IUNG nie odpowiedział" in html(
+        DOBRCZ, widok="doradca"
+    )

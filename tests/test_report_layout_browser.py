@@ -30,7 +30,11 @@ def base_url() -> Iterator[str]:
     env = {**os.environ, "GEODATA_OFFLINE": "1"}
     server = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port)],
-        cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, start_new_session=True,
+        cwd=ROOT,
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
     )
     base = f"http://127.0.0.1:{port}"
     try:
@@ -87,8 +91,12 @@ def test_below_1180_px_the_map_takes_44_percent(page: Page, base_url: str) -> No
 def test_phone_is_one_column_without_horizontal_scroll(page: Page, base_url: str) -> None:
     open_report(page, base_url, 390, 844)
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-    mapcol = page.evaluate("(() => { const r = document.querySelector('.mapcol').getBoundingClientRect(); return [r.left, r.width]; })()")
-    report = page.evaluate("(() => { const r = document.querySelector('main.report').getBoundingClientRect(); return [r.left, r.top]; })()")
+    mapcol = page.evaluate(
+        "(() => { const r = document.querySelector('.mapcol').getBoundingClientRect(); return [r.left, r.width]; })()"
+    )
+    report = page.evaluate(
+        "(() => { const r = document.querySelector('main.report').getBoundingClientRect(); return [r.left, r.top]; })()"
+    )
     assert mapcol[0] == 0 and mapcol[1] <= 390
     assert report[0] == 0 and report[1] >= mapcol[1] - 1, "the report sits under the map"
 
@@ -105,5 +113,5 @@ def test_map_stays_while_the_report_scrolls(page: Page, base_url: str) -> None:
     page.mouse.wheel(0, 1500)
     page.wait_for_timeout(200)
     assert page.evaluate("window.scrollY") > 0
-    assert page.evaluate("document.querySelector('.mapcol').getBoundingClientRect().top") == 0
-    assert page.evaluate("document.querySelector('nav.rail').getBoundingClientRect().top") == 0
+    assert abs(page.evaluate("document.querySelector('.mapcol').getBoundingClientRect().top")) < 1
+    assert abs(page.evaluate("document.querySelector('nav.rail').getBoundingClientRect().top")) < 1

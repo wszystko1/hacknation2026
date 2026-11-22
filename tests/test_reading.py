@@ -3,7 +3,9 @@ from app.models import CropCondition
 
 
 def ok(signal: str | None, **extra: object) -> CropCondition:
-    return CropCondition.model_validate({"state": "ok", "words": "rośliny", "signal": signal, "n_seasons": 4} | extra)
+    return CropCondition.model_validate(
+        {"state": "ok", "words": "rośliny", "signal": signal, "n_seasons": 4} | extra
+    )
 
 
 def test_four_readings_are_distinct() -> None:

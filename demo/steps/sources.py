@@ -4,7 +4,8 @@ from demo.steps.common import PAUSE, open_section
 
 
 def scene(page, base_url: str) -> None:
-    page.locator("#skrot").scroll_into_view_if_needed()
+    page.locator("#pokaz-doradcy").click()  # the sources panel is on the advisor screen
+    page.wait_for_selector("body.view-doradca")
     open_section(page, "Źródła i braki", "zrodla")
     table = page.locator("#tabela-zrodel")
     rows = table.locator("tbody tr")

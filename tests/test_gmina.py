@@ -36,13 +36,13 @@ def test_frame_states_both_scores_per_100_cases() -> None:
 def test_report_and_print_have_no_placeholder_in_section_2() -> None:
     for params in (DOBRCZ, GSM_TODAY):
         for path in ("/raport", "/raport/druk"):
-            section = _section(html(params, path=path))
+            section = _section(html(params, path=path, **({"widok": "doradca"} if path == "/raport" else {})))
             assert "Tu pojawi" not in section
             assert "tabel SMSR jeszcze nie wczytujemy" not in section
 
 
 def test_smsr_row_and_section_share_one_result() -> None:
-    page = html(DOBRCZ)
+    page = html(DOBRCZ, widok="doradca")
     assert 'id="wiersz-smsr"' in page
     row = page[page.index('id="wiersz-smsr"') :][:600]
     assert "zagrożone" in row

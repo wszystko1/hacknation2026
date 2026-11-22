@@ -83,7 +83,7 @@ SOIL_CATEGORIES: tuple[SoilCategory, ...] = ("I", "II", "III", "IV")
 
 # Fixed texts the jury and the scenes check word for word.
 BADGE_BELOW = "Bilans poniżej progu suszy (szacunek dla działki)"
-BADGE_ABOVE = "Bilans powyżej progu suszy (szacunek dla działki)"
+BADGE_ABOVE = "Bilans jest lepszy niż próg suszy (szacunek dla działki)"
 DISCLAIMER = "To nie jest urzędowe stwierdzenie suszy; we wniosku liczy się ocena SMSR IUNG dla gminy"
 OUT_OF_SEASON = "Poza okresem monitoringu suszy (21.III–30.IX)"
 LAW_THRESHOLDS = "Dz.U. 2019 poz. 739"
@@ -502,6 +502,13 @@ class Report(BaseModel):
     def actions(self) -> list[Action]:
         """All actions of the report in plan order (numbers 1..M)."""
         return sorted((a for s in self.sections for a in s.actions), key=lambda a: a.n)
+
+    @property
+    def farmer(self):  # noqa: ANN201 - FarmerView; imported here because farmer_view imports this module
+        """The farmer's two-level screen built from this report."""
+        from app.farmer_view import build
+
+        return build(self)
 
     @property
     def plan_count(self) -> int:

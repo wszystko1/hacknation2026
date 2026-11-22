@@ -216,7 +216,7 @@ def _soil_range(crop: CropGroup, p: PeriodBalance) -> str:
     tail = (
         f"bilans jest poniżej progu na glebie kat. {', '.join(below)}"
         if below
-        else "bilans jest powyżej progu na każdej glebie"
+        else "bilans jest lepszy niż próg na każdej glebie"
     )
     return (
         f"Bez kategorii gleby nie wybierzemy progu: dla {CROP_GENITIVE[crop]} w tym okresie to od "
@@ -231,9 +231,9 @@ def _neighbour_note(crop: CropGroup, neighbour: SoilCategory, periods: list[Peri
     if not margins:
         return f"Przy sąsiedniej kategorii gleby (kat. {neighbour}) rozporządzenie nie daje progu."
     margin, p = min(margins, key=lambda m: m[0])
-    side = "poniżej" if margin < 0 else "powyżej"
+    side = "poniżej progu" if margin < 0 else "lepiej niż próg"
     return (
-        f"Przy sąsiedniej kategorii gleby (kat. {neighbour}): {dec(abs(margin))} mm {side} progu "
+        f"Przy sąsiedniej kategorii gleby (kat. {neighbour}): {dec(abs(margin))} mm {side} "
         f"(okres {p.n}, {_span(p)})."
     )
 

@@ -22,7 +22,9 @@ SQUARE = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
 
 def built(params: dict):
     return build_report(
-        ReportRequest(parcel_id=params["dzialka"], day=date.fromisoformat(params["data"]), crop=params["uprawa"])
+        ReportRequest(
+            parcel_id=params["dzialka"], day=date.fromisoformat(params["data"]), crop=params["uprawa"]
+        )
     )
 
 
@@ -106,7 +108,10 @@ def test_outlet_falls_back_to_the_lowest_boundary_point() -> None:
     x, y = data.terrain.data.lowest_outline_point_2180
     o = data.ortho.data
     m = built(DOBRCZ).map
-    assert m.outlet_px == (round((x - o.bbox_2180[0]) / o.m_per_px, 1), round((o.bbox_2180[3] - y) / o.m_per_px, 1))
+    assert m.outlet_px == (
+        round((x - o.bbox_2180[0]) / o.m_per_px, 1),
+        round((o.bbox_2180[3] - y) / o.m_per_px, 1),
+    )
     assert m.outlet_label == ""
 
 
@@ -117,7 +122,10 @@ def test_outlet_comes_from_the_runoff_analysis_with_its_catchment(monkeypatch) -
     from app.datasource import frozen_copy
 
     o = frozen_copy(DOBRCZ["dzialka"], date(2023, 7, 20)).ortho.data
-    assert m.outlet_px == (round((cx - o.bbox_2180[0]) / o.m_per_px, 1), round((o.bbox_2180[3] - cy) / o.m_per_px, 1))
+    assert m.outlet_px == (
+        round((cx - o.bbox_2180[0]) / o.m_per_px, 1),
+        round((o.bbox_2180[3] - cy) / o.m_per_px, 1),
+    )
     assert m.outlet_label == "zlewnia 12,4 ha"
     html = page(DOBRCZ)
     assert "zlewnia 12,4 ha" in svg(html)

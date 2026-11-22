@@ -15,7 +15,9 @@ def _series(first: date, last: date, per_day: dict[int, float]) -> tuple[list[st
 
 def test_norm_is_the_median_of_earlier_years_and_excludes_the_assessed_one() -> None:
     # 1.X-21.XI is 52 days; 2021: 1 mm a day, 2022: 2, 2023: 3, 2024: 10, 2026 (assessed): 100.
-    dates, rain = _series(date(2021, 10, 1), date(2026, 11, 21), {2021: 1, 2022: 2, 2023: 3, 2024: 10, 2026: 100})
+    dates, rain = _series(
+        date(2021, 10, 1), date(2026, 11, 21), {2021: 1, 2022: 2, 2023: 3, 2024: 10, 2026: 100}
+    )
     per_year = rain_since_october(dates, rain, date(2026, 11, 21))
     assert per_year[2021] == 52 and per_year[2022] == 104 and per_year[2023] == 156 and per_year[2024] == 520
     assert per_year[2026] == 5200

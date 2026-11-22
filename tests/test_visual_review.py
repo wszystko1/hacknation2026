@@ -33,7 +33,10 @@ def base_url() -> Iterator[str]:
         port = s.getsockname()[1]
     server = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port)],
-        cwd=ROOT, env={**os.environ, "GEODATA_OFFLINE": "1"}, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT,
+        cwd=ROOT,
+        env={**os.environ, "GEODATA_OFFLINE": "1"},
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
         start_new_session=True,
     )
     base = f"http://127.0.0.1:{port}"
@@ -63,9 +66,9 @@ def page() -> Iterator[Page]:
         browser.close()
 
 
-def open_report(page: Page, base_url: str) -> None:
+def open_report(page: Page, base_url: str, view: str = "doradca") -> None:
     page.set_viewport_size({"width": 1280, "height": 800})
-    page.goto(base_url + REPORT)
+    page.goto(base_url + REPORT + f"&widok={view}")
     page.wait_for_selector("main.report")
 
 
@@ -89,7 +92,8 @@ def test_header_stays_on_top_at_section_6(page: Page, base_url: str) -> None:
     box = page.locator(".report-head").bounding_box()
     assert box
     owner = page.evaluate(
-        "([x, y]) => !!document.elementFromPoint(x, y).closest('.report-head')", [box["x"] + box["width"] / 2, box["y"] + box["height"] / 2]
+        "([x, y]) => !!document.elementFromPoint(x, y).closest('.report-head')",
+        [box["x"] + box["width"] / 2, box["y"] + box["height"] / 2],
     )
     assert owner
 
@@ -103,6 +107,14 @@ def test_no_dashed_border_in_the_report(page: Page, base_url: str) -> None:
         }).map(e => e.className)"""
     )
     assert dashed == []
+
+
+def test_first_screen_of_the_farmer_view_holds_the_verdict_and_what_to_do(page: Page, base_url: str) -> None:
+    open_report(page, base_url, "rolnik")
+    for selector in ("#plakietka", "#zdanie-werdyktu", "#dzialanie-1"):
+        box = page.locator(selector).first.bounding_box()
+        assert box, selector
+        assert box["y"] >= 0 and box["y"] + box["height"] <= 800, (selector, box)
 
 
 def test_first_screen_holds_the_answer(page: Page, base_url: str) -> None:
@@ -121,7 +133,9 @@ def test_parcel_field_shows_the_whole_identifier(page: Page, base_url: str) -> N
             page.goto(base_url + url)
             page.wait_for_selector("#f-dzialka")
             page.locator("#f-dzialka").fill(PARCEL)
-            fits = page.evaluate("() => { const e = document.getElementById('f-dzialka'); return [e.value, e.scrollWidth <= e.clientWidth]; }")
+            fits = page.evaluate(
+                "() => { const e = document.getElementById('f-dzialka'); return [e.value, e.scrollWidth <= e.clientWidth]; }"
+            )
             assert fits == [PARCEL, True], (width, url, fits)
 
 

@@ -97,6 +97,6 @@ def test_route_shows_the_scene_date_from_the_demo_copy() -> None:
     condition = report().crop_condition
     assert condition.state in {"ok", "missing"} and condition.state != "waiting"
     assert condition.scene_date is not None
-    page = html()
+    page = html(widok="doradca")
     row = page.split('id="wiersz-satelita"')[1].split("</div>")[0]
     assert condition.scene_date.strftime("%d.%m.%Y") in row

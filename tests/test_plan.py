@@ -42,7 +42,7 @@ def test_timeline_is_sorted_by_due_and_undated_actions_close_it() -> None:
 
 
 def test_a_past_date_lists_what_happened_in_periods_ending_after_it() -> None:
-    page = html(DOBRCZ)
+    page = html(DOBRCZ, widok="doradca")
     plan = page[page.index('id="plan"') :]
     assert "Okresy kończące się po 20.07.2023" in plan
     assert re.search(r"okres 8: SMSR dla gminy Dobrcz: brak suszy", plan)
@@ -77,7 +77,7 @@ FORECAST = ExceedanceForecast(
 
 def plan_html(monkeypatch, forecast: ExceedanceForecast, **params: str) -> str:
     monkeypatch.setattr(report_module, "forecast_exceedance", lambda ctx: forecast)
-    page = html(DOBRCZ, **params)
+    page = html(DOBRCZ, widok="doradca", **params)
     return page[page.index('id="plan"') :]
 
 
@@ -109,14 +109,14 @@ def test_plan_with_a_closed_period_shows_only_the_state_sentence(monkeypatch) ->
 @pytest.mark.parametrize("params", [DOBRCZ, GSM_TODAY])
 @pytest.mark.parametrize("path", ["/raport", "/raport/druk"])
 def test_plan_section_has_no_promises(params: dict, path: str) -> None:
-    page = html(params, path)
+    page = html(params, path, **({"widok": "doradca"} if path == "/raport" else {}))
     plan = page[page.index('id="plan"') :]
     plan = plan[: plan.index("</section>")]
     assert "Tu pojawi" not in plan
 
 
 def test_plan_in_the_link_marks_the_timeline_row() -> None:
-    page = client.get(f"/raport?{query(DOBRCZ, plan='1')}").text
+    page = client.get(f"/raport?{query(DOBRCZ, plan='1', widok='doradca')}").text
     assert re.search(r'<li class="is-planned" data-plan-item="1">', page)
 
 

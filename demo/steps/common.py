@@ -19,6 +19,15 @@ def evaluate(page, base_url: str, parcel: dict) -> None:
     page.wait_for_selector(".report-head", timeout=30000)
 
 
+def open_row(page, row_id: str) -> None:
+    """Open a row of level B on the farmer screen (a no-op when it is already open) and scroll it into view."""
+    row = page.locator(f"#wiersz-{row_id}")
+    if row.get_attribute("open") is None:
+        row.locator("summary").click()
+    row.scroll_into_view_if_needed()
+    page.wait_for_timeout(400)
+
+
 def open_section(page, toc_title: str, section_id: str) -> None:
     """Click a row of "Cały raport w skrócie" and wait until its section is on screen."""
     page.locator("#skrot a", has_text=toc_title).first.click()

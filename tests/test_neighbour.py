@@ -192,7 +192,12 @@ def test_a_click_on_an_unknown_place_says_so_in_the_card(report_page: Page) -> N
 def test_the_card_outline_and_link_for_an_answer_of_the_server(report_page: Page) -> None:
     """The script's side with a stubbed answer (a square 30 m wide west of the parcel, number 189/12)."""
     lon, lat = WEST
-    ring = [[lon - 0.0002, lat - 0.0002], [lon + 0.0002, lat - 0.0002], [lon + 0.0002, lat + 0.0002], [lon - 0.0002, lat + 0.0002]]
+    ring = [
+        [lon - 0.0002, lat - 0.0002],
+        [lon + 0.0002, lat - 0.0002],
+        [lon + 0.0002, lat + 0.0002],
+        [lon - 0.0002, lat + 0.0002],
+    ]
     body = {
         "dzialka": "040303_2.0002.189/12", "numer": "189/12", "obreb": "Dobrcz", "gmina": "Dobrcz",
         "pow_ha": 3.5, "obrys_4326": [ring + ring[:1]],
@@ -205,7 +210,9 @@ def test_the_card_outline_and_link_for_an_answer_of_the_server(report_page: Page
     href = card.get_by_role("link", name="Otwórz raport tej działki").get_attribute("href")
     assert href == "/raport?dzialka=040303_2.0002.189%2F12&data=2023-07-20&uprawa=zboza_jare"
     box = report_page.locator(".mo-neighbour").bounding_box()
-    assert box and 20 < box["width"] < 120, box  # 0.0004 deg of longitude is about 27 m, at least 15 px on the photo
+    assert box and 20 < box["width"] < 120, (
+        box
+    )  # 0.0004 deg of longitude is about 27 m, at least 15 px on the photo
     centre = screen_point(report_page, lon, lat)
     assert box["x"] < centre[0] < box["x"] + box["width"] and box["y"] < centre[1] < box["y"] + box["height"]
     report_page.keyboard.press("Escape")

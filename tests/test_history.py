@@ -23,7 +23,7 @@ def section_html(page: str, section_id: str) -> str:
 def test_section_has_a_chart_with_a_title_sentences_and_the_calculation(
     route: str, params: dict, section_id: str
 ) -> None:
-    page = html(params, route)
+    page = html(params, route, **({"widok": "doradca"} if route == "/raport" else {}))
     sec = section_html(page, section_id)
     assert "Tu pojawi" not in sec
     svg = re.search(r'<svg class="ch".*?</svg>', sec, flags=re.S)

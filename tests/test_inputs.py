@@ -61,7 +61,7 @@ def test_date_is_shown_as_dd_mm_rrrr() -> None:
 
 def test_report_page_shows_the_date_as_dd_mm_rrrr_and_never_the_browser_formats() -> None:
     for typed in ("20.07.2023", "2023-07-20"):
-        r = client.get("/raport?" + urlencode(DOBRCZ | {"data": typed}))
+        r = client.get("/raport?" + urlencode(DOBRCZ | {"data": typed, "widok": "doradca"}))
         assert r.status_code == 200
         text = visible_text(r.text)
         assert "20.07.2023" in text

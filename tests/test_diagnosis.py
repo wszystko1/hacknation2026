@@ -122,7 +122,7 @@ def test_causes_stand_above_the_retention_section_in_both_views(params: dict) ->
 
     r = report(params)
     for path in ("/raport", "/raport/druk"):
-        page = html(params, path)
+        page = html(params, path, **({"widok": "doradca"} if path == "/raport" else {}))
         end = page.index('id="retencja"')
         for c in r.diagnosis.causes:
             assert 0 <= page.find(str(escape(c.words))) < end, (path, c.words)

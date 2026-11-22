@@ -45,7 +45,7 @@ def test_the_report_links_to_the_print_view_with_its_plan() -> None:
 
 
 def test_the_print_view_carries_the_same_plant_row_as_the_screen() -> None:
-    screen = html(DOBRCZ)
+    screen = html(DOBRCZ, widok="doradca")
     printed = html(DOBRCZ, path="/raport/druk")
     sat = [re.search(r"zdjęcie z \d{2}\.\d{2}\.\d{4}, czystych pikseli \d+%", p) for p in (screen, printed)]
     assert all(sat)

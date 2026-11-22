@@ -1,9 +1,7 @@
 """Scene "Raport na dziś: poza okresem monitoringu suszy": parcel 2, today's date, legumes."""
 
-import re
 from urllib.parse import urlencode
 
-from app.models import OUT_OF_SEASON
 from demo.steps.common import PARCEL_2, PAUSE, evaluate
 
 
@@ -14,22 +12,24 @@ def scene(page, base_url: str) -> None:
     assert verdict["state"] == "out_of_season" and verdict["season_year"] == 2026
     expected = round(abs(verdict["kbw_mm"]))
 
-    banner = page.locator("#poza-sezonem")
-    assert OUT_OF_SEASON in banner.inner_text()
-    shown = page.locator("#werdykt .big-number b").inner_text()
-    assert str(expected) in shown.replace("−", "-").lstrip("-"), (shown, expected)
-    assert "2026" in page.locator("#werdykt .big-number .cap").inner_text()
-    assert re.search(r"Sezon 2026", page.locator("#werdykt").inner_text())
-    # The data are a frozen copy and say how long the original download took.
+    # Level A: grey word, the season sentence, no drought call for today.
+    assert page.locator("#plakietka").inner_text() == "Poza sezonem"
+    assert "badge--neutral" in page.locator("#plakietka").get_attribute("class")
     assert (
-        "kopia danych z 21.11.2026; pobranie trwało" in page.locator(".report-head .demo-data").inner_text()
+        "Susza rolnicza jest oceniana od 21 marca do 30 września"
+        in page.locator("#zdanie-werdyktu").inner_text()
     )
+    assert page.locator("#poziom-a [data-a-item]").count() <= 7
+    # The balance of the season just ended opens in its row.
+    page.locator("#wiersz-bilans summary").click()
+    shown = page.locator("#wiersz-bilans .big-number b").inner_text()
+    assert str(expected) in shown.replace("−", "-").lstrip("-"), (shown, expected)
+    assert "2026" in page.locator("#wiersz-bilans .big-number .cap").inner_text()
 
     # The summary of the season just ended and the rain since 1 October against the norm.
     off = page.request.get(f"{base_url}/api/raport?{urlencode(PARCEL_2)}").json()["off_season"]
     assert off["season_year"] == 2026 and off["norm_mm"] and off["n_years"] >= 5
-    assert page.locator("#wiersz-werdyktu-dzis").inner_text().count("nie dotyczy") == 1
-    sentence = page.locator("#opad-od-1x")
+    sentence = page.locator("#wiersz-bilans #opad-od-1x")
     assert f"{round(off['rain_mm'])} mm" in sentence.inner_text()
     assert f"{round(off['norm_mm'])} mm" in sentence.inner_text()
     sentence.scroll_into_view_if_needed()

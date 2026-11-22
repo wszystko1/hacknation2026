@@ -1,0 +1,171 @@
+"""The farmer screen in two levels: level A (#poziom-a) of at most seven items, level B (#poziom-b) of expandable rows.
+
+The advisor view and the print view keep the blocks they had before; the numbers live in level B and there."""
+
+from __future__ import annotations
+
+import re
+
+import pytest
+
+from app.farmer_view import Bar, plain, weather_bar
+from app.models import Cause, Diagnosis
+from tests.acceptance.helpers import DOBRCZ, GSM_TODAY, html, report
+from tests.test_farmer_screen_baseline import BASELINE
+
+PARCELS = [DOBRCZ, GSM_TODAY]
+IDS = ["dobrcz", "gora"]
+FORBIDDEN = ("pobranie trwało", "kat. II", "okres 4", "bilans wody w 60 dniach", "Brak: zgodność metody")
+ROMAN_DATE = re.compile(
+    r"\b(?:I|II|III|IV|V|VI|VII|VIII|IX|X)\.\s?\d{1,2}\b|\b\d{1,2}\.(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)\b"
+)
+
+
+def text_of(fragment: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", fragment))
+
+
+def level_a(page: str) -> str:
+    m = re.search(r'<section id="poziom-a".*?</section>\s*(?=<section id="poziom-b")', page, flags=re.S)
+    assert m, "#poziom-a stands right before #poziom-b"
+    return m.group(0)
+
+
+def level_b(page: str) -> str:
+    return re.search(r'<section id="poziom-b".*?</section>', page, flags=re.S).group(0)
+
+
+def rows_of(page: str) -> list[str]:
+    return re.findall(r"<details\b.*?</details>", level_b(page), flags=re.S)
+
+
+def farmer_text(page: str) -> str:
+    """The farmer's report column without the map column (its source panel is a separate component)."""
+    main = page[page.index('<main id="tresc"') :]
+    return text_of(re.sub(r"<(script|style)\b.*?</\1>", " ", main, flags=re.S))
+
+
+@pytest.mark.parametrize("params", PARCELS, ids=IDS)
+def test_removed_texts_are_gone(params: dict) -> None:
+    text = farmer_text(html(params))
+    for phrase in FORBIDDEN:
+        assert phrase not in text, phrase
+    assert not re.search(r"\b\d+,\d s\b", text)
+    assert not ROMAN_DATE.search(text)
+    assert "Brak: " not in text
+
+
+@pytest.mark.parametrize("params", PARCELS, ids=IDS)
+def test_level_a_has_up_to_seven_items_and_both_buttons(params: dict) -> None:
+    a = level_a(html(params))
+    assert 1 <= a.count("data-a-item") <= 7
+    text = text_of(a)
+    for needed in ("Raport PDF", "Pokaż doradcy", "ocena IUNG", "Przy wniosku liczy się ocena IUNG"):
+        assert needed in text, needed
+
+
+def test_header_has_the_date_in_words_and_the_soil_without_a_category_code() -> None:
+    a = text_of(level_a(html(DOBRCZ)))
+    assert "20 lipca 2023" in a
+    assert "gleba podatna na suszę" in a and "kat." not in a
+
+
+def test_balance_and_threshold_stand_in_one_row_of_level_b() -> None:
+    page = html(DOBRCZ)
+    assert "−201 mm" not in text_of(level_a(page)) and "−154 mm" not in text_of(level_a(page))
+    holding = [r for r in rows_of(page) if "−201 mm" in text_of(r) or "−154 mm" in text_of(r)]
+    assert len(holding) == 1
+    assert "−201" in text_of(holding[0]) and "−154 mm" in text_of(holding[0])
+    assert 'id="wiersz-bilans"' in holding[0]
+
+
+@pytest.mark.parametrize("params", PARCELS, ids=IDS)
+def test_every_row_has_one_arrow(params: dict) -> None:
+    rows = rows_of(html(params))
+    assert len(rows) >= 5
+    for row in rows:
+        assert row.count("<summary") == 1
+
+
+def test_verdict_is_coloured_with_a_word_and_out_of_season_is_grey_without_bars() -> None:
+    dry = html(DOBRCZ)
+    assert "badge--dry" in dry and "Susza: tak" in dry and "a-bars" in level_a(dry)
+    grey = level_a(html(GSM_TODAY))
+    assert "badge--neutral" in grey and "Poza sezonem" in grey
+    assert "a-bars" not in grey and 'id="zdanie-werdyktu"' in grey
+
+
+def test_bar_shows_usual_and_now_of_the_first_weather_cause() -> None:
+    r = report(DOBRCZ)
+    bar = weather_bar(r)
+    assert bar == Bar("Opad w tym okresie", "106 mm", "33 mm", 100, 31)
+    page_bar = text_of(
+        re.search(r'class="a-bars".*?</div>\s*<div class="a-do"', html(DOBRCZ), flags=re.S).group(0)
+    )
+    assert "zwykle 106 mm" in page_bar and "teraz 33 mm" in page_bar
+
+
+def test_bar_follows_the_order_of_the_diagnosis_and_drops_out_without_a_weather_cause() -> None:
+    r = report(DOBRCZ)
+    causes = {c.code: c for c in r.diagnosis.causes}
+    evaporation_first = r.model_copy(
+        update={"diagnosis": Diagnosis(causes=[causes["duze_parowanie"], causes["malo_opadu"]])}
+    )
+    assert weather_bar(evaporation_first).label == "Parowanie w tym okresie"
+    soil_only = r.model_copy(update={"diagnosis": Diagnosis(causes=[causes["gleba_lekka"]])})
+    assert weather_bar(soil_only) is None
+    assert (
+        weather_bar(r.model_copy(update={"diagnosis": Diagnosis(causes=[Cause(code="splyw", words="x")])}))
+        is None
+    )
+
+
+def test_action_one_has_a_pin_and_a_deadline_or_the_promise_to_give_one() -> None:
+    a = text_of(level_a(html(DOBRCZ)))
+    assert re.search(r"Pinezka 1 na mapie", a)
+    assert "termin podamy po wyliczeniu" in a or re.search(r"Kiedy: .*20\d\d", a)
+
+
+@pytest.mark.parametrize("params", PARCELS, ids=IDS)
+def test_empty_parts_are_one_closing_line(params: dict) -> None:
+    page = html(params)
+    text = farmer_text(page)
+    assert len(re.findall(r"Jeszcze nie liczymy:", text)) <= 1
+    assert page.count('id="jeszcze-nie-liczymy"') <= 1
+    assert "Brak:" not in text
+
+
+def test_above_threshold_is_stated_without_a_double_meaning() -> None:
+    from app.models import BADGE_ABOVE
+
+    assert BADGE_ABOVE == "Bilans jest lepszy niż próg suszy (szacunek dla działki)"
+
+
+def test_plain_turns_codes_into_words() -> None:
+    assert plain("do 31.08.2023") == "do 31 sierpnia 2023"
+    assert plain("od 21.III do 30.IX") == "od 21 marca do 30 września"
+    assert (
+        plain("gleba podatna (kat. II); okres 4 i w okresie 7") == "gleba podatna; ten okres i w tym okresie"
+    )
+    assert plain("okno 60 dni, kat. III") == "okno 60 dni, kategoria III"
+
+
+@pytest.mark.parametrize(("params", "key"), [(DOBRCZ, "d"), (GSM_TODAY, "g")], ids=IDS)
+@pytest.mark.parametrize(
+    ("path", "extra", "name"), [("/raport", {"widok": "doradca"}, "doradca"), ("/raport/druk", {}, "druk")]
+)
+def test_advisor_and_print_views_keep_their_blocks(
+    params: dict, key: str, path: str, extra: dict, name: str
+) -> None:
+    page = html(params, path=path, **extra)
+    blocks = [text_of(b).strip() for b in re.findall(r'<div class="advisor".*?</div>', page, flags=re.S)]
+    assert blocks == BASELINE[f"{key}_{name}"]
+    if params is DOBRCZ:
+        assert "−201" in page and "−154 mm" in page
+    assert 'id="poziom-a"' not in page
+
+
+def test_default_view_is_the_farmer_view() -> None:
+    page = html(DOBRCZ)
+    assert page.index('id="poziom-a"') < page.index('id="poziom-b"')
+    assert '<div class="advisor"' not in level_a(page)

@@ -65,7 +65,7 @@ def test_today_the_plants_do_not_apply() -> None:
 @pytest.mark.parametrize("path", ["/raport", "/raport/druk"])
 @pytest.mark.parametrize("params", [DOBRCZ, GSM_TODAY], ids=["dobrcz", "gora-swietej-malgorzaty"])
 def test_verdict_has_the_three_rows_and_no_placeholder(path: str, params: dict) -> None:
-    page = html(params, path=path)
+    page = html(params, path=path, **({"widok": "doradca"} if path == "/raport" else {}))
     top = page[page.index('id="werdykt"') :]
     top = top[: top.index("</section>")]
     assert 'id="wiersz-satelita"' in top
@@ -74,7 +74,7 @@ def test_verdict_has_the_three_rows_and_no_placeholder(path: str, params: dict) 
 
 
 def test_reading_row_only_when_there_is_a_reading() -> None:
-    page = html(DOBRCZ)
+    page = html(DOBRCZ, widok="doradca")
     r = report()
     assert ('id="wiersz-odczyt"' in page) is bool(r.reading)
 

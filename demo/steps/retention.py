@@ -1,12 +1,13 @@
-"""Scene "Gdzie zatrzymać wodę na działce": section 4 with the place on the photo and the formality."""
+"""Scene "Gdzie zatrzymać wodę na działce": the row with the places on the parcel and the row with the formality."""
 
-from demo.steps.common import PAUSE, open_section
+from demo.steps.common import PAUSE, open_row
 
 
 def scene(page, base_url: str) -> None:
-    page.locator("#skrot").scroll_into_view_if_needed()
-    open_section(page, "Zatrzymanie wody", "retencja")
-    section = page.locator("#retencja")
-    assert section.is_visible()
-    assert "Wodach Polskich" in section.inner_text() or "Prawo wodne" in section.inner_text()
+    open_row(page, "formalnosci")
+    formalities = page.locator("#wiersz-formalnosci")
+    assert "Wodach Polskich" in formalities.inner_text() or "Prawo wodne" in formalities.inner_text()
+    open_row(page, "spadek")
+    assert page.locator("#wiersz-spadek .b-body").inner_text().strip()
+    page.locator("#wiersz-spadek").scroll_into_view_if_needed()
     page.wait_for_timeout(PAUSE)

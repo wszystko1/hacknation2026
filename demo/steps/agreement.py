@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from demo.steps.common import PAUSE, open_section
+from demo.steps.common import PAUSE, open_row
 
 SMSR = json.loads((Path(__file__).resolve().parents[2] / "metrics.json").read_text(encoding="utf-8"))["smsr"]
 
@@ -13,13 +13,11 @@ def _pct(x: float) -> str:
 
 
 def scene(page, base_url: str) -> None:
-    page.locator("#skrot").scroll_into_view_if_needed()
-    open_section(page, "Gmina i trafność", "gmina")
-    miary = page.locator("#miary")
-    miary.scroll_into_view_if_needed()
-    text = miary.inner_text()
+    open_row(page, "gmina")
+    row = page.locator("#wiersz-gmina")
+    text = row.inner_text()
     assert _pct(SMSR["accuracy"]) in text
     assert _pct(SMSR["accuracy_majority"]) in text
     assert "zawsze częstsza odpowiedź" in text
-    assert "–" not in page.locator("#gmina").inner_text().replace("−", "")
+    assert "–" not in text.replace("−", "")
     page.wait_for_timeout(PAUSE)

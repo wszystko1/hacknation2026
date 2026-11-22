@@ -39,6 +39,10 @@ def test_no_placeholder_and_every_gap_names_its_reason(path: str, extra: dict, p
     page = html(params, path=path, **extra)
     assert "Tu pojawi" not in page
     assert "Tu pojawią" not in page
+    if path == "/raport" and not extra:
+        # The farmer screen lists what is missing in one closing line instead of boxes.
+        assert "Brak: " not in page
+        return
     gaps = BRAK_SENTENCE.findall(page)
     assert gaps, "the skeleton parts must say what is missing"
     for gap in gaps:

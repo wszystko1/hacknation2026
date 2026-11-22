@@ -238,7 +238,7 @@ def test_api_report_has_the_category_the_threshold_and_the_badge_that_the_page_s
     assert body["soil"]["category"] in {"I", "II", "III", "IV"}
     assert body["verdict"]["threshold_mm"] is not None
     assert body["verdict"]["badge"] in {BADGE_BELOW, BADGE_ABOVE}
-    page = client.get(f"/raport?{DOBRCZ}")
+    page = client.get(f"/raport?{DOBRCZ}&widok=doradca")
     assert page.status_code == 200
     assert body["verdict"]["badge"] in page.text.replace("&#39;", "'")
 
@@ -249,7 +249,11 @@ def test_pages_name_the_soil_and_never_show_the_placeholder(query: str, path_suf
     for path in ("/raport", "/raport/druk"):
         text = client.get(f"{path}?{query}{path_suffix}").text
         assert STUB not in text
-        assert "kat. II" in text
+        if path == "/raport" and not path_suffix:
+            assert "kat. II" not in text  # the farmer screen names the soil in words
+            assert "gleba" in text.lower() or "gleby" in text.lower()
+        else:
+            assert "kat. II" in text
 
 
 def test_sources_table_has_the_category_row() -> None:

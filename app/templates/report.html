@@ -12,10 +12,15 @@
   </nav>
   {% include "report/_map.html" %}
   <main id="tresc" class="report">
+    {% if report.request.view == "doradca" %}
     {% include "report/_head.html" %}
     {% include "report/_verdict.html" %}
     {% include "report/_toc.html" %}
     {% for s in report.sections %}{% include "sections/" ~ s.id ~ ".html" %}{% endfor %}
+    {% else %}
+    {% include "report/_poziom_a.html" %}
+    {% include "report/_poziom_b.html" %}
+    {% endif %}
     <footer class="foot">Bilans działki · dane: ULDK, GUGiK, IMGW, Open-Meteo, IUNG-PIB, Copernicus · {{ report.verdict.disclaimer }}.</footer>
   </main>
 </div>
