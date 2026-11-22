@@ -1,10 +1,14 @@
 {# Farmer screen, level B: one <details> per row, one arrow per row. Every number stands in one row. #}
 {% set fv = report.farmer %}
 {% set v = report.verdict %}
+{% set farmer_extra = true %}
+{% set tab_of = {'bilans': 'przyczyny', 'dlaczego': 'przyczyny', 'parowanie': 'przyczyny', 'rosliny': 'przyczyny',
+                 'spadek': 'rekomendacje', 'zabiegi': 'rekomendacje', 'plan': 'rekomendacje', 'formalnosci': 'rekomendacje',
+                 'gmina': 'wiarygodnosc', 'czesto': 'wiarygodnosc', 'jak': 'zrodla'} %}
 <section id="poziom-b" class="level-b" aria-label="Szczegóły">
-  <h2>Szczegóły</h2>
+  <h2 data-tab="all-details">Szczegóły</h2>
   {% for row in fv.rows %}
-  <details class="b-row" id="wiersz-{{ row.id }}">
+  <details class="b-row" id="wiersz-{{ row.id }}" data-tab="{{ tab_of.get(row.id, 'zrodla') }}">
     <summary>{{ row.title }}</summary>
     <div class="b-body">
     {% if row.kind == 'balance' %}
@@ -42,5 +46,15 @@
     </div>
   </details>
   {% endfor %}
-  {% if fv.missing_line %}<p class="muted" id="jeszcze-nie-liczymy">{{ fv.missing_line }}</p>{% endif %}
+  {% set gmina_sections = report.sections | selectattr('id', 'equalto', 'gmina') | list %}
+  {% if gmina_sections or report.verdict_dg %}
+  <details class="b-row" id="wiersz-dla-doradcy" data-tab="wiarygodnosc">
+    <summary>Dla doradcy: tabela 2×2, miary, krzywa kalibracji, drugi wzór parowania</summary>
+    <div class="b-body b-tech">
+      {% for s in gmina_sections %}{% include "sections/gmina.html" %}{% endfor %}
+      {% if report.verdict_dg %}<div class="advisor">{% include "report/_verdict_dg.html" %}</div>{% endif %}
+    </div>
+  </details>
+  {% endif %}
+  {% if fv.missing_line %}<p class="muted" id="jeszcze-nie-liczymy" data-tab="wiarygodnosc">{{ fv.missing_line }}</p>{% endif %}
 </section>

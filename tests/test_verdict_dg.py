@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from fastapi.testclient import TestClient
@@ -35,7 +36,9 @@ def test_both_variants_are_tagged_and_the_verdict_stays_on_fao56() -> None:
 def test_advisor_view_names_the_source_and_the_farmer_view_does_not_have_it() -> None:
     advisor = client.get(f"/raport?{PARAMS}&widok=doradca").text
     assert "Doroszewski" in advisor and "2012" in advisor and "plakietka-dg" in advisor
-    assert "plakietka-dg" not in client.get(f"/raport?{PARAMS}&widok=rolnik").text
+    farmer = client.get(f"/raport?{PARAMS}&widok=rolnik").text
+    outside = re.sub(r'<details class="b-row" id="wiersz-dla-doradcy".*?</details>', " ", farmer, flags=re.S)
+    assert "plakietka-dg" not in outside and "plakietka-dg" in farmer  # only in the collapsed row
 
 
 def test_print_view_has_the_second_variant() -> None:

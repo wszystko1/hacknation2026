@@ -35,6 +35,10 @@ def level_b(page: str) -> str:
     return re.search(r'<section id="poziom-b".*?</section>', page, flags=re.S).group(0)
 
 
+def level_a_html(page: str) -> str:
+    return level_a(page)
+
+
 def rows_of(page: str) -> list[str]:
     return re.findall(r"<details\b.*?</details>", level_b(page), flags=re.S)
 
@@ -42,6 +46,8 @@ def rows_of(page: str) -> list[str]:
 def farmer_text(page: str) -> str:
     """The farmer's report column without the map column (its source panel is a separate component)."""
     main = page[page.index('<main id="tresc"') :]
+    # the collapsed "Dla doradcy" row holds the jury's tables and curve; its sentences name soil categories
+    main = re.sub(r'<details class="b-row" id="wiersz-dla-doradcy".*?</details>', " ", main, flags=re.S)
     return text_of(re.sub(r"<(script|style)\b.*?</\1>", " ", main, flags=re.S))
 
 
@@ -122,8 +128,10 @@ def test_bar_follows_the_order_of_the_diagnosis_and_drops_out_without_a_weather_
 
 def test_action_one_has_a_pin_and_a_deadline_or_the_promise_to_give_one() -> None:
     a = text_of(level_a(html(DOBRCZ)))
-    assert re.search(r"Pinezka 1 na mapie", a)
-    assert "termin podamy po wyliczeniu" in a or re.search(r"Kiedy: .*20\d\d", a)
+    assert 'aria-label="Miejsce na mapie: 1"' in level_a_html(html(DOBRCZ))
+    assert "inezka" not in a
+    # "Kiedy" is shown only for a known deadline; an unknown one goes to the last line "Jeszcze nie liczymy"
+    assert re.search(r"Kiedy: .*20\d\d", a) or "termin działania nr 1" in text_of(html(DOBRCZ))
 
 
 @pytest.mark.parametrize("params", PARCELS, ids=IDS)

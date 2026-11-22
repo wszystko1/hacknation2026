@@ -14,7 +14,7 @@ from dataclasses import asdict, dataclass
 
 import numpy as np
 
-from . import cache, config, http
+from . import cache, config, http, sanity
 from .errors import CacheMiss, GeodataError, UpstreamError
 from .models import ElevationGrid, Parcel, SourceResult, Terrain, from_dict, now_iso
 from .parcel import to_wgs84
@@ -46,6 +46,41 @@ def grid_layout(
     return round(cx - cols * step / 2, 2), round(cy + rows * step / 2, 2), step, rows, cols
 
 
+def _slope_field(z: np.ndarray, step: float) -> np.ndarray:
+    """Slope in percent per cell from central differences; NaN where a neighbour has no height.
+
+    Gaps are NOT filled (an earlier version filled them with the grid mean and produced slopes of 100-2000 %
+    at the edge of the data); a cell next to a gap simply has no slope.
+    """
+    dy, dx = np.gradient(z, step)
+    return np.hypot(dx, dy) * 100.0
+
+
+def _slope_check(
+    z: np.ndarray, step: float, mask: np.ndarray
+) -> tuple[float | None, float | None, sanity.Check]:
+    """Mean and maximum slope over the cells of `mask` and the verdict on them (value kept even when invalid)."""
+    if min(z.shape) < 3:
+        return None, None, sanity.invalid("spadek niewiarygodny: siatka za mała", "spadek terenu")
+    slope = _slope_field(z, step)[mask]
+    finite = np.isfinite(slope)
+    if not finite.any():
+        return (
+            None,
+            None,
+            sanity.invalid("spadek niewiarygodny: brak sąsiednich komórek z danymi", "spadek terenu"),
+        )
+    share = float(finite.sum()) / max(int(mask.sum()), 1)
+    mean, peak = round(float(slope[finite].mean()), 2), round(float(slope[finite].max()), 2)
+    return mean, peak, sanity.guarded("spadek terenu", sanity.check_slope, mean, peak, share)
+
+
+def _slope_stats(z: np.ndarray, step: float, mask: np.ndarray) -> tuple[float | None, float | None]:
+    """Mean and maximum slope over the cells of `mask`; None (missing) when the verdict is invalid."""
+    mean, peak, verdict = _slope_check(z, step, mask)
+    return (mean, peak) if verdict.usable else (None, None)
+
+
 def grid_stats(
     z: np.ndarray,
     x0: float,
@@ -60,7 +95,9 @@ def grid_stats(
     from rasterio.features import geometry_mask
     from rasterio.transform import from_origin
 
-    z = np.asarray(z, dtype="float64")
+    z = sanity.mask_nodata(
+        np.asarray(z, dtype="float64")
+    )  # nodata markers and the service's 0.0 gaps become NaN
     transform = from_origin(x0, y_top, step, step)
     geometry = {"type": "Polygon", "coordinates": [parcel.rings_2180[0]]}
     inside = geometry_mask([geometry], out_shape=z.shape, transform=transform, invert=True)
@@ -71,15 +108,12 @@ def grid_stats(
     valid = np.isfinite(z)
     mask = inside & valid
     if not mask.any():
-        mask = valid
-    if not mask.any():
-        raise UpstreamError("elevation grid has no valid cells")
-    slope_mean = slope_max = None
-    if min(z.shape) >= 3:
-        filled = np.where(valid, z, np.nanmean(z[valid]))
-        dy, dx = np.gradient(filled, step)
-        slope = np.hypot(dx, dy) * 100.0
-        slope_mean, slope_max = round(float(slope[mask].mean()), 2), round(float(slope[mask].max()), 2)
+        # Never describe the surroundings as the parcel: no valid cell inside the outline means no terrain.
+        raise UpstreamError("elevation grid has no valid cells inside the parcel outline")
+    dem = sanity.check_dem(z, inside)
+    if not dem.usable:
+        raise UpstreamError(dem.reason)
+    slope_mean, slope_max = _slope_stats(z, step, mask)
     # Lowest point of the outline: walk the ring in steps of one cell and take the lowest cell.
     lowest: tuple[float, float, float] | None = None
     ring = parcel.rings_2180[0]
@@ -106,6 +140,53 @@ def grid_stats(
         lowest_outline_elevation_m=round(lowest[2], 2) if lowest else None,
         grid_m=round(step, 2), samples=int((inside & valid).sum()), provider=provider, grid=grid,
     )  # fmt: skip
+
+
+def _grid_array(grid: ElevationGrid) -> np.ndarray:
+    return np.array([[np.nan if v is None else v for v in row] for row in grid.z], dtype="float64")
+
+
+def assess_terrain(parcel: Parcel, terrain: Terrain) -> tuple[Terrain, list[str]]:
+    """Plausibility of a terrain result (fresh or from the cache): the verdicts as Polish notes.
+
+    A cached answer written before nodata was recognised is recomputed from its own grid. An invalid slope is
+    removed (None) with the note "brak: ..."; a warning leaves the numbers and adds "Ostrzeżenie: ...". Raises
+    UpstreamError when the elevations themselves are unusable. A failing check is reported as a gap, never raised.
+    """
+    notes: list[str] = []
+    grid = terrain.grid
+    if grid is None:
+        return terrain, notes
+    z = _grid_array(grid)
+    clean = sanity.mask_nodata(z)
+    if (
+        int(np.isfinite(clean).sum()) != int(np.isfinite(z).sum())
+        or terrain.slope_mean_pct is not None
+        and not (sanity.check_slope(terrain.slope_mean_pct, terrain.slope_max_pct).usable)
+    ):
+        fresh = grid_stats(clean, grid.x0, grid.y_top, grid.step_m, parcel, terrain.provider)
+        fresh.catchment_grid, fresh.catchment_note = terrain.catchment_grid, terrain.catchment_note
+        terrain = fresh
+        notes.append("Model terenu: komórki bez danych (0 m) pominięte, statystyki policzone od nowa")
+        grid, z = terrain.grid, sanity.mask_nodata(_grid_array(terrain.grid))  # type: ignore[arg-type,union-attr]
+    inside = np.array(grid.inside, dtype=bool)  # type: ignore[union-attr]
+    mask = inside & np.isfinite(z)
+    dem = sanity.guarded("numeryczny model terenu", sanity.check_dem, z, inside)
+    if dem.note:
+        notes.append(dem.note)
+    if not dem.usable:
+        raise UpstreamError(dem.reason)
+    mean, _, verdict = _slope_check(z, grid.step_m, mask)
+    if verdict.note:
+        notes.append(verdict.note)
+    if verdict.usable:
+        plane = sanity.plane_slope_pct(z, inside, grid.step_m)
+        consistency = sanity.guarded("spójność spadku", sanity.check_slope_consistency, mean, plane)
+        if consistency.note:
+            notes.append(consistency.note)
+    else:
+        terrain.slope_mean_pct = terrain.slope_max_pct = None
+    return terrain, notes
 
 
 def parse_height_list(text: str, expected: int) -> list[float]:
@@ -332,7 +413,7 @@ def fetch_catchment_grid(
     """Elevation grid over the parcel plus ~300 m with one 10 m step, heights rounded to 0.1 m."""
     plan = catchment_plan(parcel, max_points)
     coarse_points, fine_points = catchment_points(plan)
-    heights = _post_heights(coarse_points + fine_points, deadline)
+    heights = sanity.mask_nodata(np.array(_post_heights(coarse_points + fine_points, deadline))).tolist()
     z = assemble_catchment(plan, heights[: len(coarse_points)], heights[len(coarse_points) :])
     if not np.isfinite(z).any():
         raise UpstreamError("height service returned no heights for the margin grid")
@@ -355,7 +436,10 @@ def _with_catchment(
     key = f"{parcel.id}_catchment_p{max_points}"
     hit = cache.get_json("terrain", key)
     if hit is not None:
-        terrain.catchment_grid = from_dict(ElevationGrid, hit["grid"])
+        grid = from_dict(ElevationGrid, hit["grid"])
+        cleaned = sanity.mask_nodata(_grid_array(grid))
+        grid.z = [[None if np.isnan(v) else round(float(v), 2) for v in row] for row in cleaned]
+        terrain.catchment_grid = grid
         terrain.catchment_note = hit["note"]
         return result
     try:
@@ -406,10 +490,17 @@ def _fetch_main(
             "terrain", key, config.DAY
         )  # coarse fallback: try the national model again after a day
     if hit is not None:
-        return SourceResult(
-            "terrain", hit["status"], from_dict(Terrain, hit["data"]), source_url=hit["url"],
-            retrieved_at=hit["retrieved_at"], resolution=hit["resolution"], notes=hit["notes"], from_cache=True,
-        )  # fmt: skip
+        try:
+            cached, checked = assess_terrain(parcel, from_dict(Terrain, hit["data"]))
+        except UpstreamError:
+            if config.is_offline():
+                raise
+            hit = None  # the stored answer is not plausible: download again
+        else:
+            return SourceResult(
+                "terrain", hit["status"], cached, source_url=hit["url"], retrieved_at=hit["retrieved_at"],
+                resolution=hit["resolution"], notes=[*hit["notes"], *checked], from_cache=True,
+            )  # fmt: skip
     cache.require_online("terrain", key)
     notes: list[str] = []
     status = "ok"
@@ -429,6 +520,7 @@ def _fetch_main(
             terrain, url = _from_coarse(parcel, margin_m, deadline)
             status, resolution = "fallback", RES_FALLBACK
             notes.append("90 m model: differences inside a small parcel are below its accuracy")
+    terrain, checked = assess_terrain(parcel, terrain)
     entry = {
         "status": status, "data": asdict(terrain), "url": url, "retrieved_at": now_iso(), "resolution": resolution,
         "notes": notes,
@@ -436,5 +528,5 @@ def _fetch_main(
     cache.put_json("terrain", key, entry)
     return SourceResult(
         "terrain", status, terrain, source_url=url, retrieved_at=entry["retrieved_at"], resolution=resolution,
-        notes=notes,
+        notes=[*notes, *checked],
     )  # fmt: skip

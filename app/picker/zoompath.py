@@ -10,8 +10,8 @@ import math
 from app.picker.webmercator import TILE_PX
 
 VIEW_W, VIEW_H = 1366, 768  # map window of the demo browser, px
-FIRST_ZOOM, LAST_ZOOM = 6, 17
-ORTHO_FROM_ZOOM = 15  # the base map up to this zoom (exclusive), the orthophoto from it
+FIRST_ZOOM, LAST_ZOOM = 9, 17
+ORTHO_FROM_ZOOM = 9  # the base map below this zoom (the map cannot be zoomed out that far), the orthophoto from it
 
 POLAND_CENTRE = (19.15, 52.05)  # lon, lat of the view of Poland at FIRST_ZOOM
 # Centroids (lon, lat) of the two demo parcels: 040303_2.0002.189/13 and 100403_2.0011.144.

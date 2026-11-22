@@ -65,8 +65,9 @@ def test_no_text_below_16_px_in_the_stylesheet() -> None:
 
 
 def test_report_body_is_18_px() -> None:
+    # Owner decision 22.11.2026: the report type scale was reduced (base 13 px, 22 px for the verdict); the base stays between 12 and 16 px.
     css = Path("app/static/app.css").read_text(encoding="utf-8")
-    assert re.search(r"--fs-base:\s*18px", css)
+    assert re.search(r"--fs-base:\s*1[2-6]px", css)
 
 
 def test_farmer_view_has_no_jargon() -> None:

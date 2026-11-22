@@ -72,7 +72,9 @@ def mechanism_for(action_id: str) -> Mechanism:
     return load_mechanisms()[load_catalog()[action_id].mechanism]
 
 
-def is_needed(mechanism: Mechanism, cause_codes: set[str] | frozenset[str] | tuple[str, ...], in_season: bool) -> bool:
+def is_needed(
+    mechanism: Mechanism, cause_codes: set[str] | frozenset[str] | tuple[str, ...], in_season: bool
+) -> bool:
     """In the season the need is required: one of `need_required` among the diagnosed causes. Off season it is not."""
     if not in_season:
         return True

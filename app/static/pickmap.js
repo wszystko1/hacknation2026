@@ -3,8 +3,9 @@
    under the point and draws its outline. Web Mercator: world pixel = 256 * 2^z * (lon + 180) / 360. */
 (function () {
   "use strict";
-  var TILE = 256, MIN_Z = 6, MAX_Z = 19, ORTHO_FROM = 15, DRAG_PX = 5, WHEEL_GAP_MS = 100, KEY_PAN_PX = 120;
-  var START = { lon: 19.15, lat: 52.05, z: 6 }; // the view of Poland
+  var TILE = 256, MIN_Z = 9, MAX_Z = 19, ORTHO_FROM = 9, DRAG_PX = 5, WHEEL_GAP_MS = 100, KEY_PAN_PX = 120;
+  var START = { lon: 19.15, lat: 52.05, z: 9 }; // the middle of Poland, where the photo has no empty corners
+  var BOUNDS = { w: 14.0, e: 24.3, s: 48.9, n: 55.0 }; // the map centre stays inside this frame (no empty photo outside the country)
   var SVG_NS = "http://www.w3.org/2000/svg";
 
   function size(z) { return TILE * Math.pow(2, z); }
@@ -75,16 +76,19 @@
     }
     function redraw() { if (!frame) frame = requestAnimationFrame(render); }
 
+    function clamp() {
+      var a = toWorld(BOUNDS.w, BOUNDS.n, z), b = toWorld(BOUNDS.e, BOUNDS.s, z);
+      cx = Math.min(b.x, Math.max(a.x, cx)); cy = Math.min(b.y, Math.max(a.y, cy));
+    }
     function zoomBy(step, px, py) { // keeps the point under (px, py) in place
       var nz = Math.min(MAX_Z, Math.max(MIN_Z, z + step));
       if (nz === z) return;
       var f = Math.pow(2, nz - z), dx = px - w / 2, dy = py - h / 2;
       cx = (cx + dx) * f - dx; cy = (cy + dy) * f - dy; z = nz;
-      render();
+      clamp(); render();
     }
     function pan(dx, dy) {
-      var s = size(z);
-      cx = Math.min(s, Math.max(0, cx - dx)); cy = Math.min(s, Math.max(0, cy - dy));
+      cx -= dx; cy -= dy; clamp();
       redraw();
     }
 

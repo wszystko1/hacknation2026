@@ -76,7 +76,7 @@ def test_header_is_opaque_over_scrolled_content(page: Page, base_url: str) -> No
     open_report(page, base_url)
     page.evaluate("window.scrollTo(0, 1500)")
     page.wait_for_timeout(200)
-    inside = page.evaluate("() => !!document.elementFromPoint(700, 120).closest('.report-head')")
+    inside = page.evaluate("() => !!document.elementFromPoint(1000, 40).closest('.report-head')")
     assert inside
     alpha = page.evaluate(
         """() => { const c = getComputedStyle(document.querySelector('.report-head')).backgroundColor;

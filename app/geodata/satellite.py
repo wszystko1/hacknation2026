@@ -14,7 +14,7 @@ from datetime import date, timedelta
 
 import numpy as np
 
-from . import cache, config, http
+from . import cache, config, http, sanity
 from .errors import GeodataError, UpstreamError
 from .models import Parcel, Satellite, SceneIndex, SourceResult, now_iso
 
@@ -276,6 +276,18 @@ def _same_day(target: date, year: int) -> date:
         return target.replace(year=year, day=28)
 
 
+def _vet(scene: SceneIndex | None, notes: list[str]) -> SceneIndex | None:
+    """The scene, or None when its indices are not plausible (NDVI / NDMI outside -1..1, almost no clear pixels)."""
+    if scene is None:
+        return None
+    verdict = sanity.guarded(
+        "indeksy satelitarne", sanity.check_indices, scene.ndvi, scene.ndmi, scene.valid_fraction
+    )
+    if verdict.note:
+        notes.append(f"{scene.date}: {verdict.note}")
+    return scene if verdict.usable else None
+
+
 def fetch_satellite(
     parcel: Parcel,
     target: date,
@@ -306,9 +318,12 @@ def fetch_satellite(
             current=SceneIndex(**hit["data"]["current"]) if hit["data"]["current"] else None,
             history=[SceneIndex(**h) for h in hit["data"]["history"]],
         )  # fmt: skip
+        checked: list[str] = []
+        data.current = _vet(data.current, checked)
+        data.history = [h for h in (_vet(h, checked) for h in data.history) if h is not None]
         return SourceResult(
             "satellite", hit["status"], data, source_url=config.stac_search_url(), retrieved_at=hit["retrieved_at"],
-            resolution=RESOLUTION, notes=hit["notes"], from_cache=True,
+            resolution=RESOLUTION, notes=[*hit["notes"], *checked], from_cache=True,
         )  # fmt: skip
     cache.require_online("satellite", key)
     lon, lat = parcel.centroid_4326
@@ -350,6 +365,8 @@ def fetch_satellite(
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
         band_pool.shutdown(wait=False, cancel_futures=True)
+    current = _vet(current, notes)
+    history = [h for h in (_vet(h, notes) for h in history) if h is not None]
     dropped = None
     if current is not None and current.valid_fraction < MIN_CLEAR_SHARE:
         dropped, current = current, None  # the scene stays out of the data and the notes say why

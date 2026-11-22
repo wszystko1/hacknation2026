@@ -8,7 +8,7 @@ from collections.abc import Callable
 from datetime import date
 from typing import Any
 
-from . import config
+from . import config, sanity
 from .crop_hint import fetch_crop_hint
 from .errors import CacheMiss, InvalidParcelId
 from .forecast import fetch_forecast, fetch_seasonal
@@ -79,6 +79,21 @@ def _empty(name: str, status: str, elapsed_ms: int, error: str = "", note: str =
     )  # fmt: skip
 
 
+def _vet_parcel(result: SourceResult[Any]) -> SourceResult[Any]:
+    """An outline that is not a plausible polygon in Poland is no outline: the source becomes an error with the reason."""
+    if not result.usable:
+        return result
+    parcel = result.data
+    verdict = sanity.guarded("obrys działki", sanity.check_outline, parcel.rings_2180, parcel.area_ha)
+    if verdict.usable:
+        if verdict.note:
+            result.notes.append(verdict.note)
+        return result
+    failed = _empty("parcel", "error", result.elapsed_ms, verdict.missing_text)
+    failed.notes = [*result.notes, verdict.missing_text]
+    return failed
+
+
 def d8_wins() -> bool:
     """True when the D8 variant won the placement check, so the margin grid is worth downloading."""
     try:
@@ -144,7 +159,9 @@ def fetch_all(
             parcel_task = _Task(
                 "parcel", lambda: fetch_parcel_by_lonlat(lonlat[0], lonlat[1], deadline=total_deadline)
             )
-        parcel_res = parcel_task.collect(min(total_deadline, started + config.TIMEOUTS["parcel"]))
+        parcel_res = _vet_parcel(
+            parcel_task.collect(min(total_deadline, started + config.TIMEOUTS["parcel"]))
+        )
         results: dict[str, SourceResult[Any]] = {"parcel": parcel_res}
         others = [n for n in ALL_SOURCES if n != "parcel"]
         if not parcel_res.usable:

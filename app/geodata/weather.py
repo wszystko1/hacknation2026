@@ -17,7 +17,7 @@ from datetime import date, timedelta
 
 import numpy as np
 
-from . import cache, config, http, imgw
+from . import cache, config, http, imgw, sanity
 from .errors import CacheMiss, GeodataError, UpstreamError
 from .et0 import et0_penman_monteith
 from .models import SourceResult, Weather, now_iso
@@ -309,7 +309,14 @@ def _build(
     s = entry["series"]
     lo = (needed_start - date.fromisoformat(entry["start"])).days
     hi = (target - date.fromisoformat(entry["start"])).days + 1
-    prec, et0 = s["precipitation_mm"][lo:hi], s["et0_mm"][lo:hi]
+    raw_prec, raw_et0 = s["precipitation_mm"][lo:hi], s["et0_mm"][lo:hi]
+    # Values outside the physical range are gaps (never corrected): see sanity.py.
+    checked = [
+        sanity.guarded("opad dzienny", sanity.check_precipitation, raw_prec),
+        sanity.guarded("parowanie dzienne", sanity.check_et0, raw_et0),
+    ]
+    prec = sanity.clean_series(raw_prec, 0.0, sanity.PRECIP_MAX_DAILY_MM)
+    et0 = sanity.clean_series(raw_et0, 0.0, sanity.ET0_MAX_DAILY_MM)
     p_sources, e_sources = _shares(s["p_src"][lo:hi]), _shares(s["e_src"][lo:hi])
     p_main = next((k for k in p_sources if k != "missing"), "")
     e_main = next((k for k in e_sources if k != "missing"), "")
@@ -329,7 +336,12 @@ def _build(
         tmean_c=s.get("tmean_c", [])[lo:hi], sunshine_h=s.get("sunshine_h", [])[lo:hi],
         precipitation_station_km=p_km, et0_station=e_station, et0_station_km=e_km, grid="; ".join(grids),
     )  # fmt: skip
-    notes = list(entry["notes"]) + extra
+    checked.append(
+        sanity.guarded(
+            "luki w serii", sanity.check_series_gaps, data.missing_share, "okres opadu i parowania"
+        )
+    )
+    notes = list(entry["notes"]) + extra + [c.note for c in checked if c.note]
     if p_station:
         notes.append(f"precipitation: IMGW station {p_station}, {p_km} km from the parcel")
     if e_station:

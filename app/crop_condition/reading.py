@@ -6,7 +6,10 @@ from app.models import CropCondition, VerdictState
 
 _READINGS = {
     ("below", "weaker"): "Susza potwierdzona przez stan roślin.",
-    ("below", "normal"): "Bilans poniżej progu; satelita jeszcze nie pokazuje stresu (wskaźnik reaguje z opóźnieniem).",
+    (
+        "below",
+        "normal",
+    ): "Bilans poniżej progu; satelita jeszcze nie pokazuje stresu (wskaźnik reaguje z opóźnieniem).",
     ("above", "weaker"): (
         "Spadek niewyjaśniony bilansem, sprawdź na polu "
         "(lokalny opad nawalny, zalanie, zbiór lub pokos, inna uprawa)."

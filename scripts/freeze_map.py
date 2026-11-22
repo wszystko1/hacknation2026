@@ -1,8 +1,8 @@
 """Freeze the offline copy of the parcel picker: uv run python scripts/freeze_map.py
 
 Writes into demo/data/map:
-  tiles/{layer}/{z}/{x}/{y}.jpg  every tile of the zoom path (Poland at z=6 down to z=17 around both demo parcels,
-                                 1366x768 window), cut from the GUGiK WMS;
+  tiles/{layer}/{z}/{x}/{y}.jpg  every tile of the zoom path (the middle of Poland at z=9 down to z=17 around both demo parcels,
+                                 1366x768 window), the GUGiK orthophoto (WMS);
   parcels.json                   outlines of the demo parcels (from their frozen data copies) and of the parcels
                                  the report photo shows around them (ULDK GetParcelByXY on a grid of points).
 

@@ -7,7 +7,18 @@ import re
 
 import pytest
 
-from app.advice.diagnosis import RULES, balance_split, diagnose, season_history, usual_period
+from app.advice.diagnosis import (
+    BOTH_FACTORS,
+    LESS_RAIN_SHARE,
+    MORE_EVAPORATION_SHARE,
+    RULES,
+    attribution,
+    balance_split,
+    diagnose,
+    need,
+    season_history,
+    usual_period,
+)
 from app.context import ReportContext
 from app.drought.kbw import assess
 from app.inputs import parse_request
@@ -134,3 +145,63 @@ def test_adviser_view_shows_rule_thresholds_with_confidence(params: dict) -> Non
     keys = {kv.key: kv.value for kv in r.section("przyczyny").advisor}
     assert any("propozycja zespołu" in v for v in keys.values())
     assert all(any(rule.label.lower() in k for k in keys) for rule in RULES)
+
+
+def test_thresholds_are_85_and_110_percent() -> None:
+    assert (LESS_RAIN_SHARE, MORE_EVAPORATION_SHARE) == (0.85, 1.10)
+
+
+@pytest.mark.parametrize("params", PARCELS)
+def test_two_definitions_of_usual_and_a_label_only_when_they_agree(params: dict) -> None:
+    attr = attribution(make_context(params))
+    assert attr is not None
+    assert attr.label == (attr.label_season if attr.label_season == attr.label_medians else BOTH_FACTORS)
+    assert abs((attr.season_rain_mm - attr.season_et0_mm) - usual_period(make_context(params)).kbw_mm) <= 0.1
+
+
+@pytest.mark.parametrize("params", PARCELS)
+def test_label_is_stable_when_any_earlier_season_is_dropped(params: dict) -> None:
+    ctx = make_context(params)
+    full = attribution(ctx)
+    assert full is not None
+    years = usual_period(ctx).years
+    assert len(years) == 9
+    for year in years:
+        dropped = attribution(ctx, without_year=year)
+        assert dropped is not None
+        assert dropped.label in {full.label, BOTH_FACTORS}, (year, dropped.label, full.label)
+
+
+def test_label_is_both_factors_when_the_definitions_disagree() -> None:
+    from app.advice.diagnosis import MAINLY_EVAPORATION, MAINLY_RAIN, _factor
+
+    # same period, two different "usual" values: one says rain, the other evaporation
+    assert _factor(100, 200, 150, 200) == MAINLY_RAIN
+    assert _factor(100, 200, 100, 150) == MAINLY_EVAPORATION
+    assert _factor(100, 200, 100, 200) == BOTH_FACTORS
+
+
+@pytest.mark.parametrize("params", PARCELS)
+def test_place_and_crop_causes_are_not_ranked_and_the_need_lists_every_cause(params: dict) -> None:
+    d = report(params).diagnosis
+    assert need(d) == [c.code for c in d.causes]
+    for c in d.causes:
+        assert c.evidence, c.code
+        if c.axis != "pogoda":
+            assert c.strength_mm is None
+    axes = [c.axis for c in d.causes]
+    assert axes == sorted(axes, key=lambda a: a != "pogoda")
+
+
+def test_adviser_route_shows_axis_and_evidence_of_every_cause_and_both_definitions() -> None:
+    page = html(DOBRCZ, widok="doradca")
+    r = report(DOBRCZ, widok="doradca")
+    rows = {kv.key: kv.value for kv in r.section("przyczyny").advisor}
+    for c in r.diagnosis.causes:
+        key = next(k for k in rows if k.startswith(f"Przyczyna: {c.code} · oś: "))
+        assert re.search(r"\d", rows[key]), key
+    assert any(k.startswith("Zwykły sezon (a)") for k in rows)
+    assert any(k.startswith("Zwykły sezon (b)") for k in rows)
+    assert "Zwykły sezon (b)" in page
+    farmer = html(DOBRCZ)
+    assert "Zwykły sezon (b)" not in farmer and "oś: " not in farmer

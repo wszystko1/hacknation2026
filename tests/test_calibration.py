@@ -108,4 +108,7 @@ def test_advisor_view_has_the_curve_with_the_parcel_and_seven_years_but_the_farm
     table = section[section.index('id="po-latach"') :]
     assert len(re.findall(r"<tr><th scope=\"row\">20\d\d</th>", table)) == 7
     farmer = html(DOBRCZ, widok="rolnik")
-    assert "data-marker" not in farmer and "krzywa-kalibracji" not in farmer
+    # the farmer report keeps the curve only in the collapsed "Dla doradcy" row of the Wiarygodność tab
+    outside = re.sub(r'<details class="b-row" id="wiersz-dla-doradcy".*?</details>', " ", farmer, flags=re.S)
+    assert "data-marker" not in outside and "krzywa-kalibracji" not in outside
+    assert 'id="wiersz-dla-doradcy"' in farmer and "krzywa-kalibracji" in farmer

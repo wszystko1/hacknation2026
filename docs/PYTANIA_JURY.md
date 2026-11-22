@@ -1,6 +1,6 @@
 # Pytania jury: kod, który warto otworzyć
 
-Pięć modułów, z których wynika to, co raport mówi rolnikowi. Każdy jest mały, typowany i ma testy w `tests/`.
+Sześć modułów, z których wynika to, co raport mówi rolnikowi. Każdy jest mały, typowany i ma testy w `tests/`.
 
 | # | Moduł | Co robi | Testy |
 |---|---|---|---|
@@ -68,3 +68,25 @@ w modelu terenu.
 
 **Czy raport obiecuje efekt w mm?** Nie. Nie podaje też milimetrów wody odpływającej z działki; współczynnika spływu dla pól uprawnych
 ze źródłem nie mamy.
+
+## Jak czytać krzywą kalibracji
+
+**Co pokazuje krzywa?** Dla klas odległości bilansu od progu (np. 25 mm i więcej pod progiem) odsetek symboli „+” w SMSR IUNG
+(`smsr.calibration` w `metrics.json`, tabela w README). Krzywa powinna rosnąć w stronę bilansu pod progiem: w klasie −25 mm i niżej
+SMSR potwierdza suszę w 0,9229 przypadków (`smsr.confirm_share_margin_le_minus25`, przedział 0,8852–0,9512), a blisko progu (0 do 10 mm)
+zgodność wynosi ok. połowy. Płaska krzywa znaczyłaby, że bilans nie niesie informacji. Przedziały pochodzą z bootstrapu po gminach.
+Kod: `scripts/eval_smsr.py`, `app/validation/agreement.py`.
+
+**Dlaczego baza to najmocniejsza linia?** CSI porównujemy z najwyższym wynikiem z trzech prostych linii: „zawsze susza”, klimatologia gminy
+i siatka NASA POWER (`smsr.baseline_csi_*`). Przewaga `smsr.csi_gain_vs_baseline` to 0,2229 wobec siatki NASA POWER (0,147), która dziś wygrywa.
+Słabsza linia zawyżałaby przewagę; wybór najmocniejszej jest uczciwszy i kod robi go sam (`strongest_baseline` w `scripts/eval_smsr.py`).
+
+## Obrys działki: `uldk_guard.py` i kolejność źródeł
+
+**Po co strażnik?** W sali ULDK może przekierować na atrapę (`integracja01.gugik.gov.pl/resp/uldk.php`) z nagłówkiem 4 GiB i nieskończonym
+strumieniem. `app/geodata/uldk_guard.py` nie idzie za przekierowaniem, przyjmuje tylko host `uldk.gugik.gov.pl`, czyta strumień z limitem
+rozmiaru i czasu, sprawdza kształt odpowiedzi, a po pierwszej atrapie omija ULDK na 5 minut. Testy: `tests/test_uldk_guard.py`.
+
+**W jakiej kolejności szukamy obrysu?** `app/geodata/parcel.py`: kopia lokalna (50 działek i działki demo), ULDK przez strażnika,
+EGiB WFS (`app/geodata/parcel_wfs.py`), a gdy nic nie odpowie, uczciwy komunikat. Zapas EGiB WFS nie był sprawdzony z sieci sali;
+testy używają atrap HTTP.

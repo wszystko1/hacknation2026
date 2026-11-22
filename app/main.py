@@ -53,7 +53,8 @@ templates.env.filters.update(
     seconds=fmt.seconds,
     crop_label=lambda code: CROP_LABELS[CropGroup(code)].lower(),
 )
-templates.env.globals.update(hbar=hbar_svg, out_of_season=OUT_OF_SEASON)
+APP_BUILD = "2026-11-22 · 80cb767"  # date of the build and a short hash
+templates.env.globals.update(hbar=hbar_svg, out_of_season=OUT_OF_SEASON, APP_BUILD=APP_BUILD)
 
 # Example parcels on the start screen (frozen copies in demo/data/geodata, no network needed).
 EXAMPLES = [

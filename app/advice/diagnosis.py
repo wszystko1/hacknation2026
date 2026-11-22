@@ -171,13 +171,13 @@ class UsualSeason:
     et0_mm: float  # evaporation of the same season(s); precip - et0 = kbw_mm exactly
 
 
-def usual_period(ctx: ReportContext) -> UsualSeason | None:
-    """The same days of the year in the earlier seasons of the history, or None with fewer than three."""
+def _earlier_rows(ctx: ReportContext) -> list[tuple[int, PeriodBalance]]:
+    """The verdict's period in each earlier season of the history that has enough data, oldest first."""
 
-    def compute() -> UsualSeason | None:
+    def compute() -> list[tuple[int, PeriodBalance]]:
         v, series = ctx.verdict, _series(ctx)
         if v is None or v.period is None or series is None:
-            return None
+            return []
         dates, rain, et0 = series
         soil = ctx.soil.category if ctx.soil else None
         n, stop = v.period.n, min(v.period.end, ctx.request.day)
@@ -188,20 +188,90 @@ def usual_period(ctx: ReportContext) -> UsualSeason | None:
             p = _period_balance(dates, rain, et0, year, n, until, ctx.request.crop, soil)
             if p is not None and _enough_data(p, until):
                 rows.append((year, p))
-        if len(rows) < MIN_EARLIER_SEASONS:
-            return None
-        ranked = sorted(rows, key=lambda r: r[1].kbw_mm)
-        mid = len(ranked) // 2
-        middle = [ranked[mid]] if len(ranked) % 2 else ranked[mid - 1 : mid + 1]
-        return UsualSeason(
-            n_seasons=len(rows),
-            years=sorted(y for y, _ in rows),
-            kbw_mm=round(statistics.median(p.kbw_mm for _, p in rows), 1),
-            precip_mm=round(statistics.fmean(p.precip_mm for _, p in middle), 1),
-            et0_mm=round(statistics.fmean(p.et0_mm for _, p in middle), 1),
-        )
+        return rows
 
-    return _cached(ctx, "usual", compute)
+    return _cached(ctx, "earlier_rows", compute)
+
+
+def _usual_of(rows: list[tuple[int, PeriodBalance]]) -> UsualSeason | None:
+    """Definition (a): the season with the median balance."""
+    if len(rows) < MIN_EARLIER_SEASONS:
+        return None
+    ranked = sorted(rows, key=lambda r: r[1].kbw_mm)
+    mid = len(ranked) // 2
+    middle = [ranked[mid]] if len(ranked) % 2 else ranked[mid - 1 : mid + 1]
+    return UsualSeason(
+        n_seasons=len(rows),
+        years=sorted(y for y, _ in rows),
+        kbw_mm=round(statistics.median(p.kbw_mm for _, p in rows), 1),
+        precip_mm=round(statistics.fmean(p.precip_mm for _, p in middle), 1),
+        et0_mm=round(statistics.fmean(p.et0_mm for _, p in middle), 1),
+    )
+
+
+def usual_period(ctx: ReportContext) -> UsualSeason | None:
+    """The same days of the year in the earlier seasons of the history, or None with fewer than three."""
+    return _cached(ctx, "usual", lambda: _usual_of(_earlier_rows(ctx)))
+
+
+# ---------------------------------------------------------------- "usual" in two definitions and the label
+
+BOTH_FACTORS = "oba czynniki"
+MAINLY_RAIN = "głównie opad"
+MAINLY_EVAPORATION = "głównie parowanie"
+
+
+@dataclass
+class Attribution:
+    """Which factor explains the shortfall against the usual season, in each of the two definitions of "usual".
+
+    (a) the usual is one season, the one with the median balance, so rain - evaporation = balance holds;
+    (b) the usual rain and the usual evaporation are separate medians over the same seasons.
+    The label names a factor only when both definitions name the same one.
+    """
+
+    season_rain_mm: float  # definition (a)
+    season_et0_mm: float
+    medians_rain_mm: float  # definition (b)
+    medians_et0_mm: float
+    label_season: str
+    label_medians: str
+    label: str
+
+
+def _factor(rain_mm: float, et0_mm: float, usual_rain: float, usual_et0: float) -> str:
+    """The factor with the larger shortfall against the usual (rain below it, evaporation above it)."""
+    rain_gap, et0_gap = usual_rain - rain_mm, et0_mm - usual_et0
+    if rain_gap > et0_gap:
+        return MAINLY_RAIN
+    if et0_gap > rain_gap:
+        return MAINLY_EVAPORATION
+    return BOTH_FACTORS
+
+
+def _attribution_of(p: PeriodBalance, rows: list[tuple[int, PeriodBalance]]) -> Attribution | None:
+    usual = _usual_of(rows)
+    if usual is None:
+        return None
+    med_rain = round(statistics.median(r.precip_mm for _, r in rows), 1)
+    med_et0 = round(statistics.median(r.et0_mm for _, r in rows), 1)
+    a = _factor(p.precip_mm, p.et0_mm, usual.precip_mm, usual.et0_mm)
+    b = _factor(p.precip_mm, p.et0_mm, med_rain, med_et0)
+    return Attribution(usual.precip_mm, usual.et0_mm, med_rain, med_et0, a, b, a if a == b else BOTH_FACTORS)
+
+
+def attribution(ctx: ReportContext, without_year: int | None = None) -> Attribution | None:
+    """The label for the verdict's period; `without_year` drops one earlier season (the stability check)."""
+    v = ctx.verdict
+    if v is None or v.period is None:
+        return None
+    rows = [r for r in _earlier_rows(ctx) if r[0] != without_year]
+    return _attribution_of(v.period, rows)
+
+
+def need(diagnosis: Diagnosis) -> list[CauseCode]:
+    """The codes of the causes that justify an action: every cause whose rule holds, in the diagnosis' order."""
+    return [c.code for c in diagnosis.causes]
 
 
 # ---------------------------------------------------------------- the rules
@@ -215,6 +285,11 @@ def _rain_cause(p: PeriodBalance, usual: UsualSeason) -> Cause | None:
         code="malo_opadu",
         words=f"spadło {dec(p.precip_mm)} mm, o {dec(gap)} mm mniej niż zwykle ({dec(usual.precip_mm)} mm)",
         strength_mm=round(gap, 1),
+        evidence={
+            "opad_mm": p.precip_mm,
+            "opad_zwykly_mm": usual.precip_mm,
+            "opad_do_zwyklego_proc": round(100 * p.precip_mm / usual.precip_mm) if usual.precip_mm else None,
+        },
     )
 
 
@@ -226,6 +301,11 @@ def _evaporation_cause(p: PeriodBalance, usual: UsualSeason) -> Cause | None:
         code="duze_parowanie",
         words=f"wyparowało {dec(p.et0_mm)} mm, o {dec(gap)} mm więcej niż zwykle ({dec(usual.et0_mm)} mm)",
         strength_mm=round(gap, 1),
+        evidence={
+            "parowanie_mm": p.et0_mm,
+            "parowanie_zwykle_mm": usual.et0_mm,
+            "parowanie_do_zwyklego_proc": round(100 * p.et0_mm / usual.et0_mm) if usual.et0_mm else None,
+        },
     )
 
 
@@ -239,7 +319,12 @@ def _soil_cause(ctx: ReportContext, p: PeriodBalance) -> Cause | None:
         number = f"próg suszy w okresie {p.n} to {dec(p.threshold_mm)} mm"
     else:
         number = f"kategoria {soil.category} z czterech"
-    return Cause(code="gleba_lekka", words=f"{soil.words}; {number}")
+    evidence: dict[str, float | int | str | bool | None] = {"kategoria_gleby": soil.category}
+    if soil.sand_pct is not None:
+        evidence["piasek_proc"] = soil.sand_pct
+    if p.threshold_mm is not None:
+        evidence["prog_mm"] = p.threshold_mm
+    return Cause(code="gleba_lekka", words=f"{soil.words}; {number}", evidence=evidence)
 
 
 def mean_slope_pct(ctx: ReportContext) -> float | None:
@@ -252,6 +337,11 @@ def nearest_ditch_m(ctx: ReportContext) -> float | None:
     return water.nearest_ditch_m if water else None
 
 
+def _catchment_ha(ctx: ReportContext) -> float | None:
+    area = ctx.outlet_catchment_ha
+    return round(area, 1) if area is not None else None
+
+
 def _runoff_cause(ctx: ReportContext) -> Cause | None:
     slope = mean_slope_pct(ctx)
     if slope is None or slope <= RUNOFF_SLOPE_PCT:
@@ -260,7 +350,13 @@ def _runoff_cause(ctx: ReportContext) -> Cause | None:
     ditch = nearest_ditch_m(ctx)
     if ditch is not None:
         words += f", najbliższy rów w odległości {dec(ditch, 1 if ditch < 10 else 0)} m (BDOT10k)"
-    return Cause(code="splyw", words=words)
+    evidence: dict[str, float | int | str | bool | None] = {"spadek_proc": round(slope, 1)}
+    if ditch is not None:
+        evidence["row_m"] = round(ditch, 1)
+    area = _catchment_ha(ctx)
+    if area is not None:
+        evidence["zlewnia_ha"] = area
+    return Cause(code="splyw", words=words, evidence=evidence)
 
 
 def _phase_cause(ctx: ReportContext, p: PeriodBalance) -> Cause | None:
@@ -270,6 +366,7 @@ def _phase_cause(ctx: ReportContext, p: PeriodBalance) -> Cause | None:
     return Cause(
         code="faza_wrazliwa",
         words=f"w okresie {p.n} ({dec(p.threshold_mm)} mm progu) susza obniża plon tej uprawy",
+        evidence={"okres": p.n, "prog_mm": p.threshold_mm, "uprawa": ctx.request.crop.value},
     )
 
 
@@ -285,7 +382,9 @@ def diagnose(ctx: ReportContext) -> Diagnosis:
         found += [_rain_cause(p, usual), _evaporation_cause(p, usual)]
     found += [_soil_cause(ctx, p), _runoff_cause(ctx), _phase_cause(ctx, p)]
     causes = [c for c in found if c is not None]
-    causes.sort(key=lambda c: -(c.strength_mm if c.strength_mm is not None else -1.0))  # stable: rule order
+    # Only the weather axis is ranked, in mm; place and crop causes follow it in rule order.
+    weather = sorted((c for c in causes if c.axis == "pogoda"), key=lambda c: -(c.strength_mm or 0.0))
+    causes = weather + [c for c in causes if c.axis != "pogoda"]
     return Diagnosis(causes=causes, usual_kbw_mm=usual.kbw_mm if usual else None)
 
 

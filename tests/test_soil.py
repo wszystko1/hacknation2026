@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import re
 
 import httpx
 import pytest
@@ -250,7 +251,10 @@ def test_pages_name_the_soil_and_never_show_the_placeholder(query: str, path_suf
         text = client.get(f"{path}?{query}{path_suffix}").text
         assert STUB not in text
         if path == "/raport" and not path_suffix:
-            assert "kat. II" not in text  # the farmer screen names the soil in words
+            outside = re.sub(
+                r'<details class="b-row" id="wiersz-dla-doradcy".*?</details>', " ", text, flags=re.S
+            )
+            assert "kat. II" not in outside  # the farmer screen names the soil in words
             assert "gleba" in text.lower() or "gleby" in text.lower()
         else:
             assert "kat. II" in text

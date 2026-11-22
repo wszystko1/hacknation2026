@@ -21,9 +21,7 @@ SOIL_SOURCE = {
 NOT_COVERED = "Raport nie uwzględnia drenowania, wód gruntowych ani faktycznej daty siewu."
 
 BRIER_EXPLAINED = "Wynik Briera to średni kwadrat błędu szansy: im bliżej zera, tym trafniejsza prognoza."
-BSS_EXPLAINED = (
-    "BSS porównuje wynik Briera z prognozą „zawsze częstość historyczna”: powyżej zera prognoza jest od niej lepsza."
-)
+BSS_EXPLAINED = "BSS porównuje wynik Briera z prognozą „zawsze częstość historyczna”: powyżej zera prognoza jest od niej lepsza."
 METHOD_EXPLAINED = (
     "Dopełnianie przebiegami: znany bilans do dnia oceny, resztę okresu dopełnia pogoda tych samych dni "
     "kalendarza z każdego wcześniejszego roku; pierwsze 16 dni bierze się z prognozy, gdy jest."
@@ -57,9 +55,18 @@ def plan_advisor(ctx: ReportContext) -> list[KeyValue]:
     method = {"historical": "częstość historyczna (klimatologia)", "analog": "dopełnianie przebiegami"}.get(
         f.method if f else "", ""
     )
-    rows = [KeyValue(key="Metoda prognozy", value=f"{method or 'brak: prognoza nie została policzona'}. {METHOD_EXPLAINED}")]
+    rows = [
+        KeyValue(
+            key="Metoda prognozy",
+            value=f"{method or 'brak: prognoza nie została policzona'}. {METHOD_EXPLAINED}",
+        )
+    ]
     if f is not None and f.years_used:
-        rows.append(KeyValue(key="Lata w prognozie", value=f"{len(f.years_used)} ({f.years_used[0]}–{f.years_used[-1]})"))
+        rows.append(
+            KeyValue(
+                key="Lata w prognozie", value=f"{len(f.years_used)} ({f.years_used[0]}–{f.years_used[-1]})"
+            )
+        )
     if f is not None and f.k is not None and f.n:
         rows.append(KeyValue(key="Częstość historyczna", value=f"{f.k} z {f.n} wcześniejszych lat"))
     bss = m.get("forecast.brier_skill")
@@ -68,12 +75,22 @@ def plan_advisor(ctx: ReportContext) -> list[KeyValue]:
         ci = f", przedział 95%: {_num(low)} do {_num(high)}" if low is not None and high is not None else ""
         rows.append(KeyValue(key="BSS", value=f"{_num(bss)}{ci}. {BSS_EXPLAINED}"))
     else:
-        rows.append(KeyValue(key="BSS", value=f"brak: pomiaru, bo metrics.json nie ma jeszcze wyniku walidacji prognozy. {BSS_EXPLAINED}"))
+        rows.append(
+            KeyValue(
+                key="BSS",
+                value=f"brak: pomiaru, bo metrics.json nie ma jeszcze wyniku walidacji prognozy. {BSS_EXPLAINED}",
+            )
+        )
     brier = m.get("forecast.brier")
     if isinstance(brier, (int, float)):
         rows.append(KeyValue(key="Brier", value=f"{_num(brier)}. {BRIER_EXPLAINED}"))
     else:
-        rows.append(KeyValue(key="Brier", value=f"brak: pomiaru, bo metrics.json nie ma jeszcze wyniku walidacji prognozy. {BRIER_EXPLAINED}"))
+        rows.append(
+            KeyValue(
+                key="Brier",
+                value=f"brak: pomiaru, bo metrics.json nie ma jeszcze wyniku walidacji prognozy. {BRIER_EXPLAINED}",
+            )
+        )
     calibration = _calibration(ctx)
     rows.append(
         KeyValue(
@@ -115,15 +132,13 @@ def build(ctx: ReportContext) -> Section:
         TextPart(text=f"{len(ok)} z {len(rows)}", bold=True),
         TextPart(text=" źródeł z danymi"),
         TextPart(
-            text=f"; brak: {', '.join(r.label[0].lower() + r.label[1:] for r in missing)}." if missing else ".",
+            text=f"; brak: {', '.join(r.label[0].lower() + r.label[1:] for r in missing)}."
+            if missing
+            else ".",
             warn=bool(missing),
         ),
     ]
     section.chip = f"razem {total:.1f} s".replace(".", ",")
     section.sentences = _sentences(ctx, rows)
-    section.advisor = [
-        KeyValue(key=r.label, value=r.resolution)
-        for r in rows
-        if r.resolution
-    ]
+    section.advisor = [KeyValue(key=r.label, value=r.resolution) for r in rows if r.resolution]
     return section

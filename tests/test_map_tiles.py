@@ -39,7 +39,7 @@ def test_tile_arithmetic_matches_the_web_mercator_grid() -> None:
 def test_the_zoom_path_uses_the_base_map_then_the_orthophoto() -> None:
     path = path_tiles()
     assert {z for _, z, _, _ in path} == set(range(FIRST_ZOOM, LAST_ZOOM + 1))
-    assert layer_for_zoom(14) == "podklad" and layer_for_zoom(15) == "orto"
+    assert layer_for_zoom(8) == "podklad" and layer_for_zoom(9) == "orto"
     assert all(layer == layer_for_zoom(z) for layer, z, _, _ in path)
 
 

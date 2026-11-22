@@ -79,13 +79,16 @@
   <details class="ledger{% if n_missing %} ledger--missing{% endif %}" aria-label="Skąd są dane">
     <summary><i class="mark {% if n_missing %}mark--no{% else %}mark--ok{% endif %}" aria-hidden="true">{% if n_missing %}!{% else %}✓{% endif %}</i><span class="ledger-line"><b>Skąd są dane:</b> {{ n_ok }} z {{ report.sources | length }} źródeł{% if report.data_copy %} · {{ report.data_copy | replace('kopia danych z', 'kopia z') }}{% endif %}</span><span class="ledger-more">Szczegóły</span></summary>
     <div class="ledger-body">
-    <p class="ledger-meta">{% if report.data_copy %}{{ report.data_copy }}; pobranie trwało {{ report.data_copy_took_s | seconds }}{% else %}pobrane dla tej działki{% endif %}<span class="t">razem {{ report.total_s | seconds }}</span></p>
+    {% set cached = [] %}{% set live = [] %}
+    {% for r in report.sources %}{% if r.retrieved_at and (r.status == 'copy' or (r.elapsed_s is not none and r.elapsed_s < 0.05)) %}{% set _ = cached.append(r) %}{% else %}{% set _ = live.append(r) %}{% endif %}{% endfor %}
+    {% set stamp = (cached | map(attribute='retrieved_at') | sort | last) if cached else '' %}
+    <p class="ledger-meta">{% if cached and not live %}dane z pamięci podręcznej (pobrane {{ stamp[8:10] }}.{{ stamp[5:7] }}.{{ stamp[:4] }}){% elif live %}pobrane dla tej działki<span class="t">razem {{ live | map(attribute='elapsed_s') | select('number') | sum | seconds }}</span>{% else %}pobrane dla tej działki{% endif %}</p>
     <ul class="sources">
       {% for r in report.sources %}
       <li class="is-{{ {'ok': 'done', 'copy': 'done', 'fallback': 'fallback', 'missing': 'missing', 'waiting': 'waiting'}[r.status] }}">
         <i class="mark" aria-hidden="true">{{ {'ok': '✓', 'copy': '✓', 'fallback': '~', 'missing': '!', 'waiting': '…'}[r.status] }}</i>
         <span><b>{{ r.label }}</b><small>{{ r.provider }}</small>{% if r.status == 'missing' %}: {{ r.reason }}{% endif %}</span>
-        <em>{{ r.elapsed_s | seconds }}</em>
+        <em>{% if r.retrieved_at and (r.status == 'copy' or (r.elapsed_s is not none and r.elapsed_s < 0.05)) %}z pamięci · {{ r.retrieved_at[8:10] }}.{{ r.retrieved_at[5:7] }}.{{ r.retrieved_at[:4] }} {{ r.retrieved_at[11:16] }}{% else %}{{ r.elapsed_s | seconds }}{% endif %}</em>
       </li>
       {% endfor %}
     </ul>

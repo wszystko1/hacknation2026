@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
-from . import cache, config, http
+from . import cache, config, http, sanity
 from .errors import CacheMiss, GeodataError, UpstreamError
 from .models import Soil, SourceResult, now_iso
 
@@ -86,6 +86,13 @@ def fetch_soil(
         hit = cache.get_json("soil", key, config.TTL_SOIL_NULL)  # empty answers are re-checked after a day
     if hit is not None:
         soil = Soil(**hit["data"])
+        if (
+            soil.available
+            and not sanity.guarded(
+                "uziarnienie gleby", sanity.check_soil_texture, soil.sand_pct, soil.silt_pct, soil.clay_pct
+            ).usable
+        ):
+            return _no_data("brak: uziarnienie niewiarygodne (zapisana odpowiedź)", hit["url"], True)
         if not soil.available:
             return _no_data("SoilGrids has no value for this point (cached answer)", hit["url"], True)
         return SourceResult(
@@ -106,6 +113,12 @@ def fetch_soil(
         if resp.status_code != 200:
             raise UpstreamError(f"SoilGrids HTTP {resp.status_code}: {resp.text[:120]}")
         soil = parse_soilgrids(resp.json())
+        if soil.available:
+            verdict = sanity.guarded(
+                "uziarnienie gleby", sanity.check_soil_texture, soil.sand_pct, soil.silt_pct, soil.clay_pct
+            )
+            if not verdict.usable:  # fractions that make no sense are a gap, never a texture class
+                return _no_data(verdict.missing_text)
     except CacheMiss:
         raise
     except (GeodataError, ValueError) as exc:

@@ -142,14 +142,14 @@ def verdict_item(report: Report) -> VerdictItem:
         return VerdictItem(
             "dry",
             "Susza: tak",
-            f"Nasz szacunek dla tej działki: bilans wody jest o {gap} mm gorszy niż próg suszy dla {genitive} na tej glebie.",
+            f"Bilans wody jest o {gap} mm gorszy niż próg suszy dla {genitive} na tej glebie.",
         )
     if v.state == "above" and v.margin_mm is not None:
         gap = dec(abs(v.margin_mm))
         return VerdictItem(
             "ok",
             "Susza: nie",
-            f"Nasz szacunek dla tej działki: bilans wody jest lepszy niż próg suszy (o {gap} mm) dla {genitive} na tej glebie.",
+            f"Bilans wody jest lepszy niż próg suszy (o {gap} mm) dla {genitive} na tej glebie.",
         )
     if v.state == "out_of_season":
         last = ""
@@ -164,7 +164,7 @@ def verdict_item(report: Report) -> VerdictItem:
             f"Susza rolnicza jest oceniana od 21 marca do 30 września, więc na dziś jej nie oceniamy.{last}",
         )
     return VerdictItem(
-        "neutral", "Nasz szacunek", plain(v.sentence) or "Nie udało się policzyć bilansu wody."
+        "neutral", "Szacunek dla działki", plain(v.sentence) or "Nie udało się policzyć bilansu wody."
     )
 
 
@@ -218,7 +218,7 @@ def confidence(report: Report) -> list[str]:
     """Our estimate against the IUNG assessment of the commune, then the sentence that decides for a claim."""
     s = report.smsr
     if s.state == "ok":
-        first = f"Nasz szacunek dla działki, ocena IUNG dla gminy {s.commune}: {plain(s.words)}."
+        first = f"IUNG dla gminy {s.commune}: {plain(s.words).split(',')[0]}."
     else:
         first = f"Oceny IUNG dla gminy {s.commune} w tym okresie nie mamy: {plain(s.reason)}"
     return [first, "Przy wniosku liczy się ocena IUNG."]
@@ -358,6 +358,9 @@ def _method_row(report: Report) -> Row:
     texts = [s.how for s in report.sections if s.how and s.id in METHOD_SECTIONS]
     paragraphs += [t for t in (calm(x, report) for x in texts) if t and not CHART_WORDS.search(t)]
     paragraphs.append(plain(report.verdict.disclaimer) + ".")
+    paragraphs.append(
+        "Raport nie uwzględnia drenowania, wód gruntowych ani faktycznej daty siewu."
+    )  # task 3.3.5
     return Row("jak", "Jak policzyliśmy", paragraphs=paragraphs)
 
 
@@ -371,7 +374,7 @@ def _slope_row(report: Report) -> Row:
 
 
 def _commune_row(report: Report) -> Row:
-    return Row("gmina", "Gmina: ocena IUNG i trafność naszej metody", kind="gmina")
+    return Row("gmina", "Gmina: ocena IUNG i trafność metody", kind="gmina")
 
 
 ROW_BUILDERS = (
@@ -433,14 +436,23 @@ def balance_caption(report: Report) -> str:
 def build(report: Report) -> FarmerView:
     all_rows = rows(report)
     query = _query(report)
+    do = do_item(report)
+    missing = not_counted(all_rows)
+    if do is not None and do.when == NO_DEADLINE:
+        # the "Kiedy" line shows only a known deadline; an unknown one goes to the last line
+        missing = (
+            (missing[:-1] + ", termin działania nr 1.")
+            if missing
+            else "Jeszcze nie liczymy: termin działania nr 1."
+        )
     return FarmerView(
         header=header(report),
         verdict=verdict_item(report),
         bar=weather_bar(report),
-        do=do_item(report),
+        do=do,
         confidence=confidence(report),
         rows=[r for r in all_rows if r.present],
-        missing_line=not_counted(all_rows),
+        missing_line=missing,
         pdf_query=query,
         advisor_query=f"{query}&widok=doradca",
         commune_measures=commune_measures(report),

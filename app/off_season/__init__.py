@@ -55,9 +55,7 @@ def _last_season(ctx: ReportContext) -> str:
     if v is None or v.period is None:
         return "Brak: oceny minionego sezonu, bo nie ma bilansu z tego roku"
     p = v.period
-    text = (
-        f"Najgorszy okres sezonu {v.season_year}: {ddmmyyyy(p.start)}–{ddmmyyyy(p.end)}, bilans {dec(p.kbw_mm)} mm"
-    )
+    text = f"Najgorszy okres sezonu {v.season_year}: {ddmmyyyy(p.start)}–{ddmmyyyy(p.end)}, bilans {dec(p.kbw_mm)} mm"
     if p.threshold_mm is not None and p.margin_mm is not None:
         side = "poniżej" if p.margin_mm < 0 else "powyżej"
         text += f", {dec(abs(p.margin_mm))} mm {side} progu {dec(p.threshold_mm)} mm"

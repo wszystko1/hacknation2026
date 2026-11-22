@@ -6,30 +6,35 @@
     <h1>Działka {{ fv.header.parcel }} · {{ fv.header.crop | crop_label }}</h1>
     <div class="sub">{{ fv.header.day }} · {{ fv.header.soil }} · {{ fv.header.area }}</div>
   </header>
-  <div class="a-verdict" id="werdykt" data-a-item>
+  <div class="tabs" role="tablist" aria-label="Części raportu" data-tabs hidden>
+    {% for t in [('podsumowanie', 'Podsumowanie'), ('przyczyny', 'Przyczyny'), ('rekomendacje', 'Rekomendacje'), ('wiarygodnosc', 'Wiarygodność'), ('zrodla', 'Jak liczymy')] %}
+    <button type="button" role="tab" id="tab-{{ t[0] }}" data-tab-button="{{ t[0] }}" aria-selected="{{ 'true' if loop.first else 'false' }}" tabindex="{{ 0 if loop.first else -1 }}">{{ t[1] }}</button>
+    {% endfor %}
+  </div>
+  <div class="a-verdict" data-tab="podsumowanie" id="werdykt" data-a-item>
     <span class="badge badge--{{ {'dry': 'dry', 'ok': 'ok', 'neutral': 'neutral'}[fv.verdict.tone] }}" id="plakietka">{{ fv.verdict.word }}</span>
     <p id="zdanie-werdyktu" class="verdict-sentence {{ 'verdict-sentence--ok' if fv.verdict.tone == 'ok' else '' }}">{{ fv.verdict.sentence }}</p>
   </div>
   {% if fv.bar %}
-  <div class="a-bars" data-a-item role="img" aria-label="{{ fv.bar.label }}: zwykle {{ fv.bar.usual }}, teraz {{ fv.bar.now }}">
+  <div class="a-bars" data-tab="podsumowanie" data-a-item role="img" aria-label="{{ fv.bar.label }}: zwykle {{ fv.bar.usual }}, teraz {{ fv.bar.now }}">
     <h2>{{ fv.bar.label }}</h2>
     <div class="a-bar"><span>zwykle {{ fv.bar.usual }}</span><svg viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="bar-usual" width="{{ fv.bar.usual_pct }}" height="8" rx="2"/></svg></div>
     <div class="a-bar"><span>teraz {{ fv.bar.now }}</span><svg viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="bar-now" width="{{ fv.bar.now_pct }}" height="8" rx="2"/></svg></div>
   </div>
   {% endif %}
-  <div class="a-do" id="dzialanie-1" data-a-item>
+  <div class="a-do" data-tab="podsumowanie" id="dzialanie-1" data-a-item>
     <h2>Co robić</h2>
     {% if fv.do %}
-    <p><span class="nb">{{ fv.do.n }}</span> Do rozważenia: <b>{{ fv.do.title }}</b>{% if fv.do.place %} ({{ fv.do.place }}){% endif %}.{% if fv.do.map_url %} <a href="{{ fv.do.map_url }}" rel="noopener" target="_blank">Pinezka {{ fv.do.n }} na mapie</a>{% endif %}</p>
-    <p class="muted">Kiedy: {{ fv.do.when }}.</p>
+    <p>{% if fv.do.map_url %}<span class="pin" role="img" aria-label="Miejsce na mapie: {{ fv.do.n }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22l-6-9V3h12v10z"/></svg><b>{{ fv.do.n }}</b></span> {% endif %}<b>{{ fv.do.title }}</b>.</p>
+    {% if fv.do.when != 'termin podamy po wyliczeniu' %}<p class="muted">Kiedy: {{ fv.do.when }}.</p>{% endif %}
     {% else %}
     <p class="muted">Jeszcze nie liczymy.</p>
     {% endif %}
   </div>
-  <div class="a-conf" id="pewnosc" data-a-item>
-    <h2>Jak pewny jest ten wynik</h2>
+  <div class="a-conf" data-tab="podsumowanie" id="pewnosc" data-a-item>
+    <h2>Pewność</h2>
     {% for line in fv.confidence %}<p>{{ line }}</p>{% endfor %}
   </div>
-  <a class="btn" id="pdf" data-a-item href="/raport/druk?{{ fv.pdf_query }}" data-base="/raport/druk?{{ fv.pdf_query }}">Raport PDF</a>
-  <a class="btn btn--ghost" id="pokaz-doradcy" data-a-item href="/raport?{{ fv.advisor_query }}">Pokaż doradcy</a>
+  <a class="btn" id="pdf" data-tab="podsumowanie" data-a-item href="/raport/druk?{{ fv.pdf_query }}" data-base="/raport/druk?{{ fv.pdf_query }}">Raport PDF</a>
+  <a class="btn btn--ghost" id="pokaz-doradcy" data-tab="podsumowanie" data-a-item href="/raport?{{ fv.advisor_query }}">Pokaż doradcy</a>
 </section>

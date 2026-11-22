@@ -25,8 +25,63 @@ Czego raport nie podaje: milimetrów wody odpływającej z działki ani objęto�
 
 ## Liczby z pomiaru (`make eval`, `metrics.json`)
 
-**Zgodność z SMSR** (wariant aplikacji: ET0 FAO-56). Próba: 149 gmin, `n_gmina_years` = 1017 gmino-lat, 566130 symboli „+” lub „-”;
-częstość „+” w SMSR 4,5%.
+Trzy liczby, od których zaczynamy; każda ma obok linię odniesienia:
+
+- **Krzywa kalibracji.** Gdy bilans działki leży 25 mm i więcej poniżej progu, SMSR IUNG potwierdza suszę w 92,29% symboli
+  (przedział 95%: 88,52–95,12%; 3799 symboli). Im bliżej progu, tym mniej: tabela poniżej.
+- **CSI wobec najmocniejszej linii odniesienia.** CSI 0,3699 przy siatce NASA POWER 0,147 (najmocniejsza z trzech linii:
+  klimatologia 0,0694, „zawsze susza” 0,045); przewaga 0,2229.
+- **BSS prognozy.** 0,2081 wobec częstości historycznej (przedział 95%: 0,1826–0,2329), 8000 przypadków.
+
+Próba zgodności z SMSR: 149 gmin, 1017 gmino-lat, 566130 symboli „+” lub „-”; częstość „+” w SMSR 4,5%. Wariant aplikacji: ET0 FAO-56.
+
+**Krzywa kalibracji** (odsetek symboli „+” w SMSR w klasie odległości bilansu od progu; ujemna odległość = bilans pod progiem):
+
+| Klasa (mm) | Symboli | „+” w SMSR | Przedział 95% |
+|---|---|---|---|
+| poniżej −50 | 668 | 0,985 | 0,9664–0,9983 |
+| −50 do −25 | 3131 | 0,9096 | 0,868–0,9425 |
+| −25 do −10 | 4808 | 0,7941 | 0,7468–0,8376 |
+| −10 do 0 | 4911 | 0,6526 | 0,6039–0,7022 |
+| 0 do 10 | 6999 | 0,5191 | 0,4708–0,566 |
+| 10 do 25 | 15092 | 0,3232 | 0,2867–0,362 |
+| 25 do 50 | 38903 | 0,1199 | 0,1006–0,141 |
+| powyżej 50 | 491618 | 0,0036 | 0,0028–0,0046 |
+
+Przedziały pochodzą z bootstrapu po gminach, nie po symbolach.
+
+**Czego nie zmierzyliśmy:** retencji (trafienia punktu wypływu w rów, niecki w zbiornik), czasu raportu w sali, zgodności upraw z mapą JRC
+i zgodności na działkach; wiersze w ostatniej części tabeli.
+
+| Stan | Co | Liczba | Jednostka | Co z tego wynika |
+|---|---|---|---|---|
+| zmierzone | CSI wobec siatki NASA POWER | 0,3699 wobec 0,147 | gmino-lata, symbole | Wskazujemy susze ponad 2 razy celniej niż najmocniejsza prosta linia, ale to nie jest dokładność na działce. |
+| zmierzone | trafność i trafność zrównoważona | 0,9683 wobec 0,955; 0,7039 wobec 0,5377 | symbole | Sama trafność jest wysoka, bo suszy jest 4,5%; o umiejętności mówi trafność zrównoważona (klimatologia 0,5377). |
+| zmierzone | klasa −25 mm i niżej | 0,9229 | symbole (3799) | Gdy bilans jest wyraźnie pod progiem, SMSR zwykle się zgadza. |
+| zmierzone | BSS prognozy | 0,2081 | przypadki (8000) | Prognoza przekroczenia progu jest lepsza od częstości historycznej o ok. jedną piątą błędu Briera. |
+| zmierzone, słabe | czułość (POD) | 0,4133 | symbole | Nie wskazujemy większości susz z SMSR; precyzja alarmów to 0,7789. |
+| zmierzone, słabe | kategoria gleby z SoilGrids | 0,375 (w granicach jednej kategorii 0,8958) | punkty (96) | Dotyczy zapasu SoilGrids, nie warstwy IUNG, którą bierzemy najpierw. |
+| zmierzone, słabe | przesunięcie progu o 53 mm | 0,7727 → 0,9094 (trafność zrównoważona) | gmino-rok, jeden rok (2026) | Sprawdzone na jednym roku i dopasowane do ocen IUNG, więc w werdykcie go nie stosujemy. |
+| nie zmierzone | retencja: punkt wypływu wobec rowów, niecka wobec zbiorników | brak `retention.*` | działki | Aplikacja bierze podstawę (najniższy punkt granicy). |
+| nie zmierzone | czas i odporność raportu na 20 działkach | brak `robustness.*` | działki | Nie podajemy czasu raportu w sali. |
+| nie zmierzone | zgodność upraw z mapą JRC | brak `crop.rotation_agreement_jrc` | działki | Mapa nie rozróżnia zbóż ozimych i jarych. |
+| nie zmierzone | zgodność z SMSR na działkach | brak | działki | Mierzymy na gminach. |
+
+**Zgodność po latach** (CSI, przedział 95% z bootstrapu po gminach; 2025 to rok z 262 symbolami „+”):
+
+| Rok | CSI | Przedział 95% | Symboli „+” |
+|---|---|---|---|
+| 2020 | 0,2294 | 0,1575–0,3066 | 1731 |
+| 2021 | 0,1819 | 0,123–0,2463 | 1325 |
+| 2022 | 0,4758 | 0,4077–0,5362 | 4555 |
+| 2023 | 0,413 | 0,3704–0,4555 | 11330 |
+| 2024 | 0,3159 | 0,2636–0,367 | 4258 |
+| 2025 | 0,1103 | 0,0632–0,1632 | 262 |
+| 2026 | 0,3483 | 0,3042–0,3914 | 2017 |
+
+Wynik waha się od 0,1103 do 0,4758 zależnie od roku: w roku z mało suszami (2025) CSI jest niski.
+
+**Pełne miary zgodności z SMSR** (wariant ET0 FAO-56):
 
 | Miara | Wynik | Linia odniesienia |
 |---|---|---|
@@ -37,8 +92,6 @@ częstość „+” w SMSR 4,5%.
 | trafność | 0,9683 | zawsze częstsza odpowiedź: 0,955 |
 | trafność zrównoważona | 0,7039 | klimatologia 0,5377 |
 | precyzja | 0,7789 | |
-
-Zgodność rośnie z odległością bilansu od progu: 0,5517 dla 0–10 mm, 0,7051 dla 10–25 mm, 0,8823 dla 25–50 mm, 0,9964 powyżej 50 mm.
 
 **Dwa warianty parowania** na tych samych gminach testowych:
 
@@ -123,7 +176,7 @@ uv sync
 uv run python -m app
 ```
 
-Potem w przeglądarce: http://127.0.0.1:8000 (port zmienia zmienna `HN_PORT`). W Linuksie i macOS: `make setup`, `make serve`, `make test`.
+Potem w przeglądarce: http://127.0.0.1:8000 (port zmienia zmienna `HN_PORT`). Formularz startowy ma wpisaną przykładową działkę, datę i uprawę; można je zmienić. W Linuksie i macOS: `make setup`, `make serve`, `make test`.
 Demo na kopii danych dwóch działek (bez sieci): `make demo`. Na żywo aplikacja pobiera dane dla dowolnej działki; kopia stoi w `demo/data/`.
 
 ## Źródła i licencje
@@ -144,6 +197,10 @@ Zakres przepisów i danych: rozporządzenie Dz.U. 2019 poz. 739, Prawo wodne (Dz
 - Zgodność roślin z mapą JRC (`crop.rotation_agreement_jrc`) nie jest w `metrics.json`; mapa nie rozróżnia zbóż ozimych i jarych.
 - Zgodność reguły gleby z mapą IUNG to 0,375 na 96 punktach (w granicach jednej kategorii 0,8958); to słabo, więc kategorię z mapy IUNG
   bierzemy, gdy odpowiada, a regułę tylko jako zapas.
+- Zapas EGiB WFS (gdy ULDK nie odpowiada) nie był sprawdzony z sieci sali: jego testy idą na atrapach HTTP, nie na żywej usłudze.
+- Zgodność z SMSR liczymy na gminach, nie na działkach; przedziały z bootstrapu po gminach. Wynik zależy od roku (tabela po latach).
+- Czas raportu mierzymy na 20 działkach z naszej sieci, nie z sali; pomiaru jeszcze nie ma w `metrics.json`. Kopia lokalna obrysów
+  obejmuje 50 działek, dla pozostałych obrys idzie z ULDK albo EGiB WFS.
 - Zgodność z SMSR mierzymy symbolami „+” i „-”, nie w mm: tabele IUNG nie podają wartości KBW. Nasz CSI 0,3699 jest
   wyraźnie nad klimatologią (0,0694), ale czułość 0,4133 znaczy, że nie wskazujemy większości susz z SMSR.
 - Nie znamy wzoru, którym IUNG liczy parowanie w SMSR; wzór D–G pochodzi z publikacji IUNG 2023 w postaci miesięcznej.

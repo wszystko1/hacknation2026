@@ -5,6 +5,7 @@ import re
 from urllib.parse import urlencode
 
 from demo.steps.common import PARCEL_1, PAUSE
+from demo.steps.tabs import show_tab
 
 
 def scene(page, base_url: str) -> None:
@@ -20,6 +21,7 @@ def scene(page, base_url: str) -> None:
     assert "Przy wniosku liczy się ocena IUNG" in page.locator("#pewnosc").inner_text()
     page.wait_for_timeout(PAUSE)
     # The number is not on the first level: it appears when the row is opened.
+    show_tab(page, "przyczyny")
     row = page.locator("#wiersz-bilans")
     assert not re.search(r"−\d+\s*mm", top.inner_text())
     row.locator("summary").click()
@@ -30,6 +32,7 @@ def scene(page, base_url: str) -> None:
     row.scroll_into_view_if_needed()
     page.wait_for_timeout(PAUSE)
     row.locator("summary").click()  # closed again: the scene ends on level A
+    show_tab(page, "podsumowanie")
     top.scroll_into_view_if_needed()
     assert page.locator("#zdanie-werdyktu").is_visible()
     page.wait_for_timeout(PAUSE)

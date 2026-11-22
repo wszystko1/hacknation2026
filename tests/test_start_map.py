@@ -84,11 +84,29 @@ def outline_path(page: Page) -> str:
     return page.locator(".pm-shape .mo-outline").get_attribute("d") or ""
 
 
-def test_the_start_view_is_poland_with_the_empty_caption(page: Page) -> None:
+def test_the_start_view_is_the_middle_of_poland_on_the_photo_with_the_empty_caption(page: Page) -> None:
     zoom, lon, lat = map_pick.view(page)
-    assert zoom == 6 and 18 < lon < 20 and 51 < lat < 53
+    assert zoom == 9 and 18 < lon < 20 and 51 < lat < 53
+    assert page.evaluate("[...document.querySelectorAll('.pm-tile')].every(i => i.src.includes('/orto/9/'))")
     assert page.locator(".pm-state").inner_text() == "Przybliż i kliknij pole albo wpisz numer"
     assert outline_path(page) == ""
+
+
+@pytest.mark.parametrize("size", [{"width": 1440, "height": 800}, {"width": 390, "height": 844}])
+def test_search_card_and_button_are_in_view_and_the_map_fills_the_window(
+    browser_page: Page, base_url: str, size: dict
+) -> None:
+    browser_page.set_viewport_size(size)
+    browser_page.goto(base_url + "/")
+    map_pick.tiles_loaded(browser_page)
+    for locator in (browser_page.locator("#start-card"), browser_page.get_by_role("button", name="Oceń działkę")):
+        locator.wait_for(state="visible")
+        box = locator.bounding_box()
+        assert box and box["y"] >= 0 and box["y"] + box["height"] <= size["height"], box
+        assert box["x"] >= 0 and box["x"] + box["width"] <= size["width"], box
+    box = map_pick.map_box(browser_page)
+    assert box["width"] * box["height"] >= 0.85 * size["width"] * size["height"], box
+    assert browser_page.evaluate("document.documentElement.scrollHeight <= window.innerHeight")
 
 
 def test_zoom_buttons_are_large_and_named(page: Page) -> None:
@@ -97,19 +115,24 @@ def test_zoom_buttons_are_large_and_named(page: Page) -> None:
         assert box and box["width"] >= 44 and box["height"] >= 44, (name, box)
 
 
-def test_base_map_up_to_zoom_14_and_orthophoto_from_15(page: Page) -> None:
+def test_the_photo_from_zoom_9_and_no_zoom_out_beyond_it(page: Page) -> None:
+    assert page.evaluate("document.querySelectorAll('.pm-tile').length > 0")
+    page.get_by_role("button", name=BUTTON_ZOOM_OUT).click()
+    assert map_pick.view(page)[0] == 9  # the photo has empty corners further out, so the map stops here
     map_pick.zoom_to_parcel(page)
     assert map_pick.view(page)[0] == 16
     assert page.evaluate("[...document.querySelectorAll('.pm-tile')].every(i => i.src.includes('/orto/16/'))")
-    for _ in range(2):
-        page.get_by_role("button", name=BUTTON_ZOOM_OUT).click()
+    page.get_by_role("button", name=BUTTON_ZOOM_OUT).click()
     map_pick.tiles_loaded(page)
-    assert map_pick.view(page)[0] == 14
-    assert page.evaluate(
-        "[...document.querySelectorAll('.pm-tile')].every(i => i.src.includes('/podklad/14/'))"
-    )
-    page.get_by_role("button", name=BUTTON_ZOOM_IN).click()
     assert page.evaluate("document.querySelector('.pm-tile').src.includes('/orto/15/')")
+    assert "GUGiK" in page.locator(".map-attr").inner_text()
+
+
+def test_the_map_centre_cannot_leave_poland(page: Page) -> None:
+    for _ in range(12):
+        map_pick.drag(page, -300, 0)  # the content follows the pointer: this moves the view east
+    _, lon, _ = map_pick.view(page)
+    assert lon <= 24.31, lon
 
 
 def test_this_parcel_fills_the_field_and_moves_focus_to_the_date(page: Page) -> None:
@@ -135,7 +158,10 @@ def test_pick_another_hides_the_card_and_the_outline(page: Page) -> None:
 def test_a_click_outside_poland_gives_one_sentence_and_the_number_field_still_works(
     page: Page, base_url: str
 ) -> None:
-    page.mouse.click(120, 420)  # at zoom 6 about 12 degrees west of the start view
+    for _ in range(14):
+        map_pick.drag(page, 300, 0)  # pan west to the edge of the allowed frame
+    map_pick.tiles_loaded(page)
+    page.mouse.click(470, 600)  # at the frame edge the left half of the window lies outside Poland, right of the card
     error = page.locator(".pm-state .pm-error")
     error.wait_for(state="visible")
     text = error.inner_text()

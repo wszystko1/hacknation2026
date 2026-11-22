@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from demo.steps.common import PAUSE, open_row
+from demo.steps.tabs import show_tab
 
 SMSR = json.loads((Path(__file__).resolve().parents[2] / "metrics.json").read_text(encoding="utf-8"))["smsr"]
 
@@ -14,6 +15,7 @@ def _pct(x: float) -> str:
 
 
 def scene(page, base_url: str) -> None:
+    show_tab(page, "wiarygodnosc")
     open_row(page, "gmina")
     row = page.locator("#wiersz-gmina")
     text = row.inner_text()
@@ -23,6 +25,7 @@ def scene(page, base_url: str) -> None:
     assert "–" not in text.replace("−", "")
     page.wait_for_timeout(PAUSE)
 
+    show_tab(page, "podsumowanie")
     page.locator("#pokaz-doradcy").click()
     page.wait_for_selector("#krzywa-kalibracji", timeout=30000)
     marker = page.locator("#krzywa-kalibracji [data-marker]")

@@ -1,19 +1,52 @@
 {% extends "base.html" %}
+{% block head %}<link rel="stylesheet" href="/static/start.css">{% endblock %}
 {% block main %}
 <main id="tresc" class="mapcol pickmap">
   {% include "_pickmap.html" %}
-  <div class="start">
-    <h1 class="vh">Ocena działki</h1>
-    {% include "report/_pick.html" %}
-    <p class="muted">To przykład (działka 189/13 w Dobrczu, zboża jare, 20.07.2023) — każde pole możesz zmienić.</p>
-    <div class="examples">
-      <b>Przykładowe działki</b> <span class="demo-data">kopia danych z 21.11.2026</span>
-      <ul>
-        {% for e in examples %}
-        <li><a href="/raport?dzialka={{ e.dzialka | urlencode }}&amp;data={{ e.data }}&amp;uprawa={{ e.uprawa }}"><b>{{ e.label }}</b><span class="muted">{{ e.note }}</span></a></li>
-        {% endfor %}
-      </ul>
+  <div class="start" id="start-card">
+    <button type="button" class="start-grip" aria-expanded="true" aria-controls="start-body">
+      <h1>Znajdź działkę</h1>
+    </button>
+    <div class="start-body" id="start-body">
+      <p class="start-lead">Przykład jest już wpisany: kliknij „Oceń działkę” — każde pole możesz zmienić.</p>
+      {% include "report/_pick.html" %}
+      <details class="examples">
+        <summary>Przykładowe działki</summary>
+        <span class="demo-data">kopia danych z 21.11.2026</span>
+        <ul>
+          {% for e in examples %}
+          <li><a href="/raport?dzialka={{ e.dzialka | urlencode }}&amp;data={{ e.data }}&amp;uprawa={{ e.uprawa }}"><span class="ex-text"><b>{{ e.label }}</b><span class="muted">{{ e.note }}</span></span><span class="ex-go">Zobacz wynik</span></a></li>
+          {% endfor %}
+        </ul>
+      </details>
     </div>
   </div>
 </main>
+{% include "_start_foot.html" %}
+<script>
+  (function () {
+    var grip = document.querySelector(".start-grip"), card = document.getElementById("start-card");
+    if (!grip || !card) return;
+    var phone = window.matchMedia("(max-width: 760px)"), auto = false, state = document.querySelector(".pm-state");
+    function fold(closed) {
+      card.classList.toggle("is-collapsed", closed);
+      grip.setAttribute("aria-expanded", closed ? "false" : "true");
+    }
+    grip.addEventListener("click", function () { auto = false; fold(!card.classList.contains("is-collapsed")); });
+    // on a phone the sheet folds away once a parcel is outlined, so it never covers the outline
+    if (state) {
+      new MutationObserver(function () {
+        if (!phone.matches) return;
+        if (state.querySelector(".pm-title")) { auto = true; fold(true); }
+      }).observe(state, { childList: true, subtree: true });
+      state.addEventListener("click", function (e) {
+        var yes = e.target.closest(".pm-actions button:first-child");
+        if (!yes || !auto) return;
+        auto = false; fold(false);
+        var next = document.getElementById("f-data");
+        if (next) next.focus();
+      });
+    }
+  })();
+</script>
 {% endblock %}

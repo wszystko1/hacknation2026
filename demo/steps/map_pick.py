@@ -8,14 +8,14 @@ from __future__ import annotations
 import math
 from urllib.parse import urlparse
 
-from app.picker.zoompath import DEMO_CENTRES
+from app.picker.zoompath import DEMO_CENTRES, FIRST_ZOOM
 from demo.steps.common import PAUSE
 
 LAPTOP = {"width": 1366, "height": 768}
 PARCEL_ID = "040303_2.0002.189/13"
 TARGET = DEMO_CENTRES[PARCEL_ID]  # lon, lat of the parcel centre
 FINAL_ZOOM = 16  # the whole parcel (about 460 x 620 m) fits in the frame
-BUTTON_PRESSES = 5  # 6 -> 11, the wheel does the rest
+BUTTON_PRESSES = 5  # 9 -> 14, the wheel does the rest
 TILE = 256
 
 
@@ -67,17 +67,20 @@ def drag(page, dx: int, dy: int) -> None:
 
 def centre_on(page, lon: float, lat: float) -> None:
     """Drag the map until the point is at its middle (the frozen tiles of the demo lie around that point)."""
-    x, y = pixel_of(page, lon, lat)
-    cx, cy = map_centre(page)
-    dx, dy = round(cx - x), round(cy - y)
-    if dx or dy:
-        drag(page, dx, dy)
+    for _ in range(8):
+        x, y = pixel_of(page, lon, lat)
+        cx, cy = map_centre(page)
+        dx, dy = round(cx - x), round(cy - y)
+        if abs(dx) < 2 and abs(dy) < 2:
+            return
+        # one drag stays inside the window: at most 300 px right/left, 150 px up/down
+        drag(page, max(-300, min(300, dx)), max(-150, min(150, dy)))
         tiles_loaded(page)
 
 
 def zoom_to_parcel(page) -> None:
     """Start view of Poland -> drag to Dobrcz -> "+" five times -> wheel up to FINAL_ZOOM, staying centred on the parcel."""
-    assert view(page)[0] == 6
+    assert view(page)[0] == FIRST_ZOOM
     centre_on(page, *TARGET)
     plus = page.get_by_role("button", name="Przybliż mapę")
     for _ in range(BUTTON_PRESSES):
@@ -106,7 +109,7 @@ def scene(page, base_url: str) -> None:
 
     page.goto(base_url + "/")
     assert "Przybliż i kliknij pole albo wpisz numer" in page.locator(".pm-state").inner_text()
-    assert view(page)[0] == 6
+    assert view(page)[0] == FIRST_ZOOM
     tiles_loaded(page)
     page.wait_for_timeout(PAUSE)
 

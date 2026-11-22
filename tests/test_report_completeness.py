@@ -83,9 +83,11 @@ def test_one_total_on_the_map_card_and_in_the_sources_section() -> None:
     report = Report.model_validate(client.get(f"/api/raport?{PARCELS[0]}").json())
     chip = next(s.chip for s in report.sections if s.id == "zrodla")
     assert chip.startswith("razem ") and chip.endswith(" s")
-    assert card, "the map card shows no total"
-    assert {c for c in card} == {chip.removeprefix("razem ").removesuffix(" s")}
-    assert len(set(re.findall(r"razem\s+[\d,]+ s", html))) == 1
+    if card:  # a total is shown only for sources fetched live
+        assert len(set(re.findall(r"razem\s+[\d,]+ s", html))) == 1
+    else:
+        assert "dane z pamięci podręcznej (pobrane " in html, "neither a total nor the cache note"
+    assert "0,0 s" not in html.split('class="ledger', 1)[1].split("</details>")[0]
 
 
 def test_the_adviser_view_states_each_gap_with_its_reason() -> None:

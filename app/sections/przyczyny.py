@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from app.advice.diagnosis import (
     RULES,
+    attribution,
     balance_split,
     mean_slope_pct,
     nearest_ditch_m,
@@ -22,6 +23,13 @@ def _upper_first(text: str) -> str:
     return text[:1].upper() + text[1:]
 
 
+AXIS_NAMES = {"pogoda": "pogoda", "miejsce": "miejsce", "uprawa": "uprawa"}
+
+
+def _num(v: object) -> str:
+    return dec(float(v)) if isinstance(v, int | float) and not isinstance(v, bool) else str(v)
+
+
 def _causes_advisor(ctx: ReportContext) -> list[KeyValue]:
     found = {c.code for c in (ctx.diagnosis.causes if ctx.diagnosis else [])}
     rows = [
@@ -31,7 +39,35 @@ def _causes_advisor(ctx: ReportContext) -> list[KeyValue]:
         )
         for r in RULES
     ]
-    usual = usual_period(ctx)
+    causes = ctx.diagnosis.causes if ctx.diagnosis else []
+    for c in causes:
+        evidence = ", ".join(f"{k.replace('_', ' ')}: {_num(v)}" for k, v in c.evidence.items())
+        mm = f", udział w niedoborze {dec(c.strength_mm)} mm" if c.strength_mm is not None else ""
+        rows.append(
+            KeyValue(
+                key=f"Przyczyna: {c.code} · oś: {AXIS_NAMES[c.axis or 'pogoda']}", value=f"{evidence}{mm}"
+            )
+        )
+    usual, attr = usual_period(ctx), attribution(ctx)
+    if attr:
+        rows.append(
+            KeyValue(
+                key="Zwykły sezon (a): rok o medianie bilansu",
+                value=f"opad {dec(attr.season_rain_mm)} mm, parowanie {dec(attr.season_et0_mm)} mm · {attr.label_season}",
+            )
+        )
+        rows.append(
+            KeyValue(
+                key="Zwykły sezon (b): mediany osobno",
+                value=f"opad {dec(attr.medians_rain_mm)} mm, parowanie {dec(attr.medians_et0_mm)} mm · {attr.label_medians}",
+            )
+        )
+        rows.append(
+            KeyValue(
+                key="Główny czynnik",
+                value=f"{attr.label} (nazwany tylko gdy obie definicje wskazują to samo)",
+            )
+        )
     if usual:
         rows.append(
             KeyValue(

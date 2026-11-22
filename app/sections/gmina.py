@@ -33,7 +33,7 @@ SYMBOL_SHORT = {
 EXPLAIN = {
     "CSI": "Trafienia podzielone przez wszystkie przypadki, w których susza wystąpiła albo została zapowiedziana; trafne „brak” nie liczą się.",
     "POD": "Jaka część susz ocenionych przez SMSR została przez metodę wykryta.",
-    "FAR": "Jaka część naszych zapowiedzi suszy nie potwierdziła się w SMSR.",
+    "FAR": "Jaka część zapowiedzi suszy nie potwierdziła się w SMSR.",
     "Peirce": "Wykryte susze minus fałszywe alarmy wśród przypadków bez suszy; 0 znaczy tyle co rzut monetą, 1 to bezbłędna metoda.",
 }
 
@@ -78,15 +78,17 @@ def _difference(ctx: ReportContext, smsr: SmsrRow, k: int | None) -> str:
     ours_below = v is not None and v.state == "below"
     theirs = smsr.symbol
     if v is None or v.state not in ("below", "above"):
-        return "Nasz wynik dotyczy jednej działki, wynik SMSR całej gminy na danej kategorii gleby, więc mogą się różnić."
+        return "Wynik dla działki dotyczy jednej działki, a SMSR całej gminy na danej kategorii gleby, więc mogą się różnić."
     if theirs == "+" and ours_below or theirs == "-" and not ours_below:
         return "Wynik działki i wynik gminy są zgodne."
     if theirs == "-":
         cause = (
-            "SMSR ocenia całą gminę dla kategorii gleby, a nasz bilans liczymy z pogody dla punktu działki"
+            "SMSR ocenia całą gminę dla kategorii gleby, a bilans liczony jest z pogody dla punktu działki"
         )
     elif theirs == "+":
-        cause = "SMSR uśrednia stan gleby i roślin w gminie, a nasz bilans opiera się na opadzie i parowaniu działki"
+        cause = (
+            "SMSR uśrednia stan gleby i roślin w gminie, a bilans opiera się na opadzie i parowaniu działki"
+        )
     else:
         return "SMSR nie ocenia tej komórki tabeli, więc nie ma z czym porównać wyniku działki."
     near = (
@@ -170,9 +172,9 @@ def build(ctx: ReportContext) -> Section:
         assert smsr is not None
         cats = _category_symbols(ctx)
         ours = (
-            f"nasz bilans: {ctx.verdict.badge.lower()}"
+            f"bilans: {ctx.verdict.badge.lower()}"
             if ctx.verdict and ctx.verdict.badge
-            else "nasz bilans: brak oceny"
+            else "bilans: brak oceny"
         )
         by_cat = ", ".join(f"kat. {c}: {SYMBOL_SHORT.get(s, 'bez oceny')}" for c, s in cats.items())
         sentences.append(
