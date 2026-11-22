@@ -233,7 +233,7 @@ Kod i dokumentacja powstały z udziałem asystenta LLM jako narzędzia programis
 | pyproj, rasterio | układy współrzędnych (EPSG:2180), odczyt rastrów (NMT, Sentinel-2, JRC) | MIT, BSD-3-Clause |
 | LightGBM | tylko pomiar prognozy (`make eval`) | MIT |
 | htmx 2.0.4 (`app/static/htmx.min.js`) | doczytywanie sekcji raportu | 0BSD |
-| Mapa (`app/static/pickmap.js`) | własny kod, bez biblioteki mapowej | MIT (licencja repozytorium) |
+| Mapa (`app/static/pickmap.js`) | własny kod, bez biblioteki mapowej | własny kod zespołu (licencja repozytorium: wszelkie prawa zastrzeżone, zob. `LICENSE`) |
 | Czcionki Inter, Geist, IBM Plex (`app/static/fonts/`) | interfejs, wbudowane w repozytorium | SIL OFL 1.1 |
 | pytest, ruff, Playwright, pypdf (grupa dev) | testy, lint, scenariusz demo | MIT, MIT, Apache-2.0, BSD-3-Clause |
 | uv | menedżer środowiska | Apache-2.0 lub MIT |
@@ -254,7 +254,7 @@ Wersje zależności są w `uv.lock`. Usługi zewnętrzne są wymienione w tabela
 | JRC EUCROPMAP 2022 | CC BY 4.0, © Unia Europejska |
 
 Przepisy i tabele: rozporządzenie Dz.U. 2019 poz. 739, Prawo wodne (Dz.U. 2026 poz. 1335), poradnik CDR 2025, FAO-56, katalog NWRM (szczegóły: docs/DANE.md).
-Kod aplikacji: MIT (`LICENSE`). Źródła z licencją niekomercyjną (Open-Meteo) wymagają zmiany dostawcy lub planu przy użyciu komercyjnym (sekcja o kosztach).
+Kod aplikacji: wszelkie prawa zastrzeżone, udostępniony do oceny w ramach HackNation 2026 (`LICENSE`). Źródła z licencją niekomercyjną (Open-Meteo) wymagają zmiany dostawcy lub planu przy użyciu komercyjnym (sekcja o kosztach).
 
 ## Uczciwe ograniczenia
 
