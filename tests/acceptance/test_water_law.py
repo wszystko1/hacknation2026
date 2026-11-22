@@ -23,7 +23,8 @@ FORMALITIES = {
 # action id -> (formality, article fragment) as read from Dz.U. 2026 poz. 1335
 EXPECTED = {
     "zastawka-istniejaca": ("nic nie trzeba", "art. 395 pkt 11"),
-    "dreny-regulowany-odplyw": ("nic nie trzeba", "art. 395 pkt 12"),
+    # fitting a regulator rebuilds the drainage works to hold water back; regulating an existing device is pkt 12
+    "dreny-regulowany-odplyw": ("powiadomienie Wód Polskich", "art. 395 pkt 16"),
     "przebudowa-rowu": ("powiadomienie Wód Polskich", "art. 395 pkt 15"),
     "niecka-przy-wyplywie": ("zgłoszenie", "art. 394 ust. 1 pkt 9"),
     "pobor-wody-nawadnianie": ("pozwolenie wodnoprawne", "art. 34 pkt 12"),
@@ -80,3 +81,11 @@ def test_report_shows_the_formality_with_its_article_in_the_retention_section() 
 def test_weirs_warn_to_lower_the_water_level_in_wet_periods(action_id: str) -> None:
     warning = " ".join(legal_note(action_id).extra).lower()
     assert "obniż" in warning and "mokr" in warning, warning
+
+
+@pytest.mark.xfail(reason="not built yet", strict=False)
+def test_drain_regulator_cites_395a_and_names_regulation_of_an_existing_device_as_pkt_12() -> None:
+    note = legal_note("dreny-regulowany-odplyw")
+    assert "art. 395a" in note.article or any("art. 395a" in e for e in note.extra), note
+    assert any("art. 395 pkt 12" in e for e in note.extra), note.extra
+    assert "art. 395 pkt 15" in legal_note("przebudowa-rowu").article

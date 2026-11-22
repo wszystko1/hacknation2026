@@ -60,6 +60,7 @@ class CatalogRow(BaseModel):
     farmer_alone: bool
     title: str
     sentence: str
+    mechanism: str  # id from mechanisms.csv
 
     @field_validator("causes")
     @classmethod
@@ -106,6 +107,7 @@ def _row(raw: dict[str, str]) -> CatalogRow:
         farmer_alone=raw["farmer_alone"].strip().lower() == "tak",
         title=raw["title"].strip(),
         sentence=raw["sentence"].strip(),
+        mechanism=raw["mechanism"].strip(),
     )
 
 

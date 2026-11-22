@@ -1,0 +1,10 @@
+id,title,causes_addressed,terrain_input,need_required,opportunity_required,detector,no_place_reason,threshold_source
+slow_runoff_strip,Spowolnić spływ pasem trawy,splyw;gleba_lekka,spadek,splyw,spadek ze zlewni do dolnego odcinka granicy,strip,,propozycja zespołu
+slow_runoff_balk,Spowolnić spływ miedzą w poprzek stoku,splyw,spadek,splyw,spadek powyżej progu na długości stoku,balk,,propozycja zespołu
+contour_tillage,Uprawa w poprzek stoku,splyw,spadek,splyw,komórki o spadku w przedziale progowym,contour,,propozycja zespołu
+hold_in_depression,Zatrzymać wodę w obniżeniu,splyw;malo_opadu,zagłębienie,splyw;malo_opadu,zagłębienie o głębokości co najmniej progu detekcji,basin,,propozycja zespołu
+dam_in_ditch,Spiętrzyć wodę w rowie,malo_opadu;splyw;duze_parowanie,rów,malo_opadu;splyw,rów z połączeniem ze spływem z działki,no_place,brak sprawdzonego połączenia rowu ze spływem z działki; to odległość do rowu z BDOT10k,propozycja zespołu
+drain_outflow,Wstrzymać odpływ z drenów,malo_opadu;duze_parowanie;faza_wrazliwa,brak,malo_opadu;duze_parowanie,drenaż na działce,no_place,brak danych o drenażu na działce,propozycja zespołu
+reduce_evaporation,Ograniczyć parowanie z gleby,duze_parowanie;gleba_lekka;splyw,gleba,duze_parowanie;gleba_lekka,gleba i uprawa; nie zależy od rzeźby,no_place,działanie na całej działce; nie ma jednego miejsca na mapie,CDR 2025
+raise_soil_capacity,Zwiększyć pojemność gleby,gleba_lekka;malo_opadu;splyw,gleba,gleba_lekka,gleba i uprawa; nie zależy od rzeźby,no_place,działanie na całej działce; nie ma jednego miejsca na mapie,CDR 2025
+supply_missing_rain,Uzupełnić brak opadu,malo_opadu;duze_parowanie;faza_wrazliwa,brak,malo_opadu;duze_parowanie,dostęp do wody i do sprzętu,no_place,działanie na całej działce; nie ma jednego miejsca na mapie,CDR 2025

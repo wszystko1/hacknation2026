@@ -5,7 +5,9 @@ definicją suszy z rozporządzenia MRiRW (Dz.U. 2019 poz. 739) i stawiamy obok p
 poziomy: u góry siedem rzeczy czytanych w trzy sekundy (werdykt zdaniem, jedna liczba jako dwa paski, działanie nr 1 z terminem,
 pewność), pod strzałkami cała reszta. Widok doradcy zostaje pełny: wskaźniki, progi, źródła, niepewność, metoda. Pod werdyktem stoją
 ocena SMSR IUNG dla gminy, trzy osobne odpowiedzi (werdykt, stan roślin z Sentinel-2 wobec porównywalnych sezonów działki, podatność
-działki) ze zdaniem odczytu werdyktu i roślin naraz, bez jednej sklejonej liczby, i działania retencyjne z miejscem na zdjęciu. Dalej
+działki) ze zdaniem odczytu werdyktu i roślin naraz, bez jednej sklejonej liczby, i działania retencyjne z miejscem na zdjęciu. Każde
+takie działanie wynika z łańcucha przyczyna → mechanizm → kandydat z geometrią → walidacja → działanie (rozdział „Łańcuch od przyczyny
+do działania”); gdy teren nie pozwala wskazać miejsca, raport pokazuje działanie bez punktu na mapie i mówi dlaczego. Dalej
 przyczyny, miejsca zatrzymania wody z formalnością z Prawa wodnego, zabiegi w uprawie, decyzja o nawadnianiu, plan z terminami i
 prognoza przekroczenia progu do końca okresu krytycznego. Zgodność metody z SMSR i trafność prognozy są zmierzone i pokazane w
 raporcie. Raport nie jest urzędowym stwierdzeniem suszy i mówi to zdaniem pod werdyktem. Ocenę bieżącą liczy rachunek i reguły, bez
@@ -40,8 +42,8 @@ w przeciwnym razie trafia do rozwijanej części B. Widoku doradcy ta zmiana nie
 **Poziom A, góra ekranu, najwyżej 7 elementów:**
 1. Nagłówek: działka, uprawa, data, gleba słowami („gleba bardzo lekka”, bez „kat. II”).
 2. Werdykt jednym zdaniem z kolorem i słowem: „susza: tak” / „susza: nie” z dopiskiem „nasz szacunek”; poza sezonem szary „nie dotyczy”.
-3. Jedna liczba jako dwa paski „zwykle X, teraz Y” dla głównej przyczyny pogodowej: pierwsza przyczyna z osi pogody wg obecnej
-   kolejności w `diagnosis.py` (za mało opadu albo duże parowanie), bez nowej logiki; gdy jej nie ma, tylko werdykt.
+3. Jedna liczba jako dwa paski „zwykle X, teraz Y” dla głównej przyczyny pogodowej: pierwsza przyczyna z osi pogody (jedyna
+   oś z rankingiem w mm: za mało opadu albo duże parowanie); gdy jej nie ma, tylko werdykt.
 4. Co robić: działanie nr 1 z pinezką na mapie i kiedy (termin albo „termin podamy po wyliczeniu”). Gdy sekcja retencji nie ma jeszcze
    działania: „jeszcze nie liczymy”.
 5. Pewność w 1–2 zdaniach: nasz szacunek wobec oceny IUNG dla gminy; „przy wniosku liczy się ocena IUNG”.
@@ -103,8 +105,9 @@ się różni, demo to pokazuje. Działka 2: `100403_2.0011.144` (gm. Góra Świ�
    raportu jedna linia „Jeszcze nie liczymy: …”.
 5. **Retencja i plan** (sceny „Gdzie zatrzymać wodę na działce”, „Plan działań: przełącznik „W planie””): klik w „Zatrzymanie wody”; nad
    działaniami lista rozpoznanych przyczyn z liczbami; mapa pokazuje strzałkę kierunku spadku ze spadkiem w %, dolny odcinek granicy
-   z pasem trawy, rów i miejsca 1–3 (albo zdanie, że spadek jest za mały, by wskazać dolny odcinek); sekcja ma profil terenu i formalność
-   z cytatem przepisu; działania brzmią „rozważ …” z warunkiem i następnym krokiem. Przełączenie działania na „W planie” zmienia licznik planu z N na N+1 na osi czasu do następnego okna suszy; nad osią stoi
+   z pasem trawy, rów i miejsca 1–3 rysowane z geometrii kandydata (linia pasa trawy albo miedzy, kierunek rzędów uprawy w poprzek stoku,
+   punkt i obrys niecki) albo zdanie, że spadek jest za mały, by wskazać dolny odcinek; sekcja ma profil terenu, kartę kandydata
+   (parametry jako zakresy ze źródłem, ryzyka, następny krok, pewność) i formalność z cytatem przepisu; działania brzmią „rozważ …” z warunkiem i następnym krokiem. Przełączenie działania na „W planie” zmienia licznik planu z N na N+1 na osi czasu do następnego okna suszy; nad osią stoi
    zdanie prognozy przekroczenia progu z jednym zdaniem jej trafności obok odpowiedzi trywialnej, z `metrics.json`.
 6. **Trafność i źródła** (sceny „Zgodność z oceną państwa (SMSR)”, „Źródła, czasy i braki danych”, „Widok doradcy i raport PDF”): tabela
    2×2 z liczbą przypadków, pod nią trafność, trafność zrównoważona, czułość i precyzja dla suszy, każda obok wyniku odpowiedzi „zawsze
@@ -143,7 +146,7 @@ Pięć kroków. Krok 2 daje trzy osobne odpowiedzi i nigdy nie skleja ich w jedn
 
    Bez plakietki (okres jeszcze trwa, brak progu dla uprawy) zdania odczytu nie ma; oba wiersze stoją osobno.
 3. **Przyczyny** (sekcja 3).
-4. **Rekomendacje** z katalogu działań (rozdział „Skąd biorą się rekomendacje”).
+4. **Rekomendacje** z łańcucha przyczyna → mechanizm → kandydat → walidacja (rozdział „Łańcuch od przyczyny do działania”).
 5. **Prognoza i termin:** szansa przekroczenia progu do końca okresu krytycznego nad osią planu (sekcja 6).
 
 **Poza sezonem (od 1.X do 20.III, w tym dzień finału):** werdykt i stan roślin mają status „nie dotyczy”. W ich miejscu: podsumowanie
@@ -203,33 +206,37 @@ zalecenia wybierają reguły na wskaźnikach, model językowy nie bierze udział
    porównywalnych sezonów, gdy bilans był pod progiem; bez historii satelitarnej „brak” z powodem).
 2. **Gmina i trafność metody.** Wynik SMSR gminy (symbol dla każdej kategorii gleby, udział powierzchni zagrożonej w %) obok wyniku działki,
    z przyczyną różnicy; zgodność według odległości od progu, tabela 2×2 i miary z sekcji „Pomiar zgodności z SMSR” z `metrics.json`.
-3. **Przyczyny.** Wykres kaskadowy: zwykły bilans tego okresu (mediana 10 sezonów) → mniej opadu → więcej parowania = wynik. Gleba słowami
-   IUNG („bardzo podatna na suszę”, kat. I), spadek terenu z NMT, przebieg NDVI i NDMI w sezonie wobec mediany poprzednich sezonów.
-4. **Zatrzymanie wody.** Miejsce każdego działania liczy aplikacja z geometrii działki (sekcja „Modele i metody obliczeń”): płaszczyzna
-   dopasowana do wysokości w obrysie daje średni spadek w % i kierunek spadku; dolny odcinek granicy to część obrysu z najniższymi
-   wysokościami; do tego najniższy punkt granicy i wnętrza, zagłębienia (oczko niższe od wszystkich sąsiadów) i najbliższy rów z BDOT10k
-   z odległością w m. Reguły:
-   - pas trawy na dolnym odcinku granicy, z długością w m; gdy rów biegnie przy tym odcinku, pas idzie wzdłuż rowu;
-   - uprawa w poprzek stoku: orka i siew prostopadle do kierunku spadku, kierunek na zdjęciu i słowami („z północy na południe”);
-   - niecka w najniższym punkcie wnętrza działki albo w zagłębieniu;
-   - zastawka tylko na rowie przy dolnym odcinku granicy.
-   Progi reguł (najmniejszy spadek, przy którym wskazujemy dolny odcinek, odległość rowu od odcinka, spadek dla uprawy w poprzek stoku)
-   są z poradnika CDR 2025 ze stroną; gdzie poradnik progu nie podaje, wiersz katalogu ma poziom pewności „propozycja zespołu”. Gdy
-   spadek płaszczyzny jest za mały, by wskazać dolny odcinek, raport pisze to wprost i nie rysuje strzałki. Gdy żadne miejsce nie spełnia
-   warunku: „brak miejsca na działce, bo …”. Akumulacja spływu i wilgotne strefy z satelity zastępują podstawę tylko tam, gdzie wygrały
-   w sprawdzeniu miejsc (sekcja „Sprawdzenie miejsc retencji”); gdy wygra akumulacja, przy miejscu stoi też zlewnia w ha. Milimetrów
-   ani m³ wody odpływającej z działki nie podajemy: współczynnik spływu nie ma źródła; efekt działania tylko jako zakres z literatury
-   z dopiskiem „literatura”.
+3. **Przyczyny.** Każda przyczyna ma oś i dowód. Oś **pogody** (mało opadu, duże parowanie): wykres kaskadowy zwykły bilans tego okresu
+   → mniej opadu → więcej parowania = wynik, z rankingiem w mm; to jedyna oś z rankingiem. Oś **miejsca** (spływ, gleba słabo trzyma
+   wodę): gleba słowami IUNG („bardzo podatna na suszę”, kat. I), spadek i zlewnia z NMT, bez rankingu w mm. Oś **uprawy** (faza
+   wrażliwa): przebieg NDVI i NDMI wobec mediany poprzednich sezonów. „Zwykły” opad i parowanie liczymy w dwóch definicjach: z roku
+   o medianie bilansu i jako osobne mediany; etykieta „głównie opad” albo „głównie parowanie” stoi tylko, gdy obie się zgadzają, inaczej
+   „oba czynniki”. Progi 85% i 110% bez zmian; etykieta nie zmienia się po usunięciu któregokolwiek z 9 wcześniejszych lat.
+4. **Zatrzymanie wody.** Miejsce każdego działania wynika z łańcucha opisanego w rozdziale „Łańcuch od przyczyny do działania”; na
+   mapie stoi tylko to, co ma geometrię kandydata. Model terenu (`app/advice/terrain_model.py`) daje płaszczyznę dopasowaną do wysokości
+   w obrysie (średni spadek w %, kierunek spadku), zlewnię działki z flagą ucięcia przez siatkę, odcinek granicy, którym wypływa co
+   najmniej 80% strumienia, najniższy punkt granicy i wnętrza, regiony zagłębień i najbliższy rów z BDOT10k z odległością w m.
+   Geometrię mają cztery mechanizmy: pas trawy na odcinku wypływu (wzdłuż rowu, gdy rów biegnie przy nim), miedza w poprzek stoku,
+   uprawa w poprzek stoku (obszar o spadku w progu i kierunek rzędów prostopadły do spadku, słowami „z północy na południe”) i niecka
+   w zagłębieniu albo najniższym punkcie wnętrza. Pozostałe mechanizmy to „potencjał do weryfikacji” z powodem, bez punktu na mapie.
+   Progi (najmniejszy spadek, odległość rowu od odcinka, spadek dla uprawy w poprzek stoku) są z poradnika CDR 2025 ze stroną; gdzie
+   poradnik progu nie podaje (m.in. szerokości pasa, miedzy i oczka), parametr stoi jako zakres z materiału zagranicznego albo z poziomem
+   „propozycja zespołu”. Gdy spadek płaszczyzny jest za mały, by wskazać dolny odcinek, raport pisze to wprost i nie rysuje strzałki.
+   Gdy żaden mechanizm nie ma miejsca: „brak miejsca na działce, bo …” z niską pewnością. Akumulacja spływu i wilgotne strefy z satelity
+   zastępują podstawę tylko tam, gdzie wygrały w sprawdzeniu miejsc (sekcja „Sprawdzenie miejsc retencji”); gdy wygra akumulacja, przy
+   miejscu stoi też zlewnia w ha. Milimetrów ani m³ wody odpływającej z działki nie podajemy: współczynnik spływu nie ma źródła; efekt
+   działania tylko jako zakres z literatury z dopiskiem „literatura”.
    Formalność z `app/advice/prawo_wodne.csv` (działanie, artykuł, cytat przepisu, strona PDF tekstu jednolitego Dz.U. 2026 poz. 1335,
    data sprawdzenia):
-   - „nic nie trzeba”: zatrzymywanie wody w rowie i hamowanie odpływu z drenów istniejącym urządzeniem (art. 395 pkt 11, 12), gdy skutek
-     zostaje na własnym gruncie albo za pisemną zgodą sąsiadów;
-   - „powiadomienie Wód Polskich”: przebudowa rowu lub drenów w celu zatrzymania wody, w tym nowa zastawka na rowie (art. 395 pkt 15,
-     16 i art. 395a);
+   - „nic nie trzeba”: zatrzymywanie wody w rowie (art. 395 pkt 11) i regulacja odpływu istniejącym urządzeniem na drenach (art. 395
+     pkt 12), gdy skutek zostaje na własnym gruncie albo za pisemną zgodą sąsiadów;
+   - „powiadomienie Wód Polskich”: przebudowa rowu w celu zatrzymania wody (art. 395 pkt 15 i art. 395a), w tym nowa zastawka na rowie;
+     montaż regulatora na drenach to przebudowa obiektów drenarskich w celu hamowania odpływu (art. 395 pkt 16 i art. 395a);
    - „zgłoszenie”: staw do 5000 m² i 3 m głębokości, zasilany tylko opadem, roztopami lub wodą gruntową (art. 394 ust. 1 pkt 9);
    - „pozwolenie”: pobór ponad 5 m³/dobę średniorocznie (art. 34 pkt 12, art. 389 pkt 2);
    - „sprawdź w Wodach Polskich”, bez numeru artykułu: działanie, dla którego tekst ustawy nie rozstrzyga formalności.
-   Przy każdym działaniu zmieniającym odpływ: art. 234 ust. 1 (bez szkody dla gruntów sąsiednich); rów poza działką: potrzebna pisemna
+   Granica art. 395 pkt 11 i pkt 15 nie jest zdefiniowana w ustawie; wpisy to interpretacja, w raporcie z dopiskiem „potwierdź
+   w Wodach Polskich”. Przy każdym działaniu zmieniającym odpływ: art. 234 ust. 1 (bez szkody dla gruntów sąsiednich); rów poza działką: potrzebna pisemna
    zgoda sąsiada albo spółki wodnej. Przy zastawce ostrzeżenie: w mokrym okresie piętrzenie trzeba obniżyć, by nie zalać pola własnego
    ani sąsiada.
 5. **Uprawa gleby.** Wykres: w ilu z 10 sezonów każda dekada IV–IX była pod progiem, pod nim kalendarz zabiegów do następnego okna suszy.
@@ -266,7 +273,12 @@ Ocena bieżąca nie używa uczenia maszynowego: każdą liczbę daje rachunek al
   granicy: ciągły fragment obrysu (punkty co krok siatki) z najniższymi wysokościami; najniższy punkt granicy i wnętrza; zagłębienie =
   oczko w obrysie niższe od wszystkich 8 sąsiadów; najbliższy rów z BDOT10k. Rachunek w numpy (działa w Windows), w jednym wymiennym
   module `app/advice/placement.py`.
-- **Rozmieszczanie, rozszerzenie (tylko po wygranej w sprawdzeniu miejsc):** akumulacja spływu D8 (O'Callaghan i Mark 1984) na siatce
+- **Model terenu i zlewnia:** siatka zlewni (z marginesem ok. 300 m) jest pobierana w każdym raporcie, bez czytania `metrics.json`,
+  i trafia do wejścia rozmieszczania. `app/advice/terrain_model.py` liczy z niej zlewnię działki w ha z flagą „ucięta przez siatkę”,
+  odcinek granicy, którym wypływa co najmniej 80% strumienia (próg 80% to propozycja zespołu), i regiony zagłębień z głębokością;
+  detektory (`app/advice/detectors.py`) czytają ten model. Wynik na syntetycznych terenach (stok 3%, płasko 0,3%, dolina z oczkiem)
+  sprawdzają testy.
+- **Rozmieszczanie, rozszerzenie (zastępuje podstawę tylko po wygranej w sprawdzeniu miejsc):** akumulacja spływu D8 (O'Callaghan i Mark 1984) na siatce
   z marginesem ok. 300 m wokół działki po wypełnieniu zagłębień, bo woda spływa od sąsiadów i do nich; punkt wypływu = oczko granicy
   z największą zlewnią w ha. Wilgotne strefy z satelity: mediana NDMI w każdym pikselu działki ze scen Sentinel-2 bez chmur z suchych
   okresów (okres rozporządzenia z bilansem działki poniżej mediany jej 10 sezonów; ta definicja to propozycja zespołu), z danych, które
@@ -304,27 +316,42 @@ okres z progiem dla grupy upraw) KBW spadnie poniżej progu. Okresy zakończone 
   częstość przekroczenia w następnym sezonie z wcześniejszych lat, nazwana w raporcie wprost klimatologią; „Inna uprawa”: brak
   progu, więc brak prognozy.
 
-## Skąd biorą się rekomendacje
+## Łańcuch od przyczyny do działania
 
 Baza: 26 działań spisanych ze źródeł (11 retencji krajobrazowej, 11 glebowych i agrotechnicznych, 4 nawadniania; CDR 2025, katalog NWRM
 Komisji Europejskiej, IUNG, FAO-56, załącznik organizatora) w katalogu CSV (`app/advice/catalog*.csv`). Kolumny: działanie, grupa,
-przyczyny, warunki (każdy próg w osobnej kolumnie), efekt (od, do, jednostka), źródło (dokument, strona, dosłowny cytat, adres), poziom
-pewności (badanie / opinia ekspercka / propozycja zespołu), formalność (artykuł), termin. Liczba trafia do raportu tylko z wypełnionym
-źródłem i cytatem; test to sprawdza. Efekt działania tylko jako zakres z literatury, oznaczony „literatura”. Progi warunków są
-z polskich źródeł (poradnik CDR 2025) ze stroną; gdzie ich brak, wiersz ma poziom pewności „propozycja zespołu”.
-1. Diagnoza przyczyn z danych działki: za mało opadu, gleba słabo trzyma wodę, woda spływa z pola, uprawa wrażliwa w tej fazie. Wszystkie
-   spełnione reguły dają przyczyny; nad działaniami stoi lista rozpoznanych przyczyn z liczbami działki.
-2. Dopasowanie: każde działanie jest przypisane do przyczyn, na które działa (mulcz i międzyplon ograniczają parowanie i poprawiają
-   glebę; zastawka i pas przy rowie zatrzymują odpływ; nawadnianie uzupełnia brak opadu). Bez przyczyny nie ma zalecenia.
-3. Warunki stosowania: działanie odpada, gdy nie pasuje do działki (głęboszowanie tylko na glebach średnich i ciężkich; regulowany
-   odpływ tylko na gruntach zdrenowanych o spadku do 1%, CDR 2025; zastawka tylko na rowie przy dolnym odcinku granicy).
-4. Kolejność w grupie: wyżej działanie odpowiadające na więcej przyczyn naraz; dalej wykonalność w terminie od daty oceny i to, czy
-   rolnik zrobi je sam. Najwyżej 3 działania na grupę; grupy w kolejności zadania (retencja, agrotechnika, nawadnianie).
-5. Stałe zdanie z podstawionymi liczbami tej działki (powierzchnia, spadek i jego kierunek, długość dolnego odcinka, odległość do rowu,
-   niedobór w mm, termin, miejsce).
+mechanizm, przyczyny, warunki (każdy próg w osobnej kolumnie), parametry jako zakresy (od, do, jednostka, źródło albo „propozycja
+zespołu”), efekt (od, do, jednostka), źródło (dokument, strona, dosłowny cytat, adres), poziom pewności (badanie / opinia ekspercka /
+propozycja zespołu), formalność (artykuł), termin. Liczba trafia do raportu tylko z wypełnionym źródłem i cytatem; test to sprawdza.
+Efekt działania tylko jako zakres z literatury, oznaczony „literatura”.
 
-Progi bez strony w polskim źródle (np. odległość rowu od dolnego odcinka, wysokość piętrzenia) mają poziom pewności „propozycja
-zespołu”; widok doradcy tak je opisuje.
+Pięć kroków, każdy w osobnym, małym module; wynik kroku 3 jest jedynym źródłem tekstu, mapy i PDF:
+1. **Przyczyny** (`app/advice/diagnosis.py`): każda reguła, która zachodzi, daje przyczynę z osią (pogoda, miejsce, uprawa)
+   i dowodem liczbowym. Nad działaniami stoi lista rozpoznanych przyczyn; ranking w mm tylko w osi pogody. Bez przyczyny nie ma zalecenia.
+2. **Mechanizm** (`app/advice/mechanisms.py`, `mechanisms.csv`, 9 wierszy: pas trawy przy odcinku wypływu, pas buforowy wzdłuż rowu,
+   miedza w poprzek stoku, uprawa w poprzek stoku, niecka, regulowany odpływ z drenów, ochrona zbiornika, przebudowa rowu,
+   zadrzewienie śródpolne): jakie przyczyny adresuje, jakiego wejścia terenu wymaga, czy potrzebuje potrzeby, możliwości, czy obu.
+   W sezonie mechanizm wchodzi do raportu, gdy jest **potrzeba** (z przyczyn) ORAZ **możliwość** (z terenu); poza sezonem wystarcza
+   możliwość. Każdy `action_id` z obu katalogów ma mechanizm i detektor albo wpis „bez miejsca”.
+3. **Kandydat** (`app/advice/detectors.py`, model terenu w `app/advice/terrain_model.py`): detektor mechanizmu zwraca `Candidate`:
+   geometrię w EPSG:2180 (punkt, linia albo obrys) lub powód braku miejsca, parametry jako zakresy ze źródłem albo „propozycja
+   zespołu”, dowód z terenu (spadek, zlewnia, odległość rowu, głębokość), pewność, ryzyka, formalność, zgody i następny krok. Geometrię
+   mają cztery mechanizmy; reszta to „potencjał do weryfikacji” z powodem. Regulowany odpływ z drenów: o drenaż nie pytamy, zakładamy
+   „nieznane”, więc to potencjał o niskiej pewności i zdaniu warunkowym.
+4. **Walidacja** (`app/advice/validate.py`): zlewnia ucięta przez siatkę, zlewnia zewnętrzna większa niż 2–3 razy działka, miejsce
+   bliżej niż 20 m od granicy, brak danych o drenażu, spadek poniżej rozdzielczości wysokości. Walidacja obniża pewność i dopisuje
+   ryzyko; progi walidacji to propozycja zespołu i tak stoją w widoku doradcy.
+5. **Działanie** (`retention_actions` w `app/advice/retention.py`; agrotechnika i nawadnianie z reguł katalogu): widok kandydata dla
+   rolnika w formie „rozważ …, jeśli …; następny krok …” z liczbami tej działki, terminem i formalnością; efektu w mm nie obiecujemy.
+   Zdanie o nowej zastawce mówi o odległości rowu („rów w odległości N m; połączenie spływu do potwierdzenia”), nie o linii spływu.
+   `retention_actions` ustawia też pola mapy (spadek, kierunek spadku, dolny odcinek, wypływ), których wcześniej nikt nie ustawiał.
+
+Warunki stosowania: działanie odpada, gdy nie pasuje do działki (głęboszowanie tylko na glebach średnich i ciężkich; regulowany odpływ
+tylko na gruntach zdrenowanych o spadku do 1%, CDR 2025, mierzymy tu tylko potencjał; zastawka tylko na rowie przy odcinku wypływu).
+Kolejność w grupie: wyżej działanie odpowiadające na więcej przyczyn naraz; dalej wykonalność w terminie od daty oceny i to, czy
+rolnik zrobi je sam. Najwyżej 3 działania na grupę; grupy w kolejności zadania (retencja, agrotechnika, nawadnianie).
+Progi bez strony w polskim źródle (np. odległość rowu od odcinka, wysokość piętrzenia, szerokość pasa) mają poziom pewności
+„propozycja zespołu”; widok doradcy tak je opisuje.
 
 ## Pomiar zgodności z SMSR
 
@@ -396,7 +423,7 @@ mapie: ULDK GetParcelByXY; kafle mapy: mapa podkładowa i ortofotomapa GUGiK. Po
 FAO-56 ze stacji synoptycznej, luki z NASA POWER; temperatura i usłonecznienie z tej samej stacji IMGW zasilają też wzór
 Doroszewskiego–Górskiego. Sentinel-2 L2A z warstwą SCL: bieżące zdjęcie od razu, historia sezonów w tle. Dochodzą: tabele gmin SMSR IUNG (wiersz gminy na żywo, archiwum do pomiaru), kategoria
 gleby z warstwy IUNG, progi z Dz.U. 2019 poz. 739 w CSV z testem, katalog działań (CDR 2025, NWRM), formalności Prawa wodnego
-w CSV z cytatami, siatka wysokości GUGiK w obrysie (z marginesem ok. 300 m do akumulacji spływu), rowy, zbiorniki i oczka z BDOT10k do testu miejsc, pogoda 2001–2026 dla centroidów 200 gmin (2020–2026 do pomiaru zgodności, 2001–2025 do walidacji prognozy), prognoza 16 dni
+w CSV z cytatami, siatka wysokości GUGiK w obrysie (z marginesem ok. 300 m, pobierana w każdym raporcie: zlewnia, odcinek wypływu), rowy, zbiorniki i oczka z BDOT10k do testu miejsc, pogoda 2001–2026 dla centroidów 200 gmin (2020–2026 do pomiaru zgodności, 2001–2025 do walidacji prognozy), prognoza 16 dni
 Open-Meteo, mapy upraw JRC EUCROPMAP 2018 i 2022 czytane oknem w obrysie (podpowiedź uprawy, sprawdzian grup płodozmianu). Danych syntetycznych w produkcie nie ma; dane demo to prawdziwe
 pobrania z datą, oznaczone w interfejsie.
 
@@ -415,7 +442,9 @@ pobrania z datą, oznaczone w interfejsie.
    działań bez źródła z cytatem.
 9. Metod, progów ani tekstu ACPF (USDA); bibliotek hydrologicznych bez działającej wersji dla Windows: geometrię i spływ liczymy
    w numpy.
-10. Niczego innego z listy „Otwarte decyzje”, dopóki nie zapadnie decyzja.
+10. Pytania do rolnika o drenaż ani innych pól formularza dla łańcucha przyczyn; ekranu rolnika (poziomy A i B) i widoku doradcy
+    nie przebudowujemy: karta kandydata to dodatkowy częściowy szablon.
+11. Niczego innego z listy „Otwarte decyzje”, dopóki nie zapadnie decyzja.
 
 ## Moduły krytyczne dla jury
 
@@ -428,7 +457,12 @@ Małe, typowane, z testami i opisem w `docs/PYTANIA_JURY.md`:
    każde działanie ma w CSV artykuł, cytat, stronę PDF i datę sprawdzenia albo „sprawdź w Wodach Polskich” bez numeru artykułu; liczba
    efektu tylko z cytatem źródła; próg z polskiego źródła ze stroną albo z poziomem „propozycja zespołu”. Progi bez źródła w widoku
    doradcy opisane jako propozycje zespołu.
-3. `app/advice/placement.py`: płaszczyzna najmniejszych kwadratów (spadek, kierunek), dolny odcinek granicy, najniższe punkty,
+3. `app/advice/terrain_model.py`, `app/advice/detectors.py`, `app/advice/mechanisms.py`, `app/advice/validate.py` (łańcuch przyczyna →
+   mechanizm → kandydat → walidacja, rozdział „Łańcuch od przyczyny do działania”): `Candidate` z geometrią albo powodem braku miejsca,
+   parametrami jako zakresy ze źródłem, ryzykami i następnym krokiem; testy: każdy `action_id` ma mechanizm, detektory na syntetycznych
+   terenach, walidacje, test łańcucha na trzech syntetycznych terenach (każde działanie ma mechanizm, każdy kod przyczyny jest w diagnozie,
+   jest geometria albo powód, zdanie bez niewypełnionych pól).
+3a. `app/advice/placement.py`: płaszczyzna najmniejszych kwadratów (spadek, kierunek), dolny odcinek granicy, najniższe punkty,
    zagłębienia, rów i z nich miejsca działań albo „brak miejsca, bo …”; rozszerzenie (akumulacja D8, mediana NDMI) za tym samym
    interfejsem, wybierane wynikiem sprawdzenia miejsc. Typowane wejście (obrys, siatka wysokości, wody z BDOT10k) i wyjście (lista
    miejsc z rodzajem, położeniem, długością albo kierunkiem i powodem); moduł da się wymienić bez zmian w reszcie raportu.
@@ -471,6 +505,10 @@ raporty do zgłoszenia robi `scripts/export_reports.py` (Playwright, `page.pdf`)
 | Ani akumulacja spływu, ani wilgotne strefy z satelity nie biją podstawy w sprawdzeniu miejsc | aplikacja zostaje przy podstawie; porównanie wszystkich wariantów w README |
 | Siatka z marginesem 300 m przekracza limit punktów lub czasu | poza działką co 20–30 m; zlewnia przycięta do marginesu, raport to mówi; podstawa marginesu nie potrzebuje |
 | Wysokości co 0,1 m dają płaskie fragmenty i fałszywe zagłębienia | płaszczyzna ze wszystkich oczek obrysu uśrednia zaokrąglenia; za mały spadek: zdanie zamiast dolnego odcinka; test zbiorników mierzy, czy zagłębienia trafiają |
+| Zlewnia ucięta przez siatkę, zlewnia zewnętrzna wielokrotnie większa od działki albo miejsce przy granicy | walidacja obniża pewność kandydata i dopisuje ryzyko; flaga „ucięta” stoi w karcie i w widoku doradcy |
+| Brak danych o drenażu | nie pytamy; regulowany odpływ z drenów to potencjał o niskiej pewności ze zdaniem warunkowym |
+| Granica art. 395 pkt 11 i 15 Prawa wodnego niejednoznaczna | cytat dosłowny, strona PDF, dopisek „potwierdź w Wodach Polskich”; bez potwierdzenia „sprawdź w Wodach Polskich” |
+| Szerokości pasa, miedzy i oczka bez polskiego źródła (CDR 2025 ich nie podaje) | zakres z materiału zagranicznego z nazwą źródła albo „propozycja zespołu”, nigdy „norma” |
 | Poradnik CDR 2025 nie podaje progu reguły rozmieszczania | próg w katalogu z poziomem „propozycja zespołu”, widok doradcy to mówi; pytanie do mentora |
 | Prognoza nie bije punktów odniesienia | model nie wchodzi do aplikacji (porównanie w README); gdy i dopełnianie przegrywa z częstością historyczną, raport podaje samą częstość i mówi to wprost |
 | Mapa JRC myli uprawę na działce | podpowiedź tylko przy pokryciu ≥ 50% obrysu, nigdy wybór za użytkownika; pierwsza do cięcia |
@@ -518,6 +556,10 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
 - **L3 (ndz 09:00, potem bez nowych funkcji):** model prognozy w aplikacji, jeśli wygrał; podpowiedź uprawy z mapy JRC; pełny widok
   doradcy; bilans FAO-56 w nawadnianiu; układ na telefon; wyszukiwanie po nazwie obrębu; dopracowanie wyglądu; korekta
   względem IUNG, jeśli pomiar pokaże systematyczną różnicę; sprawdzian grup płodozmianu na mapach JRC 2018 i 2022.
+- **Łańcuch przyczyna → działanie (nd, po ekranie rolnika):** każdy etap zostawia aplikację uruchamialną i widoczną zmianę w raporcie.
+  Cięcie w tej kolejności: test łańcucha na demo i jego scena → detektor uprawy w poprzek stoku → walidacje inne niż zlewnia ucięta
+  i płaskość (zostają te dwie) → karta kandydata w wierszu rozwijanym (zostaje zdanie „rozważ …” z geometrią na mapie).
+  Zostają zawsze: oś przyczyny, mechanizmy z CSV, `Candidate` jako źródło tekstu i mapy, cytaty prawa.
 - **Kolejność cięcia:** podpowiedź uprawy → sprawdzian płodozmianu na mapach JRC (grupy zostają) → korekta względem IUNG
   (zostaje próg z rozporządzenia) → reakcja NDVI w suche lata w podatności → wilgotne strefy z satelity (zostają podstawa i akumulacja) → test zbiorników
   (`retention.pond_auc`; niecka zostaje w najniższym punkcie albo zagłębieniu) → model prognozy w aplikacji (zostaje dopełnianie,
@@ -590,3 +632,4 @@ Punktów z tej listy na razie nie budujemy; nie mają pracy w planie, dopóki de
   `test_three_answers.py`, `test_off_season.py`, `test_vulnerability.py`, `test_evaporation_formula.py` (xfail do zbudowania)
   (powód: krytyczna recenzja wizji; zmiana przyczyn będzie osobna).
 - nd 01:41, W08: ekran rolnika ma dwa poziomy (góra: najwyżej 7 elementów — nagłówek, werdykt zdaniem, dwa paski „zwykle / teraz”, działanie nr 1 z terminem, pewność, „Raport PDF” i „Pokaż doradcy”; reszta w wierszach rozwijanych), znikają powtórzenia liczb, czasy pobrania, „kat. II”, „okres 4”, rzymskie daty i ramki „Brak: …” (zamiast nich linia „Jeszcze nie liczymy: …”), panel „Skąd są dane” jest zwinięty do jednej linii, a działania brzmią „rozważ …”; widok doradcy bez zmian; dodany `tests/acceptance/test_farmer_screen.py` (xfail do zbudowania), żaden test nie został usunięty (powód: ekran rolnika miał za dużo elementów i powtórzeń, badanie interfejsu zatwierdzone przez właściciela 22.11).
+- nd 02:00, W09: działania retencyjne wynikają z łańcucha przyczyna (oś pogoda / miejsce / uprawa, ranking w mm tylko dla pogody) → mechanizm (9 wierszy `mechanisms.csv`, w sezonie potrzeba ORAZ możliwość) → kandydat z geometrią (pas trawy, miedza, uprawa w poprzek stoku, niecka; reszta „potencjał do weryfikacji”, bez miejsca „brak miejsca na działce, bo …” z niską pewnością) → walidacja (zlewnia ucięta, zlewnia zewnętrzna, granica, drenaż, rozdzielczość) → działanie „rozważ …, jeśli …; następny krok …”, a regulator drenów to art. 395 pkt 16 i 395a (regulacja istniejącego urządzenia: pkt 12), przebudowa rowu pkt 15; w `tests/acceptance/test_water_law.py` oczekiwanie dla `dreny-regulowany-odplyw` zmienione z „nic nie trzeba, art. 395 pkt 12” na „powiadomienie Wód Polskich, art. 395 pkt 16”, doszedł `tests/acceptance/test_cause_chain.py` (xfail do zbudowania), żaden test nie został usunięty (powód: przyczyny i działania łączył tylko tekst, a mapa nie miała danych o spadku i spływie).
