@@ -18,6 +18,9 @@ To nie jest urzędowe stwierdzenie suszy. Urzędową ocenę suszy w gminie publi
 
 ## Uruchomienie
 
+**Film demonstracyjny (1 min 20 s):** [docs/film/chronplon-demo.mp4](docs/film/chronplon-demo.mp4): ocena działki Dobrcz (werdykt, przyczyny, rady z terminem, źródłem, ryzykiem i formalnością, wiarygodność), retencja na mapie Góry Świętej Małgorzaty, źródła danych i raport do wydruku.
+
+
 Instrukcja krok po kroku dla osoby bez doświadczenia (Windows: dwa kliknięcia na `deploy\windows\start.bat`; Linux i macOS: `./start.sh`): [docs/URUCHOMIENIE.md](docs/URUCHOMIENIE.md).
 
 Wymagany jest [uv](https://docs.astral.sh/uv/) (sam pobiera Python 3.12 i zależności z `uv.lock`) oraz przeglądarka (Chrome, Firefox, Edge, Safari, Opera).
@@ -144,7 +147,7 @@ Próba: 149 gmin, 1017 gmino-lat (2020–2026), 566130 symboli „+” lub „-�
 | zmierzone, słabe | przesunięcie progu o 53 mm | trafność zrównoważona 2026: 0,7727 → 0,9094; dopasowane do ocen IUNG, w werdykcie nieużyte | `smsr.balanced_accuracy_2026_shifted` |
 | zmierzone | czas raportu na 20 działkach z 15 województw (zimny start, dane na żywo) | mediana 10,3 s, 95. percentyl 25,9 s; 18 z 20 poniżej 30 s (0,9); 2 działki bez pogody | `robustness.*` |
 | zmierzone, słabe | retencja: najniższy punkt granicy leży do 30 m od rowu | 0,50 wobec 0,2456 dla losowego punktu granicy (50 działek z rowem; rów jest zagłębieniem w modelu terenu, więc wynik jest optymistyczny) | `retention.outlet_hit_lowest`, `retention.outlet_hit_random` |
-| zmierzone, słabe | stawy z BDOT10k jako zastępnik niecek (mapy niecek na polach nie ma): prosta miara „o ile miejsce leży niżej niż teren w oknie 100 m” odróżnia stawy z BDOT10k od losowych miejsc poza nimi (to nie jest dokładnie reguła, którą aplikacja wskazuje nieckę; test jest łatwy, bo staw jest zagłębieniem w modelu terenu) | AUC 0,902 (124 zbiorniki); po dopasowaniu tła do położenia (ta sama wysokość ±2 m, 30–150 m od brzegu) 0,858 (przedział 0,826–0,886; `retention.pond_auc_matched`); reguła „dołka” użyta w aplikacji odróżnia stawy słabo (AUC 0,538; `retention.pond_auc_pit_rule`); optymistyczne | `retention.pond_auc_lowest` |
+| nie zmierzone | niecka (zagłębienie) wobec rzeczywistych miejsc, w których zbiera się woda | brak mapy niecek na polach; miejsca w raporcie to kandydatury do sprawdzenia w terenie | n/d |
 | nie zmierzone | zgodność miejsc zastawek z rzeczywistymi budowlami | pilot na BDOT10k (97 działek) nierozstrzygający: dane nie zawierają zastawek rolniczych; miejsca działań to kandydatury do weryfikacji w terenie | n/d |
 | nie zmierzone | zgodność upraw z mapą JRC | brak; mapa nie rozróżnia zbóż ozimych i jarych | brak `crop.rotation_agreement_jrc` |
 | nie zmierzone | zgodność z SMSR na działkach | brak; pomiar jest na gminach | n/d |

@@ -86,9 +86,9 @@ def rows(m: dict) -> list[tuple[str, str, str, str]]:
         ),
         (
             "RETENCJA",
-            "Niecka wobec zbiorników BDOT10k (AUC)",
-            num(g("retention.pond_auc_lowest")),
-            f"{g('retention.n_ponds')} zbiorników; optymistyczne",
+            "Niecka wobec rzeczywistych miejsc zbierania wody",
+            "nie zmierzono",
+            "brak mapy niecek na polach; miejsca to kandydatury do sprawdzenia w terenie",
         ),
         (
             "RETENCJA",
