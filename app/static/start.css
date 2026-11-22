@@ -130,3 +130,8 @@ body:has(main.pickmap) {
 body:has(main.pickmap) .top { background: var(--sd-1); color: var(--text); border-bottom: 1px solid var(--line); }
 body:has(main.pickmap) .start-foot { background: var(--sd-1); color: var(--muted); }
 body:has(main.pickmap) .start-foot a { color: var(--accent-ink); }
+
+/* WebKit/Safari: form controls follow the dark theme (a light select with near-white text was unreadable) */
+body:has(main.pickmap) { color-scheme: dark; }
+body:has(main.pickmap) select, body:has(main.pickmap) input { background-color: var(--surface); color: var(--text); }
+body:has(main.pickmap) select option { background-color: var(--surface); color: var(--text); }

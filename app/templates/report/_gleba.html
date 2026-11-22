@@ -1,0 +1,26 @@
+{# Card "Gleba na tej działce" (app/soil/card.py, styles in app/static/gleba.css); `card` is a SoilCard. #}
+<link rel="stylesheet" href="/static/gleba.css">
+<div class="b-sub gleba" id="karta-gleby">
+  <h4>Gleba na tej działce</h4>
+  <p class="gleba-cat"><b>{{ card.category_line }}</b>{% if card.share %}<span class="gleba-share"> · {{ card.share }}</span>{% endif %}</p>
+  {% if card.boundary %}<p class="gleba-note">{{ card.boundary }}</p>{% endif %}
+  {% if card.has_texture %}
+  <figure class="gleba-bar">
+    <svg viewBox="0 0 100 8" preserveAspectRatio="none" role="img" aria-label="Skład gleby 0–30 cm: {% for s in card.segments %}{{ s.name }} {{ s.pct }}%{{ ', ' if not loop.last }}{% endfor %}">
+      {% for s in card.segments %}<rect class="gleba-seg gleba-seg--{{ s.key }}" x="{{ s.x }}" y="0" width="{{ s.width }}" height="8"/>{% endfor %}
+    </svg>
+    <figcaption>
+      <ul class="gleba-legend">{% for s in card.segments %}<li><i class="gleba-dot gleba-seg--{{ s.key }}" aria-hidden="true"></i>{{ s.name }} {{ s.pct }}%</li>{% endfor %}</ul>
+      <span class="gleba-class">{{ card.texture_name }}, warstwa 0–30 cm (SoilGrids)</span>
+    </figcaption>
+  </figure>
+  {% else %}<p class="gleba-note">{{ card.texture_note }}</p>{% endif %}
+  {% if card.paw %}
+  <p class="gleba-paw"><b>ok. {{ card.paw.mm }} mm</b> wody dostępnej dla roślin w strefie korzeniowej <span class="gleba-tag">{{ card.paw.label }}</span><br>
+    <span class="gleba-note">Zakres {{ card.paw.low_mm }}–{{ card.paw.high_mm }} mm; założenie: strefa korzeniowa {{ card.paw.root_cm }} cm. {{ card.paw.method }}</span></p>
+  {% endif %}
+  {% if card.reserve %}<p>{{ card.reserve }}</p>{% endif %}
+  {% if card.threshold %}<p>{{ card.threshold }}{% if card.advice %} {{ card.advice }}{% endif %}</p>
+  {% elif card.advice %}<p>{{ card.advice }}</p>{% endif %}
+  <p class="gleba-note">{{ card.honesty }}</p>
+</div>

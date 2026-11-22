@@ -17,6 +17,7 @@ from urllib.parse import quote
 from app.drought.kbw import CROP_GENITIVE
 from app.fmt import dec
 from app.models import BADGE_ABOVE, BADGE_BELOW, Action, Cause, Report
+from app.soil.card import SoilCard, build_card
 
 MONTHS_GENITIVE = (
     "stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca",
@@ -476,6 +477,9 @@ def _method_row(report: Report) -> Row:
     ]
     texts = [s.how for s in report.sections if s.how and s.id in METHOD_SECTIONS]
     paragraphs += [t for t in (calm(x, report) for x in texts) if t and not CHART_WORDS.search(t)]
+    card = build_card(report.soil, report.verdict, report.request.crop)
+    if card is not None and card.how:
+        paragraphs.append(card.how)
     paragraphs.append(plain(report.verdict.disclaimer) + ".")
     paragraphs.append(
         "Raport nie uwzględnia drenowania, wód gruntowych ani faktycznej daty siewu."
@@ -533,6 +537,7 @@ class FarmerView:
     commune_measures: dict[str, str]
     balance_caption: str
     plants_pending: bool = False  # the satellite picture is still being fetched (the PDF says so)
+    soil_card: SoilCard | None = None  # "Gleba na tej działce", in the causes tab
 
 
 def _query(report: Report) -> str:
@@ -594,4 +599,5 @@ def build(report: Report) -> FarmerView:
         commune_measures=commune_measures(report),
         balance_caption=balance_caption(report),
         plants_pending=any(r.kind == "plants" and not r.failed for r in all_rows),
+        soil_card=build_card(report.soil, report.verdict, report.request.crop),
     )
