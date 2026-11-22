@@ -1,0 +1,26 @@
+code,jrc_name,group,reason
+100,Artificial,skip,not farmland
+211,Common wheat,ozime,winter wheat is the usual wheat in Poland and the map has no winter/spring split
+212,Durum wheat,skip,rare in Poland and spring or winter sowing both occur
+213,Barley,skip,winter and spring barley both common; the map does not tell them apart
+214,Rye,ozime,rye in Poland is sown in autumn
+215,Oats,jare,oats in Poland are sown in spring
+216,Maize,pozne,maize emerges in May and peaks in July-August
+217,Rice,skip,not grown in Poland
+218,Triticale,ozime,triticale in Poland is mostly winter
+219,Other cereals,skip,mixed content: winter and spring cereals
+221,Potatoes,jare,planted in April and green by the end of May
+222,Sugar beet,jare,sown in April and green by the end of May
+223,Other root crops,jare,sown in spring
+230,Other non-permanent industrial crops,skip,mixed content (rape is class 232)
+231,Sunflower,jare,sown in April-May
+232,Rape and turnip rape,ozime,winter rape is sown in August and is green in March
+233,Soya,pozne,sown in May and peaks in July-August
+240,Dry pulses,jare,sown in March-April
+250,Fodder crops,skip,mixed content: cereals, legumes and grass mixtures
+290,Bare arable land,gola_gleba,no crop seen in the season
+300,Woodland and shrubland (incl. permanent crops),skip,not an arable rotation group
+500,Grasslands,tuz,permanent grassland
+600,Bare land,skip,not arable land (rock, sand, built-up edges)
+700,Water,skip,not farmland
+800,Wetlands,skip,not an arable rotation group
