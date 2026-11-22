@@ -1,7 +1,7 @@
 # ChrońPlon
 
-**Zespół:** `NAZWA_ZESPOŁU` · **Tytuł rozwiązania:** ChrońPlon, aplikacja do zadania „Zatrzymaj wodę, chroń plony” (KOWR, HackNation 2026)
-· **Wersja online:** `ADRES_DEMO`
+**Zespół:** Freesolo · **Tytuł rozwiązania:** ChrońPlon, aplikacja do zadania „Zatrzymaj wodę, chroń plony” (KOWR, HackNation 2026)
+· **Wersja online:** https://70-34-247-151.sslip.io/
 
 Aplikacja webowa dla jednej działki rolnej. Rolnik wpisuje numer działki z ewidencji (albo klika pole na mapie),
 datę i uprawę. ChrońPlon liczy bilans wody działki (opad minus parowanie), stawia go obok progu suszy z rozporządzenia i obok oceny SMSR
@@ -67,7 +67,7 @@ Wersja online działa z `HN_LIVE_ONLY=1`: każda działka, także dwie działki 
 
 ## Wersja demonstracyjna online
 
-Adres działającej wersji: `ADRES_DEMO` (do uzupełnienia po wdrożeniu; kroki, logi i koszty serwera: [docs/DEPLOY.md](docs/DEPLOY.md)).
+Adres działającej wersji: https://70-34-247-151.sslip.io/ (kroki, logi i koszty serwera: [docs/DEPLOY.md](docs/DEPLOY.md)).
 Wersja online działa na żywo dla dowolnej działki w Polsce, bez logowania.
 
 ## Dostęp dla jury do repozytorium
@@ -144,7 +144,7 @@ Próba: 149 gmin, 1017 gmino-lat (2020–2026), 566130 symboli „+” lub „-�
 | zmierzone, słabe | przesunięcie progu o 53 mm | trafność zrównoważona 2026: 0,7727 → 0,9094; dopasowane do ocen IUNG, w werdykcie nieużyte | `smsr.balanced_accuracy_2026_shifted` |
 | zmierzone | czas raportu na 20 działkach z 15 województw (zimny start, dane na żywo) | mediana 12,5 s, 95. percentyl 17,6 s; 17 z 20 poniżej 30 s (0,85); 3 działki bez pogody | `robustness.*` |
 | zmierzone, słabe | retencja: najniższy punkt granicy leży do 30 m od rowu | 0,50 wobec 0,2456 dla losowego punktu granicy (50 działek z rowem; rów jest zagłębieniem w modelu terenu, więc wynik jest optymistyczny) | `retention.outlet_hit_lowest`, `retention.outlet_hit_random` |
-| zmierzone, słabe | prosta miara „o ile miejsce leży niżej niż teren w oknie 100 m” odróżnia stawy z BDOT10k od losowych miejsc poza nimi (to nie jest dokładnie reguła, którą aplikacja wskazuje nieckę; test jest łatwy, bo staw jest zagłębieniem w modelu terenu) | AUC 0,902 (124 zbiorniki; bez przedziału ufności; optymistyczne) | `retention.pond_auc_lowest` |
+| zmierzone, słabe | prosta miara „o ile miejsce leży niżej niż teren w oknie 100 m” odróżnia stawy z BDOT10k od losowych miejsc poza nimi (to nie jest dokładnie reguła, którą aplikacja wskazuje nieckę; test jest łatwy, bo staw jest zagłębieniem w modelu terenu) | AUC 0,902 (124 zbiorniki); po dopasowaniu tła do położenia (ta sama wysokość ±2 m, 30–150 m od brzegu) ok. 0,86 (przedział 0,83–0,89); reguła „dołka” użyta w aplikacji odróżnia stawy słabo (AUC 0,53); optymistyczne | `retention.pond_auc_lowest` |
 | nie zmierzone | zgodność miejsc zastawek z rzeczywistymi budowlami | pilot na BDOT10k (97 działek) nierozstrzygający: dane nie zawierają zastawek rolniczych; miejsca działań to kandydatury do weryfikacji w terenie | n/d |
 | nie zmierzone | zgodność upraw z mapą JRC | brak; mapa nie rozróżnia zbóż ozimych i jarych | brak `crop.rotation_agreement_jrc` |
 | nie zmierzone | zgodność z SMSR na działkach | brak; pomiar jest na gminach | n/d |
@@ -265,7 +265,7 @@ Kod aplikacji: MIT (`LICENSE`). Źródła z licencją niekomercyjną (Open-Meteo
 - **Obrys działki:** zapas EGiB WFS (gdy ULDK nie odpowiada) nie był sprawdzony z sieci sali; jego testy idą na atrapach HTTP. Kopia lokalna obejmuje 50 działek.
 - **Parowanie:** wzór, którym IUNG liczy parowanie w SMSR, jest nieznany; zgodność mierzy się symbolami „+” i „-”, nie w mm.
 - **Zlewnia** bywa ucięta przez siatkę (margines ok. 300 m); drenaż jest „nieznany”, więc regulator drenów to potencjał o niskiej pewności.
-  Progi oznaczone „propozycja zespołu” nie mają źródła w poradniku CDR 2025.
+  Progi oznaczone „wartość orientacyjna” nie mają źródła w poradniku CDR 2025.
 - **Przeglądarki i systemy:** scenariusz demo i testy przeglądarkowe biegną w Chrome (Playwright); Firefoxa, Edge, Safari i Opery nie sprawdzono. Skryptów Windows nie testowano.
 - **Historia satelitarna:** 5 poprzednich sezonów (pogoda: 10 sezonów); zdjęcia z chmurami i działki bez czystej sceny w oknie dają raport bez oceny stanu roślin, z jawnym komunikatem.
 - **Obciążenie:** brak ograniczeń szybkości i jednoczesnych raportów oraz rozmiaru pamięci podręcznej (sekcja Skalowanie, koszty i bezpieczeństwo).
@@ -317,7 +317,7 @@ a D–G jest podany obok; bieżące liczby są w `metrics.json` (klucze `smsr.*_
 | Wykorzystanie danych i wiarygodność (25%) | pięć kategorii danych z licencjami (`docs/DANE.md`), próg z rozporządzenia sprawdzony z tekstem (`tests/test_thresholds.py`), zgodność z SMSR i ograniczenia w zakładce Wiarygodność (`metrics.json`, sekcje Dowody i Uczciwe ograniczenia) |
 | Innowacyjność i potencjał (20%) | trzy osobne odpowiedzi zamiast jednej liczby, krzywa kalibracji i prognoza przekroczenia progu (`app/validation/`, `app/forecast/`), miejsce retencji z modelu terenu (`app/advice/terrain_model.py`), plan rozwoju w sekcji Skalowanie |
 | Prostota obsługi (15%) | ekran startowy z mapą i jednym formularzem, wpisany przykład (`tests/acceptance/test_start_defaults.py`, `tests/acceptance/test_map_pick.py`), język bez żargonu (`tests/acceptance/test_plain_language.py`), układ na telefonie (`make ui-audit`) |
-| Działający prototyp i jakość (15%) | uruchomienie z README i `ADRES_DEMO`, raport z kopii danych poniżej 30 s (`tests/acceptance/test_report_flow.py`), `make gate-fast`, `make demo`, wdrożenie (`docs/DEPLOY.md`), zgodność licencji (sekcja Licencje) |
+| Działający prototyp i jakość (15%) | uruchomienie z README i adresu https://70-34-247-151.sslip.io/, raport z kopii danych poniżej 30 s (`tests/acceptance/test_report_flow.py`), `make gate-fast`, `make demo`, wdrożenie (`docs/DEPLOY.md`), zgodność licencji (sekcja Licencje) |
 
 ## Struktura repozytorium i testy
 

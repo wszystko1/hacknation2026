@@ -34,7 +34,7 @@ def _advisor() -> list[KeyValue]:
         if r.group == "nawadnianie" and r.action_id not in NOT_USED
     ]
     rows += [
-        KeyValue(key=f"Próg: {what.lower()}", value=f"{value} · propozycja zespołu")
+        KeyValue(key=f"Próg: {what.lower()}", value=f"{value} · wartość orientacyjna")
         for what, value in PROPOSALS[3:]
     ]
     rows.append(

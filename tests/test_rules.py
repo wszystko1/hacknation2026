@@ -138,7 +138,7 @@ def test_advisor_view_lists_the_team_proposals_of_both_sections() -> None:
     for sid in ("uprawa", "nawadnianie"):
         block = page[page.index(f'<section id="{sid}"') :]
         block = block[: block.index("</section>")]
-        assert "propozycja zespołu" in block, sid
+        assert "wartość orientacyjna" in block, sid
 
 
 def test_decade_summary_counts_stay_within_the_seasons_judged() -> None:
