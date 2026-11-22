@@ -1,5 +1,5 @@
 {# Section 8: sources with what they gave, time, duration and state; gaps as rows with the reason; resolution in the adviser block. #}
-<section id="zrodla" aria-labelledby="h-zrodla">
+<section id="{{ 'zrodla-tabela' if farmer_extra else 'zrodla' }}" aria-labelledby="h-zrodla">
   <h2 class="sec-h" id="h-zrodla"{% if farmer_extra %} hidden{% endif %}><span class="n">{{ s.n }}</span>{{ s.heading }}{% if s.chip and not farmer_extra %}<span class="chip">{{ s.chip }}</span>{% endif %}</h2>
   <div class="scroll" tabindex="0" role="region" aria-label="Tabela źródeł">
     <table id="tabela-zrodel">
@@ -12,7 +12,7 @@
       </tbody>
     </table>
   </div>
-  {% for sentence in s.sentences %}<p>{{ sentence }}</p>{% endfor %}
+  {% for sentence in s.sentences %}{% if not (farmer_extra and loop.first) %}<p>{{ sentence }}</p>{% endif %}{% endfor %}
   {% if s.advisor %}
   <div class="advisor"><b>Rozdzielczość źródeł</b><dl class="kv">{% for kv in s.advisor %}<dt>{{ kv.key }}</dt><dd>{{ kv.value }}</dd>{% endfor %}</dl></div>
   {% endif %}

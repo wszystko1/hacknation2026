@@ -7,7 +7,8 @@
   var names = [];
   buttons.forEach(function (b) { var n = b.getAttribute("data-tab-button"); if (names.indexOf(n) < 0) names.push(n); });
   var panels = Array.prototype.slice.call(document.querySelectorAll(".report [data-tab]"));
-  var ALIAS = { gmina: "wiarygodnosc", zgodnosc: "wiarygodnosc" };
+  var ALIAS = { gmina: "wiarygodnosc", zgodnosc: "wiarygodnosc", "zrodla-danych": "zrodla" };
+  var keepFocus = false; // arrow keys keep focus on the tab button
 
   function show(name) {
     buttons.forEach(function (b) {
@@ -20,6 +21,21 @@
       var on = t === name || false;
       el.hidden = !on;
     });
+  }
+
+  // top of the open tab: the tab bar, so the buttons and the tab's heading are the first thing in the window
+  function toTop() {
+    var y = bar.getBoundingClientRect().top + window.pageYOffset - 8;
+    window.scrollTo(0, Math.max(0, y));
+    var head = null;
+    panels.forEach(function (el) {
+      if (head || el.hidden) return;
+      head = el.matches("h1,h2,h3") ? el : el.querySelector("h1,h2,h3");
+    });
+    if (head && !keepFocus) {
+      if (!head.hasAttribute("tabindex")) head.setAttribute("tabindex", "-1");
+      head.focus({ preventScroll: true });
+    }
   }
 
   // hash -> tab: a tab name, an alias, or the id of an element inside a tab
@@ -35,8 +51,8 @@
     show(names.indexOf(name) >= 0 ? name : "podsumowanie");
     if (target) {
       if (target.tagName === "DETAILS") target.open = true;
-      if (scroll) target.scrollIntoView();
     }
+    if (scroll && (location.hash)) toTop();
   }
 
   bar.hidden = false;
@@ -46,6 +62,7 @@
       var name = btn.getAttribute("data-tab-button");
       show(name);
       if (location.hash.replace(/^#/, "") !== name) location.hash = name;
+      else toTop();
     });
     btn.addEventListener("keydown", function (e) {
       var group = Array.prototype.slice.call(btn.parentNode.querySelectorAll("[data-tab-button]"));
@@ -58,9 +75,13 @@
       var next = group[(i + d + group.length) % group.length];
       show(next.getAttribute("data-tab-button"));
       next.focus();
+      keepFocus = true;
       location.hash = next.getAttribute("data-tab-button");
+      setTimeout(function () { keepFocus = false; }, 100);
     });
   });
   window.addEventListener("hashchange", function () { fromHash(true); });
   fromHash(true);
+  // the browser restores or jumps to the anchor after load; put the tab's top back
+  window.addEventListener("load", function () { if (location.hash) toTop(); });
 })();
