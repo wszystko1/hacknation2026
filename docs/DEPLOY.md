@@ -44,8 +44,8 @@ logi Caddy: `journalctl -u caddy -f`. Użycie pamięci: `free -h`.
   `curl "https://uldk.gugik.gov.pl/?request=GetParcelById&id=040303_2.0002.189/13&result=geom_wkt&srid=2180"` ma dać `POLYGON((`.
   Aplikacja odrzuca atrapę (`app/geodata/uldk_guard.py`). Gdy ULDK nie działa z serwera, zmień region/dostawcę.
   Uwaga: smoke.sh odpytuje ULDK z maszyny, na której go uruchomisz; uruchom go też na serwerze: `bash /srv/bilans/app/deploy/smoke.sh http://127.0.0.1:8000`.
-- **Brak pamięci (OOM):** `dmesg | grep -i kill`; zmniejsz `--workers` na 1 w `/etc/systemd/system/bilans.service`, potem
-  `sudo systemctl daemon-reload && sudo systemctl restart bilans`.
+- **Brak pamięci (OOM):** `dmesg | grep -i kill`; jednostka ma już `--workers 1`, `MemoryMax=2800M` i `TasksMax=600` (usługa zostanie zrestartowana przez systemd, host przeżyje); zmiana limitów w `/etc/systemd/system/bilans.service`, potem
+  `sudo systemctl daemon-reload && sudo systemctl restart bilans`. Aplikacja liczy naraz najwyżej 3 zimne raporty (`app/limits.py`), reszta czeka do 30 s, potem 503 z `Retry-After`.
 - **Certyfikat Let's Encrypt:** Caddy pobiera go sam przy pierwszym wejściu na HTTPS; potrzebuje otwartych portów 80 i 443
   (ufw je otwiera; sprawdź też Cloud Firewall w panelu Hetznera, jeśli go dołączono do serwera). Błędy: `journalctl -u caddy`. `sslip.io` jest wspólną domeną publiczną,
   więc limit Let's Encrypt (50 certyfikatów na domenę tygodniowo) bywa wyczerpany; wtedy użyj własnej domeny
@@ -60,5 +60,5 @@ Serwer Hetzner x86 z 2 vCPU / 4 GB kosztuje kilka euro miesięcznie, rozliczany 
 ## g) Co NIE jest sprawdzone
 
 Skrypty nie były uruchomione na prawdziwym serwerze: `bootstrap.sh` (apt, Caddy, systemd, ufw), certyfikat HTTPS i `deploy.sh`
-przez SSH przeszły tylko `bash -n` i shellcheck. Lokalnie sprawdzono aplikację z komendą z jednostki systemd (2 procesy,
+przez SSH przeszły tylko `bash -n` i shellcheck. Lokalnie sprawdzono aplikację z komendą z jednostki systemd (jeden proces, `--workers 1`,
 `GEODATA_CACHE_DIR`) i `smoke.sh`. Skryptów Windows nie testowano. Próba bez Dockera i bez serwera (świeże `uv sync`, zużycie pamięci, przegląd skryptów) jest opisana w `docs/notes/wdrozenie-proba.md`.

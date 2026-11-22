@@ -61,7 +61,7 @@ def browser_page() -> Iterator[Page]:
             browser = pw.chromium.launch(channel="chrome", headless=True)
         except Exception:  # noqa: BLE001 - fall back to the bundled chromium
             browser = pw.chromium.launch(headless=True)
-        yield browser.new_page(viewport=map_pick.LAPTOP, locale="pl-PL")
+        yield browser.new_page(viewport=map_pick.LAPTOP, locale="pl-PL", bypass_csp=True)  # wait_for_function evaluates strings
         browser.close()
 
 

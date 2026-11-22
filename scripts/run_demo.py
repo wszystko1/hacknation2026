@@ -92,7 +92,7 @@ def main() -> int:
 
         with sync_playwright() as pw:
             browser = launch(pw)
-            page = browser.new_page(viewport={"width": 1280, "height": 800}, locale="pl-PL")
+            page = browser.new_page(viewport={"width": 1280, "height": 800}, locale="pl-PL", bypass_csp=True)  # wait_for_function evaluates strings
             fast_pauses(page)
             errors: list[str] = []
             page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"[:300]))

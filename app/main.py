@@ -18,7 +18,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app import datasource, fmt
+from app import datasource, fmt, limits
 from app.charts.confidence import confidence_for
 from app.context import ReportContext
 from app.crop_condition import background as crop_background
@@ -60,6 +60,7 @@ async def _http_error(request: Request, exc: StarletteHTTPException) -> Response
 
 
 app.include_router(picker_router)
+limits.install(app)  # cold-report gate, security headers, no /docs online
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
 templates.env.filters.update(
