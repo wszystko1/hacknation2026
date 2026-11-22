@@ -109,6 +109,7 @@
     "baseline_csi_climatology": 0.0694,
     "baseline_csi_nasa_power_grid": 0.147,
     "baseline_csi_never_drought": 0.0,
+    "baseline_strongest_code": 3,
     "by_year": {
       "2020": {
         "csi": 0.2294,
@@ -278,7 +279,7 @@
     "csi_ci_low_fao56": 0.3387,
     "csi_dg": 0.4599,
     "csi_fao56": 0.3699,
-    "csi_gain_vs_baseline": 0.3005,
+    "csi_gain_vs_baseline": 0.2229,
     "dev_balanced_accuracy_dg": 0.7369,
     "dev_balanced_accuracy_fao56": 0.7002,
     "dev_dg_better": 1,

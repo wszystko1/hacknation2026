@@ -134,6 +134,27 @@ def baselines(v: measure.View) -> dict:
     return out
 
 
+# Candidate reference lines: name -> (metrics key, code stored as smsr.baseline_strongest_code).
+BASELINE_LINES = {
+    "always_drought": "smsr.baseline_csi_always_drought",
+    "climatology": "smsr.baseline_csi_climatology",
+    "nasa_power_grid": "smsr.baseline_csi_nasa_power_grid",
+}
+# metrics.json holds numbers only, so the strongest line is stored as a code:
+# 1 = always drought, 2 = commune climatology, 3 = NASA POWER grid.
+STRONGEST_CODES = {"always_drought": 1, "climatology": 2, "nasa_power_grid": 3}
+
+
+def strongest_baseline(out: dict) -> tuple[str, float]:
+    """The reference line with the highest CSI as (name, csi).
+
+    Lines whose key is missing (no NASA POWER grid) are left out; the others still compete.
+    """
+    found = {name: out[key] for name, key in BASELINE_LINES.items() if out.get(key) is not None}
+    name = max(found, key=lambda n: found[n])
+    return name, found[name]
+
+
 def shift_keys(v_all: measure.View, ratio_low: float, ratio_high: float) -> dict:
     """A threshold shift when the interval of the below-to-plus ratio does not contain 1.
 
@@ -250,7 +271,8 @@ def run() -> dict[str, float | int]:
     out["smsr.n_gmina_years"] = len({(c, y) for c, y in zip(test.commune[ok], test.year[ok], strict=True)})
     out["smsr.n_communes"] = len({c for c in test.commune[ok]})
     out.update(baselines(test))
-    best = max(out["smsr.baseline_csi_always_drought"], out["smsr.baseline_csi_climatology"])
+    name, best = strongest_baseline(out)
+    out["smsr.baseline_strongest_code"] = STRONGEST_CODES[name]
     _put(out, "smsr.csi_gain_vs_baseline", out["smsr.csi"] - best)
     out["smsr.method_beats_climatology"] = int(out["smsr.csi"] > out["smsr.baseline_csi_climatology"])
     for bucket, share in measure.agreement_by_distance(test, "fao56").items():
