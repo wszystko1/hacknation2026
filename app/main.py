@@ -16,11 +16,13 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import datasource, fmt
 from app.context import ReportContext
 from app.drought.chart import hbar_svg
 from app.drought.kbw import assess
+from app.farmer_view import plain as plain_words
 from app.geodata import InvalidParcelId, fetch_all
 from app.inputs import FORMAT_ERROR, parse_request
 from app.mapview import map_view
@@ -39,11 +41,25 @@ from app.report import ParcelUnavailable, build_report, parcel_info
 from app.soil import assess_soil
 
 BASE = Path(__file__).parent
-app = FastAPI(title="Bilans działki")
+app = FastAPI(title="ChrońPlon")
+
+
+@app.exception_handler(StarletteHTTPException)
+async def _http_error(request: Request, exc: StarletteHTTPException) -> Response:
+    """A 404 on a page address gets the app's own page; the API and every other status keep the JSON body."""
+    wants_html = "text/html" in request.headers.get("accept", "")
+    if exc.status_code == 404 and wants_html and not request.url.path.startswith("/api"):
+        return templates.TemplateResponse(
+            request, "not_found.html", {"title": "Nie znaleziono · ChrońPlon"}, status_code=404
+        )
+    return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+
 app.include_router(picker_router)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
 templates.env.filters.update(
+    plain=plain_words,
     dec=fmt.dec,
     mm=fmt.mm,
     ha=fmt.ha,
@@ -74,7 +90,7 @@ def _common() -> dict:
 
 
 def _start(request: Request, q: dict, errors: list[FieldError], status: int = 200) -> HTMLResponse:
-    ctx = _common() | {"title": "Bilans działki", "q": q, "errors": {e.field: e.message for e in errors}}
+    ctx = _common() | {"title": "ChrońPlon", "q": q, "errors": {e.field: e.message for e in errors}}
     return templates.TemplateResponse(request, "start.html", ctx, status_code=status)
 
 
@@ -164,7 +180,7 @@ def _failure(request: Request, q: dict, exc: Exception) -> HTMLResponse:
 
 def _page_context(request: Request, q: dict, report: Report) -> dict:
     return _common() | {
-        "title": f"Działka {report.parcel.number} · Bilans działki",
+        "title": f"Działka {report.parcel.number} · ChrońPlon",
         "q": q,
         "report": report,
         "sections_order": SECTION_ORDER,
@@ -255,7 +271,7 @@ def _waiting_page(request: Request, q: dict, req: ReportRequest) -> HTMLResponse
         log.info("first look unavailable: %s", exc)
     query = request.url.query
     ctx = _common() | {
-        "title": "Liczę raport · Bilans działki",
+        "title": "Liczę raport · ChrońPlon",
         "q": q,
         "req": req,
         "first": first,

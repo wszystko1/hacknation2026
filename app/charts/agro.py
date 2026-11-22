@@ -41,7 +41,6 @@ def counts_svg(counts: Sequence[DecadeCount], label: str) -> str:
     bar_w = slot * 0.7
     scale = (BASE - TOP) / judged
     body = [
-        svg.text(LEFT, 22, "Sezony pod progiem w oknie 60 dni kończącym się w dekadzie", "lbl"),
         svg.line(LEFT, BASE, RIGHT, BASE, "ax-zero"),
     ]
     for i, c in enumerate(counts):
@@ -62,7 +61,9 @@ def counts_svg(counts: Sequence[DecadeCount], label: str) -> str:
         (("s-dry", "co najmniej połowa sezonów"), ("s-warn", "mniej niż połowa"), ("s-neu", "ani razu")),
     )
     body.append(svg.text(LEFT, HEIGHT - 2, "„–”: w tej dekadzie nie kończy się okres z progiem", ""))
-    return svg.svg(HEIGHT, label, body, desc=label)
+    return svg.svg(
+        HEIGHT, label, body, desc=label, title="Sezony pod progiem w oknie 60 dni kończącym się w dekadzie"
+    )
 
 
 def deficit_svg(deficits: Sequence[DecadeDeficit], label: str) -> str:
@@ -76,7 +77,7 @@ def deficit_svg(deficits: Sequence[DecadeDeficit], label: str) -> str:
     bar_w = slot * 0.7
     scale = (BASE - 20 - TOP) / (high - low)
     zero = TOP + high * scale
-    body = [svg.text(LEFT, 22, "Niedobór wody w dekadzie (parowanie − opad), mm", "lbl")]
+    body = []
     for i, d in enumerate(deficits):
         if d.sensitive:
             body.append(svg.rect(LEFT + slot * i, TOP - 8, slot, BASE - TOP + 8, "s-window"))
@@ -104,4 +105,4 @@ def deficit_svg(deficits: Sequence[DecadeDeficit], label: str) -> str:
             ("s-rain", "nadwyżka opadu"),
         ),
     )
-    return svg.svg(HEIGHT, label, body, desc=label)
+    return svg.svg(HEIGHT, label, body, desc=label, title="Niedobór wody w dekadzie (parowanie − opad), mm")

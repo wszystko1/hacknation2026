@@ -1,7 +1,7 @@
 """Scene "Plan działań: przełącznik „W planie”": switching an action on raises the plan counter from N to N+1."""
 
-from demo.steps.common import PAUSE, open_row
-from demo.steps.tabs import show_tab
+from demo.steps.common import PAUSE
+from demo.steps.tabs import open_row, show_tab
 
 
 def scene(page, base_url: str) -> None:

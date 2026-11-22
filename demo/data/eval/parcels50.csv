@@ -19,9 +19,9 @@ dzialka,wojewodztwo,lon,lat,data,uprawa
 ,małopolskie,20.35504,50.38635,2024-06-10,kukurydza_kiszonka
 ,małopolskie,20.20762,50.34384,2020-06-04,zboza_ozime
 ,małopolskie,20.27626,50.34883,2016-08-23,krzewy_owocowe
-146501_1.0001.1,mazowieckie,20.48076,52.83175,2017-08-06,krzewy_owocowe
-146501_1.0001.1,mazowieckie,20.43756,52.81535,dzis,ziemniak
-146501_1.0001.1,mazowieckie,20.71509,52.82493,2023-01-28,kukurydza_kiszonka
+,mazowieckie,20.48076,52.83175,2017-08-06,krzewy_owocowe
+,mazowieckie,20.43756,52.81535,dzis,ziemniak
+,mazowieckie,20.71509,52.82493,2023-01-28,kukurydza_kiszonka
 ,opolskie,17.89647,50.21183,2016-12-08,rzepak
 ,opolskie,17.87744,50.12847,2023-08-20,truskawki
 ,opolskie,17.78453,50.24839,2021-07-07,kukurydza_ziarno

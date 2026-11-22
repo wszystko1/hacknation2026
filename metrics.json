@@ -76,6 +76,28 @@
     "test_year_first": 2016,
     "test_year_last": 2025
   },
+  "retention": {
+    "n_ditch_parcels": 50,
+    "n_parcels": 20,
+    "n_ponds": 124,
+    "outlet_hit_d8": 0.3,
+    "outlet_hit_lowest": 0.5,
+    "outlet_hit_random": 0.2456,
+    "outlet_hit_share": 0.5,
+    "place_or_reason_share": 1.0,
+    "pond_auc": 0.902,
+    "pond_auc_d8": 0.7242,
+    "pond_auc_lowest": 0.902,
+    "with_place_share": 0.9412
+  },
+  "robustness": {
+    "n_no_weather": 3,
+    "n_parcels": 20,
+    "n_voivodeships": 15,
+    "p50_s": 12.5,
+    "p95_s": 17.6,
+    "report_ok_under_30s_share": 0.85
+  },
   "smsr": {
     "accuracy": 0.9683,
     "accuracy_dg": 0.9734,
@@ -330,10 +352,104 @@
     "weather_share_precipitation_missing": 0.0097,
     "weather_share_precipitation_nasa_power": 0.0865
   },
+  "smsr_variants": {
+    "dg": {
+      "balanced_accuracy_gain_current_vs_worst": -0.0306,
+      "balanced_accuracy_gain_current_vs_worst_ci_high": -0.0248,
+      "balanced_accuracy_gain_current_vs_worst_ci_low": -0.0361,
+      "csi_gain_current_vs_worst": 0.1749,
+      "csi_gain_current_vs_worst_ci_high": 0.1993,
+      "csi_gain_current_vs_worst_ci_low": 0.1493
+    },
+    "dg_current": {
+      "balanced_accuracy": 0.7555,
+      "balanced_accuracy_ci_high": 0.7732,
+      "balanced_accuracy_ci_low": 0.7363,
+      "csi": 0.46,
+      "csi_ci_high": 0.4874,
+      "csi_ci_low": 0.4302,
+      "far": 0.1928,
+      "n_cases": 553223,
+      "pod": 0.5169
+    },
+    "dg_worst": {
+      "balanced_accuracy": 0.7861,
+      "balanced_accuracy_ci_high": 0.8013,
+      "balanced_accuracy_ci_low": 0.7697,
+      "csi": 0.2851,
+      "csi_ci_high": 0.2986,
+      "csi_ci_low": 0.2708,
+      "far": 0.6573,
+      "n_cases": 553223,
+      "pod": 0.6292
+    },
+    "dg_worst_vs_any": {
+      "balanced_accuracy": 0.78,
+      "balanced_accuracy_ci_high": 0.7958,
+      "balanced_accuracy_ci_low": 0.7627,
+      "csi": 0.5189,
+      "csi_ci_high": 0.5444,
+      "csi_ci_low": 0.4896,
+      "far": 0.1578,
+      "n_cases": 553223,
+      "pod": 0.5748
+    },
+    "fao56": {
+      "balanced_accuracy_gain_current_vs_worst": -0.0374,
+      "balanced_accuracy_gain_current_vs_worst_ci_high": -0.0325,
+      "balanced_accuracy_gain_current_vs_worst_ci_low": -0.0426,
+      "csi_gain_current_vs_worst": 0.0966,
+      "csi_gain_current_vs_worst_ci_high": 0.1195,
+      "csi_gain_current_vs_worst_ci_low": 0.0741
+    },
+    "fao56_current": {
+      "balanced_accuracy": 0.7025,
+      "balanced_accuracy_ci_high": 0.7208,
+      "balanced_accuracy_ci_low": 0.6832,
+      "csi": 0.3679,
+      "csi_ci_high": 0.3974,
+      "csi_ci_low": 0.3362,
+      "far": 0.2199,
+      "n_cases": 553223,
+      "pod": 0.4104
+    },
+    "fao56_worst": {
+      "balanced_accuracy": 0.7399,
+      "balanced_accuracy_ci_high": 0.7569,
+      "balanced_accuracy_ci_low": 0.7213,
+      "csi": 0.2713,
+      "csi_ci_high": 0.2854,
+      "csi_ci_low": 0.2548,
+      "far": 0.6398,
+      "n_cases": 553223,
+      "pod": 0.5237
+    },
+    "fao56_worst_vs_any": {
+      "balanced_accuracy": 0.7275,
+      "balanced_accuracy_ci_high": 0.744,
+      "balanced_accuracy_ci_low": 0.7096,
+      "csi": 0.4328,
+      "csi_ci_high": 0.4616,
+      "csi_ci_low": 0.4012,
+      "far": 0.1391,
+      "n_cases": 553223,
+      "pod": 0.4653
+    },
+    "n_communes": 146
+  },
   "soil": {
     "agreement_with_neighbour": 0.625,
     "agreement_within_one": 0.8958,
     "category_agreement": 0.375,
     "n_points": 96
+  },
+  "soil_sensitivity": {
+    "flip_cell_pm1": 0.0225,
+    "flip_cell_soilgrids": 0.0136,
+    "flip_worst_pm1": 0.0579,
+    "flip_worst_soilgrids": 0.0366,
+    "n_cell_pairs": 420716,
+    "n_points": 96,
+    "n_worst_pairs": 420716
   }
 }

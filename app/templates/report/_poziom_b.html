@@ -2,15 +2,7 @@
 {% set fv = report.farmer %}
 {% set v = report.verdict %}
 {% set farmer_extra = true %}
-{% set tab_of = {'bilans': 'przyczyny', 'dlaczego': 'przyczyny', 'parowanie': 'przyczyny', 'rosliny': 'przyczyny',
-                 'spadek': 'rekomendacje', 'zabiegi': 'rekomendacje', 'plan': 'rekomendacje', 'formalnosci': 'rekomendacje',
-                 'gmina': 'wiarygodnosc', 'czesto': 'wiarygodnosc', 'jak': 'zrodla'} %}
-<section id="poziom-b" class="level-b" aria-label="Szczegóły">
-  <h2 data-tab="all-details">Szczegóły</h2>
-  {% for row in fv.rows %}
-  <details class="b-row" id="wiersz-{{ row.id }}" data-tab="{{ tab_of.get(row.id, 'zrodla') }}">
-    <summary>{{ row.title }}</summary>
-    <div class="b-body">
+{% macro row_body(row) %}
     {% if row.kind == 'balance' %}
       {% if v.kbw_mm is not none %}
       <div class="big-number {{ 'big-number--dry' if v.state == 'below' else '' }}">
@@ -35,7 +27,7 @@
       <ul class="b-lines">
         {% for line in row.lines %}
         <li{% if line.n and row.kind == 'plan' %} id="dzialanie-{{ line.n }}" data-plan-item="{{ line.n }}" class="{{ 'is-planned' if line.planned else '' }}"{% endif %}>
-          {% if line.n %}<span class="nb">{{ line.n }}</span>{% endif %}
+          {% if line.n and line.pin %}<span class="pin" role="img" aria-label="Miejsce na mapie: {{ line.n }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22l-6-9V3h12v10z"/></svg><b>{{ line.n }}</b></span>{% else %}<span class="nb-gap" aria-hidden="true"></span>{% endif %}
           <span>{{ line.text }}{% if line.note %} <span class="muted">{{ line.note }}</span>{% endif %}{% if row.kind == 'plan' %} <span class="muted">— {{ line.due }}</span>{% endif %}</span>
           {% if line.plan_switch %}<label class="sw"><input type="checkbox" name="plan" value="{{ line.n }}" data-plan-switch {{ 'checked' if line.planned else '' }} aria-label="Działanie {{ line.n }} w planie"><span></span></label>{% endif %}
         </li>
@@ -43,15 +35,55 @@
       </ul>
       {% endif %}
     {% endif %}
+{% endmacro %}
+{# six groups of rows plus "Jak liczymy"; the first group of every tab is open #}
+{% set groups = [
+  ('bilans', 'Ile brakuje wody', ['bilans', 'parowanie'], 'przyczyny'),
+  ('dlaczego', 'Dlaczego i jak często', ['dlaczego', 'czesto', 'rosliny'], 'przyczyny'),
+  ('zatrzymaj', 'Zatrzymaj wodę', ['zabiegi', 'spadek', 'formalnosci'], 'rekomendacje'),
+  ('nawadnianie', 'Czy nawadniać', ['nawadnianie'], 'rekomendacje'),
+  ('plan', 'Plan i terminy', ['plan'], 'rekomendacje'),
+  ('gmina', 'Jak bardzo to pewne', ['gmina'], 'wiarygodnosc'),
+  ('jak', 'Jak liczymy', ['jak'], 'zrodla'),
+] %}
+{% set by_id = {} %}{% for r in fv.rows %}{% set _ = by_id.update({r.id: r}) %}{% endfor %}
+{% set seen_tabs = [] %}
+<section id="poziom-b" class="level-b" aria-label="Szczegóły">
+  {% for gid, title, rids, tab in groups %}
+  {% set present = rids | select('in', by_id) | list %}
+  {% if present %}
+  {% set first = tab not in seen_tabs %}{% set _ = seen_tabs.append(tab) %}
+  <section class="b-group" id="wiersz-{{ gid }}" data-tab="{{ tab }}" aria-labelledby="h-{{ gid }}">
+    <h3 id="h-{{ gid }}">{{ title }}</h3>
+    <div class="b-body">
+    {% for rid in present %}{% set row = by_id[rid] %}
+    {% if present | length > 1 %}<div class="b-sub"{% if rid != gid %} id="wiersz-{{ rid }}"{% endif %}><h4>{{ row.title }}</h4>{% endif %}
+    {{ row_body(row) }}
+    {% if present | length > 1 %}</div>{% endif %}
+    {% endfor %}
+    {% set extra = {'bilans': 'przyczyny', 'dlaczego': 'historia'}.get(gid) %}
+    {% if extra %}{% for sec in report.sections if sec.id == extra %}
+    <div class="b-sub b-chart">
+      {% if sec.chart_svg %}<div class="chart" tabindex="0" role="group" aria-label="Wykres: {{ sec.title }}">{{ sec.chart_svg | safe }}</div>{% endif %}
+      {% for t in sec.sentences %}<p>{{ t | plain }}</p>{% endfor %}
     </div>
-  </details>
+    {% endfor %}{% endif %}
+    {% if gid == 'gmina' %}{% for s in report.sections if s.id == 'gmina' and s.chart_svg %}{% set calib_part = 'chart' %}
+    <div class="b-sub b-chart">{% include "sections/_calibration.html" %}<p>Wykres pokazuje, jak często państwowy system (SMSR) potwierdzał suszę przy takim bilansie jak na tej działce.</p></div>
+    {% endfor %}{% endif %}
+    {% if gid == 'jak' %}{% for s in report.sections if s.id == 'zrodla' %}
+    <details class="b-row b-nested" id="wiersz-zrodla"><summary>Źródła danych i czasy pobrania</summary><div class="b-body">{% include "sections/zrodla.html" %}</div></details>
+    {% endfor %}{% endif %}
+    </div>
+  </section>
+  {% endif %}
   {% endfor %}
   {% set gmina_sections = report.sections | selectattr('id', 'equalto', 'gmina') | list %}
   {% if gmina_sections or report.verdict_dg %}
   <details class="b-row" id="wiersz-dla-doradcy" data-tab="wiarygodnosc">
-    <summary>Dla doradcy: tabela 2×2, miary, krzywa kalibracji, drugi wzór parowania</summary>
+    <summary>Szczegóły zgodności z IUNG</summary>
     <div class="b-body b-tech">
-      {% for s in gmina_sections %}{% include "sections/gmina.html" %}{% endfor %}
+      {% set calib_part = 'years' %}{% for s in gmina_sections %}{% include "sections/gmina.html" %}{% endfor %}
       {% if report.verdict_dg %}<div class="advisor">{% include "report/_verdict_dg.html" %}</div>{% endif %}
     </div>
   </details>

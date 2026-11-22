@@ -39,7 +39,7 @@ def test_section_has_a_chart_with_a_title_sentences_and_the_calculation(
 def test_ten_seasons_summary_and_marks(params: dict) -> None:
     r = report(params)
     s = r.section("historia")
-    assert s.state == "ready" and s.chart_svg.startswith("<svg")
+    assert s.state == "ready" and "<svg" in s.chart_svg
     assert re.search(r"\d+ z 10", "".join(p.text for p in s.summary))
     assert s.chart_svg.count('class="s-thr"') >= 1
 

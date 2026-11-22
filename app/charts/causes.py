@@ -34,7 +34,7 @@ def waterfall_svg(split: BalanceSplit, threshold_mm: float | None, label: str) -
 
     slot = (RIGHT - LEFT) / 4
     bar_w = slot * 0.56
-    body = [svg.text(LEFT, 22, "Bilans okresu, mm (0 u góry; w dół = niedobór)", "lbl")]
+    body = []
     body.append(svg.line(LEFT, y(0), RIGHT, y(0), "ax-zero"))
     for i, ((a, b), cls, val) in enumerate(zip(spans, classes, values, strict=True)):
         cx = LEFT + slot * (i + 0.5)
@@ -53,4 +53,4 @@ def waterfall_svg(split: BalanceSplit, threshold_mm: float | None, label: str) -
     if threshold_mm is not None:
         body.append(svg.line(LEFT, y(threshold_mm), RIGHT, y(threshold_mm), "s-thr"))
         body.append(svg.text(LEFT, y(threshold_mm) - 6, f"próg {dec(threshold_mm)} mm", "lbl"))
-    return svg.svg(HEIGHT, label, body, desc=label)
+    return svg.svg(HEIGHT, label, body, desc=label, title="Bilans okresu, mm (0 u góry; w dół = niedobór)")

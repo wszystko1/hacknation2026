@@ -9,8 +9,7 @@
 {% set v = first.verdict if first else none %}
 <div class="app">
   <nav class="rail" aria-label="Menu">
-    <a class="rail-mark" href="/" aria-hidden="true" tabindex="-1"><svg viewBox="0 0 24 24"><path d="M12 2.5C9 7 6 10.4 6 14a6 6 0 0 0 12 0c0-3.6-3-7-6-11.5z"/></svg></a>
-    <a class="rail-link" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14 M5 12h14"/></svg><span class="vh">Nowa ocena</span></a>
+    <a class="rail-item rail-new" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14 M5 12h14"/></svg><span>Nowa ocena</span></a>
   </nav>
   <div class="mapcol" id="mapa">
     <div class="map">

@@ -4,8 +4,8 @@ calibration curve of the advisor view with the parcel's mark and the frame sente
 import json
 from pathlib import Path
 
-from demo.steps.common import PAUSE, open_row
-from demo.steps.tabs import show_tab
+from demo.steps.common import PAUSE
+from demo.steps.tabs import open_row, show_tab
 
 SMSR = json.loads((Path(__file__).resolve().parents[2] / "metrics.json").read_text(encoding="utf-8"))["smsr"]
 
@@ -25,8 +25,7 @@ def scene(page, base_url: str) -> None:
     assert "–" not in text.replace("−", "")
     page.wait_for_timeout(PAUSE)
 
-    show_tab(page, "podsumowanie")
-    page.locator("#pokaz-doradcy").click()
+    open_row(page, "dla-doradcy")  # the folded tables of the agreement with IUNG
     page.wait_for_selector("#krzywa-kalibracji", timeout=30000)
     marker = page.locator("#krzywa-kalibracji [data-marker]")
     key = marker.get_attribute("data-marker")
@@ -36,6 +35,3 @@ def scene(page, base_url: str) -> None:
     assert len(page.locator("#po-latach tbody tr").all()) == 7
     page.locator("#krzywa-kalibracji").scroll_into_view_if_needed()
     page.wait_for_timeout(PAUSE)
-    # the next scene starts on the farmer screen (it clicks "Pokaż doradcy" itself): leave the advisor view
-    page.go_back()
-    page.wait_for_selector("#pokaz-doradcy")

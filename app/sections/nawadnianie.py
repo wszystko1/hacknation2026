@@ -85,8 +85,8 @@ def build(ctx: ReportContext) -> Section:
     sentences.append(water_source_sentence(ctx))
     section.sentences = sentences
     section.how = (
-        "Decyzję liczymy z bilansu KBW (opad − parowanie FAO-56) okresu z werdyktu i progu z Dz.U. 2019 poz. 739; "
-        "bilansu wody w strefie korzeni nie liczymy. Parowanie w werdykcie może mieć drugi wariant (Doroszewski–Górski, widok doradcy); "
+        "Decyzja wynika z bilansu KBW (opad − parowanie FAO-56) okresu z werdyktu i progu z Dz.U. 2019 poz. 739; "
+        "bilansu wody w strefie korzeni nie jest liczony. Parowanie w werdykcie może mieć drugi wariant (Doroszewski–Górski, widok doradcy); "
         "nawadnianie zostaje przy FAO-56. Kolumny pod wykresem: niedobór to parowanie minus opad w 10 dniach."
     )
     section.advisor = _advisor()

@@ -110,7 +110,7 @@ def test_parcel_field_shows_the_whole_number_at_1366(page: Page, base_url: str) 
 def test_map_stays_while_the_report_scrolls(page: Page, base_url: str) -> None:
     open_report(page, base_url, 1280, 800)
     page.get_by_role("tab", name="Rekomendacje").click()
-    page.evaluate("document.querySelectorAll('details.b-row').forEach(d => { d.open = true; })")
+    page.evaluate("document.querySelectorAll('details').forEach(d => { d.open = true; })")
     page.mouse.wheel(0, 1500)
     page.wait_for_timeout(200)
     assert page.evaluate("window.scrollY") > 0
@@ -221,13 +221,13 @@ def test_advisor_view_shows_everything_without_tabs(page: Page, base_url: str) -
     assert page.locator("#gmina").is_visible() and page.locator("#zrodla").is_visible()
 
 
-def test_phone_tabs_sit_in_one_scrolling_row(page: Page, base_url: str) -> None:
+def test_phone_tabs_fit_without_being_cut(page: Page, base_url: str) -> None:
     open_report(page, base_url, 390, 844)
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-    tops = page.evaluate(
-        "[...document.querySelectorAll('.tabs [role=tab]')].map(b => Math.round(b.getBoundingClientRect().top))"
+    rights = page.evaluate(
+        "[...document.querySelectorAll('.tabs [role=tab]')].map(b => Math.round(b.getBoundingClientRect().right))"
     )
-    assert len(set(tops)) == 1
+    assert len(rights) == 5 and max(rights) <= 390
 
 
 def test_desktop_menu_has_labels_and_replaces_the_top_tabs(page: Page, base_url: str) -> None:
@@ -255,8 +255,60 @@ def test_section_headings_are_not_smaller_than_what_they_contain(page: Page, bas
     page.get_by_role("tab", name="Rekomendacje").click()
     page.evaluate("document.querySelectorAll('details').forEach(d => { d.open = true; })")
     size = "s => parseFloat(getComputedStyle(document.querySelector(s)).fontSize)"
-    assert page.evaluate(size, "#poziom-b > h2") >= page.evaluate(size, "#poziom-b .b-row > summary")
-    assert page.evaluate(size, "#poziom-b .b-row > summary") >= page.evaluate(size, "#poziom-b .b-body p")
+    assert page.evaluate(size, "#poziom-b .b-group > h3") >= page.evaluate(size, "#poziom-b .b-sub > h4")
+    assert page.evaluate(size, "#poziom-b .b-sub > h4") >= page.evaluate(size, "#poziom-b .b-body p")
     assert page.evaluate(size, ".ledger > summary") >= page.evaluate(size, ".ledger .sources li")
     page.get_by_role("tab", name="Podsumowanie").click()
     assert page.evaluate(size, "#poziom-a h2") >= page.evaluate(size, "#poziom-a .a-do p")
+
+
+@pytest.mark.parametrize("name", ["przyczyny", "rekomendacje", "wiarygodnosc", "zrodla"])
+def test_every_tab_shows_content_at_once(page: Page, base_url: str, name: str) -> None:
+    open_report(page, base_url, 1280, 800)
+    page.goto(base_url + URL + "#" + name)
+    page.wait_for_selector("main.report")
+    groups = page.locator("#poziom-b .b-group:visible")
+    assert groups.count() >= 1
+    assert page.locator("#poziom-b summary:visible").count() <= 1, (
+        "at most one folded technical block per tab"
+    )
+    assert page.locator("#poziom-b").inner_text().strip()
+
+
+CHART_JS = """() => {
+  const out = [];
+  document.querySelectorAll('svg.ch, svg.hbar').forEach((svg, n) => {
+    const vb = svg.viewBox.baseVal;
+    const boxes = [...svg.querySelectorAll('text')].map(t => {
+      const b = t.getBBox(); return {s: t.textContent.trim(), x: b.x, y: b.y, w: b.width, h: b.height};
+    }).filter(b => b.w > 0);
+    const r = svg.getBoundingClientRect();
+    out.push({n, boxes, vb: [vb.x, vb.y, vb.width, vb.height], height: r.height, shown: r.height > 0});
+  });
+  return out;
+}"""
+
+
+def test_no_chart_text_overlaps_and_no_chart_is_taller_than_260_px(page: Page, base_url: str) -> None:
+    open_report(page, base_url, 1440, 900)
+    checked = 0
+    for tab in ["przyczyny", "rekomendacje", "wiarygodnosc", "zrodla"]:
+        page.goto(base_url + URL + "#" + tab)
+        page.wait_for_selector("main.report")
+        page.evaluate("document.querySelectorAll('details').forEach(d => { d.open = true; })")
+        for chart in page.evaluate(CHART_JS):
+            if not chart["shown"]:
+                continue
+            checked += 1
+            assert chart["height"] <= 260, (tab, chart["n"], chart["height"])
+            vx, vy, vw, vh = chart["vb"]
+            boxes = chart["boxes"]
+            for b in boxes:
+                assert b["x"] >= vx - 1 and b["y"] >= vy - 1, (tab, b["s"])
+                assert b["x"] + b["w"] <= vx + vw + 1 and b["y"] + b["h"] <= vy + vh + 1, (tab, b["s"])
+            for i, a in enumerate(boxes):
+                for b in boxes[i + 1 :]:
+                    ox = min(a["x"] + a["w"], b["x"] + b["w"]) - max(a["x"], b["x"])
+                    oy = min(a["y"] + a["h"], b["y"] + b["h"]) - max(a["y"], b["y"])
+                    assert not (ox > 2 and oy > 2), (tab, a["s"], b["s"])
+    assert checked >= 3

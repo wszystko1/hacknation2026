@@ -103,13 +103,32 @@ def test_resolution_is_only_in_the_adviser_block() -> None:
     page = html(DOBRCZ, widok="doradca")
     table = re.search(r'<table id="tabela-zrodel">.*?</table>', page, re.S)
     assert table and "Rozdzielczość" not in table.group(0) and "piksel źródłowy" not in table.group(0)
-    assert "rozdzielczość źródeł" in page and "piksel źródłowy do 0,25 m" in page
+    assert "rozdzielczość źródeł" in page.lower() and "piksel źródłowy do 0,25 m" in page
 
 
 def test_sentinel_row_has_the_scene_date_for_dobrcz() -> None:
     row = next(r for r in report(DOBRCZ).sources if r.key == "satellite")
     assert re.search(r"\d{2}\.\d{2}\.\d{4}", row.gave) or "ocena roślin w toku" in row.gave
-    assert "czystych pikseli 19%" in row.gave and "porównywalnych sezonów" in row.gave
+    # the row names the scene the plant assessment read (06.07.2023, 100% clear), not the nearest catalogue scene
+    assert "zdjęcie z 06.07.2023, czystych pikseli 100%" in row.gave and "porównywalnych sezonów" in row.gave
+
+
+def test_sentinel_row_names_the_scene_of_the_assessment_not_the_nearest_one() -> None:
+    from datetime import date
+
+    ctx = SimpleNamespace(
+        crop_condition=CropCondition(
+            state="missing", words="Brak", scene_date=date(2023, 7, 6), clear_share=1.0, n_seasons=1
+        ),
+        data=SimpleNamespace(
+            satellite=SimpleNamespace(
+                usable=True,
+                data=SimpleNamespace(current=SimpleNamespace(date="2023-07-21", valid_fraction=0.19)),
+            )
+        ),
+    )
+    gave, reason = sentinel_gave(ctx)  # type: ignore[arg-type]
+    assert gave == "zdjęcie z 06.07.2023, czystych pikseli 100%, porównywalnych sezonów: 1" and not reason
 
 
 def test_sentinel_row_says_the_assessment_is_running_while_it_waits() -> None:

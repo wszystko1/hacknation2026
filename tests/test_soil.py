@@ -254,6 +254,9 @@ def test_pages_name_the_soil_and_never_show_the_placeholder(query: str, path_suf
             outside = re.sub(
                 r'<details class="b-row" id="wiersz-dla-doradcy".*?</details>', " ", text, flags=re.S
             )
+            outside = re.sub(
+                r'<details class="b-row b-nested" id="wiersz-zrodla".*?</details>', " ", outside, flags=re.S
+            )
             assert "kat. II" not in outside  # the farmer screen names the soil in words
             assert "gleba" in text.lower() or "gleby" in text.lower()
         else:

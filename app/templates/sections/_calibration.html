@@ -1,12 +1,12 @@
 {# Advisor view of the commune section: the calibration curve and the table by year (rows are the advisor items whose key is a year). #}
 {% set years = s.advisor | selectattr('key', 'in', ['2020','2021','2022','2023','2024','2025','2026']) | list %}
-{% if s.chart_svg %}
-<div id="krzywa-kalibracji"><p><b>Widok doradcy: krzywa kalibracji</b></p>
+{% if s.chart_svg and calib_part != 'years' %}
+<div id="krzywa-kalibracji"><p><b>Krzywa kalibracji</b></p>
   <div class="chart" tabindex="0" role="group" aria-label="Wykres: krzywa kalibracji SMSR">{{ s.chart_svg | safe }}</div>
 </div>
 {% endif %}
-{% if years %}
-<div id="zgodnosc-po-latach"><p><b>Widok doradcy: zgodność w kolejnych latach</b></p>
+{% if years and calib_part != 'chart' %}
+<div id="zgodnosc-po-latach"><p><b>Zgodność w kolejnych latach</b></p>
   <table id="po-latach" aria-label="Zgodność z SMSR po latach">
     <thead><tr><th scope="col">Rok</th><th scope="col">CSI</th><th scope="col">Symbole „+” w SMSR</th></tr></thead>
     <tbody>{% for kv in years %}{% set parts = kv.value.split('|') %}<tr><th scope="row">{{ kv.key }}</th><td>{{ parts[0].removeprefix('CSI ') }}</td><td>{{ parts[1] }}</td></tr>{% endfor %}</tbody>

@@ -1,12 +1,12 @@
 {# Section 8: sources with what they gave, time, duration and state; gaps as rows with the reason; resolution in the adviser block. #}
 <section id="zrodla" aria-labelledby="h-zrodla">
-  <h2 class="sec-h" id="h-zrodla"><span class="n">{{ s.n }}</span>{{ s.heading }}{% if s.chip %}<span class="chip">{{ s.chip }}</span>{% endif %}</h2>
+  <h2 class="sec-h" id="h-zrodla"{% if farmer_extra %} hidden{% endif %}><span class="n">{{ s.n }}</span>{{ s.heading }}{% if s.chip and not farmer_extra %}<span class="chip">{{ s.chip }}</span>{% endif %}</h2>
   <div class="scroll" tabindex="0" role="region" aria-label="Tabela źródeł">
     <table id="tabela-zrodel">
       <thead><tr><th>Źródło</th><th>Co dało</th><th>Pobrano</th><th class="num">Czas</th><th>Stan</th></tr></thead>
       <tbody>
         {% for r in report.sources %}
-        <tr><td>{{ r.label }}<br><span class="muted">{{ r.provider }}</span></td><td>{{ r.gave or '–' }}</td><td class="mono">{{ r.retrieved_at[:16] | replace('T', ' ') if r.retrieved_at else '–' }}</td><td class="num">{{ r.elapsed_s | seconds }}</td>
+        <tr><td>{{ r.label }}<br><span class="muted">{{ r.provider }}</span></td><td>{{ r.gave or '–' }}</td><td class="mono">{{ (r.retrieved_at[8:10] ~ '.' ~ r.retrieved_at[5:7] ~ ' ' ~ r.retrieved_at[11:16]) if r.retrieved_at else '–' }}</td><td class="num">{% if r.retrieved_at and r.elapsed_s is not none and r.elapsed_s < 0.05 %}z pamięci{% else %}{{ r.elapsed_s | seconds }}{% endif %}</td>
           <td class="{{ {'ok': 'st-ok', 'copy': 'st-ok', 'fallback': 'st-warn', 'missing': 'st-no', 'waiting': 'st-warn'}[r.status] }}">{% if r.status == 'copy' %}kopia z dnia {{ r.retrieved_at[8:10] }}.{{ r.retrieved_at[5:7] }}.{{ r.retrieved_at[:4] }}{% else %}{{ {'ok': 'jest', 'fallback': 'zapas', 'missing': 'brak', 'waiting': 'w toku'}[r.status] }}{% endif %}{% if r.reason %}: {{ r.reason }}{% endif %}</td></tr>
         {% endfor %}
       </tbody>
@@ -14,6 +14,6 @@
   </div>
   {% for sentence in s.sentences %}<p>{{ sentence }}</p>{% endfor %}
   {% if s.advisor %}
-  <div class="advisor"><b>Widok doradcy: rozdzielczość źródeł</b><dl class="kv">{% for kv in s.advisor %}<dt>{{ kv.key }}</dt><dd>{{ kv.value }}</dd>{% endfor %}</dl></div>
+  <div class="advisor"><b>Rozdzielczość źródeł</b><dl class="kv">{% for kv in s.advisor %}<dt>{{ kv.key }}</dt><dd>{{ kv.value }}</dd>{% endfor %}</dl></div>
   {% endif %}
 </section>

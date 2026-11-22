@@ -7,12 +7,16 @@ from app.fmt import svg_text
 WIDTH = 600
 
 
-def svg(height: int, label: str, body: list[str], desc: str = "") -> str:
+def svg(height: int, label: str, body: list[str], desc: str = "", title: str = "") -> str:
     """<svg class="ch"> with <title>/<desc>; `body` is a list of SVG elements built with the helpers below."""
-    return (
+    chart = (
         f'<svg class="ch" viewBox="0 0 {WIDTH} {height}" role="img" aria-label="{svg_text(label)}">'
         f"<title>{svg_text(label)}</title><desc>{svg_text(desc or label)}</desc>" + "".join(body) + "</svg>"
     )
+    if not title:
+        return chart
+    # the chart title is HTML above the drawing, never text inside it
+    return f'<div class="chart-title">{svg_text(title)}</div>{chart}'
 
 
 def rect(x: float, y: float, w: float, h: float, cls: str) -> str:

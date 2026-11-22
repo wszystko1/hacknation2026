@@ -5,7 +5,7 @@ import re
 from urllib.parse import urlencode
 
 from demo.steps.common import PARCEL_1, PAUSE
-from demo.steps.tabs import show_tab
+from demo.steps.tabs import open_row, show_tab
 
 
 def scene(page, base_url: str) -> None:
@@ -15,23 +15,22 @@ def scene(page, base_url: str) -> None:
     top.scroll_into_view_if_needed()
     sentence = page.locator("#zdanie-werdyktu").inner_text()
     assert "próg suszy dla zbóż jarych" in sentence, sentence
-    assert page.locator("#plakietka").inner_text() == "Susza: tak"
+    assert page.locator("#plakietka").inner_text() == "Bilans poniżej progu suszy (szacunek dla działki)"
     assert "badge--dry" in page.locator("#plakietka").get_attribute("class")
     assert page.locator("#poziom-a [data-a-item]").count() <= 7
-    assert "Przy wniosku liczy się ocena IUNG" in page.locator("#pewnosc").inner_text()
+    assert "IUNG dla gminy" in page.locator("#pewnosc").inner_text()  # decision of the owner 22.11.2026
     page.wait_for_timeout(PAUSE)
     # The number is not on the first level: it appears when the row is opened.
     show_tab(page, "przyczyny")
     row = page.locator("#wiersz-bilans")
     assert not re.search(r"−\d+\s*mm", top.inner_text())
-    row.locator("summary").click()
+    open_row(page, "bilans")
     number = row.locator(".big-number b").inner_text()
     assert str(round(abs(verdict["kbw_mm"]))) in number.replace("−", ""), number
     label = row.locator("svg.hbar .lbl-thr").text_content()
     assert re.fullmatch(r"próg −\d+ mm", label), label
     row.scroll_into_view_if_needed()
     page.wait_for_timeout(PAUSE)
-    row.locator("summary").click()  # closed again: the scene ends on level A
     show_tab(page, "podsumowanie")
     top.scroll_into_view_if_needed()
     assert page.locator("#zdanie-werdyktu").is_visible()

@@ -198,7 +198,7 @@ def build(ctx: ReportContext) -> Section:
     section.summary = [TextPart(text=a.sentence)]
     section.sentences = sentences
     section.how = (
-        how or "Zgodność mierzymy na gminach testowych, które metoda widziała dopiero po dostrojeniu."
+        how or "Zgodność zmierzono na gminach testowych, które metoda widziała dopiero po dostrojeniu."
     )
     section.advisor = _advisor(a)
     section.advisor += _by_year(ctx)

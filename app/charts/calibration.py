@@ -16,7 +16,7 @@ from app.validation import calibration
 
 HEIGHT = 330
 LEFT, RIGHT = 64, 590
-TOP, BASE = 40, 230  # 100% and 0%
+TOP, BASE = 56, 230  # 100% and 0%
 VARIANT = "fao56"
 
 
@@ -34,7 +34,7 @@ def calibration_svg(metrics: Mapping[str, Any], margin_mm: float | None, label: 
     if not points:
         return ""
     slot = (RIGHT - LEFT) / len(calibration.CLASSES)
-    body = [svg.text(0, 22, "Odsetek „+” w SMSR wśród symboli o danym marginesie", "lbl")]
+    body = []
     for tick in (0.0, 0.5, 1.0):
         body.append(svg.line(LEFT, _y(tick), RIGHT, _y(tick), "ax-zero" if tick == 0 else "grid"))
         body.append(svg.text(LEFT - 8, _y(tick) + 5, f"{round(100 * tick)}%", "", "end"))
@@ -43,11 +43,11 @@ def calibration_svg(metrics: Mapping[str, Any], margin_mm: float | None, label: 
     own = calibration.class_index(margin_mm) if margin_mm is not None else None
     if own is not None:
         cx = LEFT + slot * (own + 0.5)
-        mark = svg.line(cx, TOP - 8, cx, BASE, "s-date").replace(
+        mark = svg.line(cx, 26, cx, BASE, "s-date").replace(
             "<line ", f'<line data-marker="{calibration.CLASSES[own].key}" '
         )
         body.append(mark)
-        body.append(svg.text(cx, TOP - 14, f"działka: {dec(margin_mm, 0)} mm", "lbl-acc", "middle"))
+        body.append(svg.text(cx, 18, f"działka: {dec(margin_mm, 0)} mm", "lbl-acc", "middle"))
     for i, cls, share in points:
         cx = LEFT + slot * (i + 0.5)
         lo = metrics.get(f"smsr.calibration.{VARIANT}.{cls.key}.ci_low")
@@ -55,11 +55,15 @@ def calibration_svg(metrics: Mapping[str, Any], margin_mm: float | None, label: 
         if lo is not None and hi is not None:
             body.append(svg.line(cx, _y(hi), cx, _y(lo), "ax-zero"))
         body.append(svg.rect(cx - 6, _y(share) - 6, 12, 12, "s-dry"))
-        body.append(svg.text(cx + 12, _y(share) + 5, f"{round(100 * share)}%", "lbl"))
+        body.append(
+            svg.text(cx, _y(hi if hi is not None else share) - 10, f"{round(100 * share)}%", "lbl", "middle")
+        )
     for j, cut in enumerate(calibration.CUTS):
         x = LEFT + slot * (j + 1)
         body.append(svg.text(x, BASE + 22, f"{cut:g}".replace("-", "−"), "", "middle"))
     body.append(svg.text(LEFT, BASE + 48, "← poniżej progu · bilans minus próg, mm · powyżej progu →", ""))
     body.append(svg.line(LEFT, HEIGHT - 22, LEFT + 36, HEIGHT - 22, "s-thr"))
     body.append(svg.text(LEFT + 44, HEIGHT - 16, "próg suszy", ""))
-    return svg.svg(HEIGHT, label, body, desc=label)
+    return svg.svg(
+        HEIGHT, label, body, desc=label, title="Odsetek „+” w SMSR wśród symboli o danym marginesie"
+    )

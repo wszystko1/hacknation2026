@@ -34,6 +34,6 @@ SCENES = [
     ("Plan działań: przełącznik „W planie”", plan.scene),
     ("Zgodność z oceną państwa (SMSR)", agreement.scene),
     ("Źródła, czasy i braki danych", sources.scene),
-    ("Widok doradcy i raport PDF", advisor_pdf.scene),
+    ("Raport PDF", advisor_pdf.scene),
     ("Raport na dziś: poza okresem monitoringu suszy", out_of_season.scene),
 ]

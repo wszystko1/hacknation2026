@@ -26,9 +26,9 @@
     <h2>Co robić</h2>
     {% if fv.do %}
     <p>{% if fv.do.map_url %}<span class="pin" role="img" aria-label="Miejsce na mapie: {{ fv.do.n }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22l-6-9V3h12v10z"/></svg><b>{{ fv.do.n }}</b></span> {% endif %}<b>{{ fv.do.title }}</b>.</p>
-    {% if fv.do.when != 'termin podamy po wyliczeniu' %}<p class="muted">Kiedy: {{ fv.do.when }}.</p>{% endif %}
+    {% if fv.do.when != 'termin do ustalenia' %}<p class="muted">Kiedy: {{ fv.do.when }}.</p>{% endif %}
     {% else %}
-    <p class="muted">Jeszcze nie liczymy.</p>
+    <p class="muted">Brak wyniku.</p>
     {% endif %}
   </div>
   <div class="a-conf" data-tab="podsumowanie" id="pewnosc" data-a-item>
@@ -36,5 +36,4 @@
     {% for line in fv.confidence %}<p>{{ line }}</p>{% endfor %}
   </div>
   <a class="btn" id="pdf" data-tab="podsumowanie" data-a-item href="/raport/druk?{{ fv.pdf_query }}" data-base="/raport/druk?{{ fv.pdf_query }}">Raport PDF</a>
-  <a class="btn btn--ghost" id="pokaz-doradcy" data-tab="podsumowanie" data-a-item href="/raport?{{ fv.advisor_query }}">Pokaż doradcy</a>
 </section>

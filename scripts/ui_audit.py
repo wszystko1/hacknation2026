@@ -4,7 +4,7 @@ For 1366x768 (a typical office laptop), 1920x1080 and 390x844 (phone) it runs
 demo/scenes.py and after each scene checks:
 - no horizontal scrolling;
 - interactive elements do not overlap; on the phone, buttons are at least 44 px;
-- text is at least 14 px; key text is not cut off;
+- text is at least 12 px (owner decision 22.11.2026: smaller type, 13 px body, 12 px for helper text); key text is not cut off;
 - no lorem / TODO / FIXME / undefined / NaN on screen; no English labels;
 - zero console errors, zero failed requests;
 - axe-core (WCAG 2.1 A/AA): zero serious or critical violations.
@@ -92,7 +92,7 @@ PROBE = """(phone) => {
     [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 1));
   for (const el of textEls) {
     const s = getComputedStyle(el); const fs = parseFloat(s.fontSize);
-    if (fs < 14 && !el.closest('sup,sub,code,pre')) out.small.push(`${el.tagName.toLowerCase()} ${fs}px "${label(el)}"`);
+    if (fs < 12 && !el.closest('sup,sub,code,pre')) out.small.push(`${el.tagName.toLowerCase()} ${fs}px "${label(el)}"`);
     if ((s.overflowX === 'hidden' || s.overflow === 'hidden' || s.textOverflow === 'ellipsis') &&
         el.scrollWidth > el.clientWidth + 1) out.truncated.push(`${el.tagName.toLowerCase()} "${label(el)}"`);
     const r = el.getBoundingClientRect();   // smoke 18.11: a table in an overflow wrapper hid a column on the phone
@@ -131,7 +131,7 @@ def audit_state(page, phone: bool) -> dict:
     if p["overflow"]:
         problems["poziome przewijanie"] = ["scrollWidth > clientWidth"]
     for key, name in (
-        ("small", "tekst < 14 px"),
+        ("small", "tekst < 12 px"),
         ("tap", "cel kliknięcia < 44 px"),
         ("overlap", "nachodzące elementy"),
         ("truncated", "ucięty tekst"),

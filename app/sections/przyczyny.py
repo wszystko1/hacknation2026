@@ -89,8 +89,8 @@ def build(ctx: ReportContext) -> Section:
         section = placeholder(
             "przyczyny",
             TITLE,
-            "Brak: rozkładu bilansu na opad i parowanie, bo mamy dane o pogodzie z mniej niż "
-            "czterech sezonów, a zwykły sezon liczymy z co najmniej trzech wcześniejszych.",
+            "Brak: rozkładu bilansu na opad i parowanie, bo dane o pogodzie obejmują mniej niż "
+            "czterech sezonów, a zwykły sezon liczony jest z co najmniej trzech wcześniejszych.",
         )
         section.advisor = _causes_advisor(ctx)
         return section

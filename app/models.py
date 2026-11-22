@@ -84,7 +84,8 @@ SOIL_CATEGORIES: tuple[SoilCategory, ...] = ("I", "II", "III", "IV")
 # Fixed texts the jury and the scenes check word for word.
 BADGE_BELOW = "Bilans poniżej progu suszy (szacunek dla działki)"
 BADGE_ABOVE = "Bilans jest lepszy niż próg suszy (szacunek dla działki)"
-DISCLAIMER = "To nie jest urzędowe stwierdzenie suszy; we wniosku liczy się ocena SMSR IUNG dla gminy"
+# decision of the owner 22.11.2026: no mention of applications for aid
+DISCLAIMER = "To nie jest urzędowe stwierdzenie suszy. Urzędową ocenę suszy w gminie publikuje IUNG (SMSR)"
 OUT_OF_SEASON = "Poza okresem monitoringu suszy (21.III–30.IX)"
 LAW_THRESHOLDS = "Dz.U. 2019 poz. 739"
 LAW_WATER = "Prawo wodne, Dz.U. 2026 poz. 1335"

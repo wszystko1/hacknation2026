@@ -26,3 +26,9 @@ def test_farmer_screen_has_no_first_person_plural(params: dict) -> None:
 
 def test_farmer_screen_has_no_pin_sentence() -> None:
     assert "inezk" not in farmer_text(html(DOBRCZ))
+
+
+def test_farmer_screen_does_not_mention_applications_or_subsidies() -> None:
+    # decision of the owner 22.11.2026: the app helps farmers cope by themselves, it is not about aid
+    for params in (DOBRCZ, GSM_TODAY):
+        assert not re.search(r"wniosk|dopłat", farmer_text(html(params)), re.I)

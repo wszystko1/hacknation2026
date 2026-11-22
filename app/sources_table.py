@@ -149,13 +149,18 @@ def sentinel_gave(ctx: ReportContext) -> tuple[str, str]:
     cc = ctx.crop_condition
     if cc is not None and cc.state == "waiting":
         return "ocena roślin w toku", ""
-    scene = s.data.current if s.usable and s.data else None
-    if scene is None:
-        return "", "nie ma czystego zdjęcia z okolic tej daty (chmury albo brak przelotu)"
     seasons = cc.n_seasons if cc is not None else 0
+    if cc is not None and cc.scene_date is not None and cc.clear_share is not None:
+        # The scene the assessment actually read (the last clear one of the season up to the analysis day),
+        # not the catalogue's nearest scene to the date, which can be another one with fewer clear pixels.
+        date_text, share = _day(cc.scene_date.isoformat()), cc.clear_share
+    else:
+        scene = s.data.current if s.usable and s.data else None
+        if scene is None:
+            return "", "nie ma czystego zdjęcia z okolic tej daty (chmury albo brak przelotu)"
+        date_text, share = _day(scene.date), scene.valid_fraction
     return (
-        f"zdjęcie z {_day(scene.date)}, czystych pikseli {dec(scene.valid_fraction * 100)}%, "
-        f"porównywalnych sezonów: {seasons}",
+        f"zdjęcie z {date_text}, czystych pikseli {dec(share * 100)}%, porównywalnych sezonów: {seasons}",
         "",
     )
 

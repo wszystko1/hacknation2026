@@ -1,217 +1,146 @@
-# Bilans działki
+# ChrońPlon
 
-Raport dla jednej działki rolnej: bilans wody (opad minus parowanie) obok progu suszy z rozporządzenia, obok oceny SMSR IUNG dla gminy,
-z działaniami „rozważ …” i miejscem na zatrzymanie wody zaznaczonym na ortofotomapie. Doradca wskazuje działkę numerem z ewidencji albo
-kliknięciem na mapie, potem podaje datę oceny i uprawę.
+Aplikacja webowa „Zatrzymaj wodę, chroń plony” dla jednej działki rolnej. Rolnik wpisuje numer działki z ewidencji (albo klika pole na mapie),
+datę i uprawę. ChrońPlon liczy bilans wody działki (opad minus parowanie), stawia go obok progu suszy z rozporządzenia i obok oceny SMSR
+dla gminy, pokazuje przyczyny i działania „rozważ …” z miejscem na ortofotomapie, a raport zawiera zakładkę Wiarygodność z miarami zgodności.
 
-![Raport dla działki 189/13 w gminie Dobrcz: skrót w siedmiu wierszach, mapa z obrysem i punktem wypływu](docs/img/readme/raport-rolnik.png)
+To nie jest urzędowe stwierdzenie suszy. Urzędową ocenę suszy w gminie publikuje IUNG (SMSR).
 
-## Co robi raport
+## Uruchomienie
 
-- **Wskazanie działki.** Dwa sposoby: numer (np. `040303_2.0002.189/13`) albo klik na mapie startowej. Klik wysyła punkt do ULDK
-  (`GetParcelByXY`), a aplikacja pokazuje obrys i numer do potwierdzenia. Kafle mapy podkładowej i ortofotomapy podaje nasz serwer,
-  przeglądarka nie łączy się z GUGiK.
-- **Werdykt.** Bilans wody działki w oknie 6 dekad, porównany z progiem z rozporządzenia Dz.U. 2019 poz. 739 dla grupy upraw
-  (14 grup) i kategorii gleby (I–IV). Drugi wariant parowania (wzór Doroszewskiego–Górskiego) stoi w widoku doradcy.
-- **Zgodność z SMSR.** Odpowiedź „pod progiem / nad progiem” obok oceny SMSR IUNG dla gminy i rok analizy.
-- **Przyczyny i działania.** Przyczyny z dowodem liczbowym (pogoda z rankingiem w mm; miejsce i uprawa bez rankingu), mechanizm,
-  miejsce na działce i zdanie „rozważ …, jeśli …; następny krok …”. Lokalizację i zgody (Prawo wodne) trzeba zweryfikować na miejscu.
-- **Plan i PDF.** Przełącznik „W planie” przy działaniu, termin, raport do wydruku i PDF.
-- **Prognoza przekroczenia progu.** Szansa, że do końca okresu krytycznego bilans spadnie pod próg.
-- **Dwa widoki.** „Rolnik”: góra ekranu ma najwyżej 7 wierszy skrótu, rozwijane wiersze dają liczby, przyczyny, plan i opis liczenia.
-  „Doradca”: pełne liczby, wejścia i niepewność.
+| Środowisko | Kroki |
+|---|---|
+| Windows, bez `make` (potrzebny [uv](https://docs.astral.sh/uv/)) | `uv sync`, potem `uv run python -m app` (równoważnie `uv run uvicorn app.main:app`); adres: http://127.0.0.1:8000. Skrypt `deploy\windows\start.bat` robi to samo i otwiera przeglądarkę (opis: `deploy/windows/README.md`) |
+| Linux, macOS | `make setup`, `make serve`; testy: `make test` |
+| Serwer (VPS) | `deploy/deploy.sh <IP>`; kroki, logi i koszty: [docs/DEPLOY.md](docs/DEPLOY.md) |
+| Inny port | zmienna `HN_PORT`, np. `HN_PORT=8797 make serve` |
 
-Czego raport nie podaje: milimetrów wody odpływającej z działki ani objętości odpływu. Współczynnika spływu dla pól ze źródłem nie mamy.
+Formularz startowy ma wpisaną przykładową działkę, datę i uprawę. Demo bez sieci, na kopii danych dwóch działek z 21.11.2026: `make demo`
+(scenariusz: [docs/DEMO.md](docs/DEMO.md)). Na żywo aplikacja pobiera dane dla dowolnej działki, kopia stoi w `demo/data/`.
 
-## Liczby z pomiaru (`make eval`, `metrics.json`)
+## Jak to działa
 
-Trzy liczby, od których zaczynamy; każda ma obok linię odniesienia:
-
-- **Krzywa kalibracji.** Gdy bilans działki leży 25 mm i więcej poniżej progu, SMSR IUNG potwierdza suszę w 92,29% symboli
-  (przedział 95%: 88,52–95,12%; 3799 symboli). Im bliżej progu, tym mniej: tabela poniżej.
-- **CSI wobec najmocniejszej linii odniesienia.** CSI 0,3699 przy siatce NASA POWER 0,147 (najmocniejsza z trzech linii:
-  klimatologia 0,0694, „zawsze susza” 0,045); przewaga 0,2229.
-- **BSS prognozy.** 0,2081 wobec częstości historycznej (przedział 95%: 0,1826–0,2329), 8000 przypadków.
-
-Próba zgodności z SMSR: 149 gmin, 1017 gmino-lat, 566130 symboli „+” lub „-”; częstość „+” w SMSR 4,5%. Wariant aplikacji: ET0 FAO-56.
-
-**Krzywa kalibracji** (odsetek symboli „+” w SMSR w klasie odległości bilansu od progu; ujemna odległość = bilans pod progiem):
-
-| Klasa (mm) | Symboli | „+” w SMSR | Przedział 95% |
-|---|---|---|---|
-| poniżej −50 | 668 | 0,985 | 0,9664–0,9983 |
-| −50 do −25 | 3131 | 0,9096 | 0,868–0,9425 |
-| −25 do −10 | 4808 | 0,7941 | 0,7468–0,8376 |
-| −10 do 0 | 4911 | 0,6526 | 0,6039–0,7022 |
-| 0 do 10 | 6999 | 0,5191 | 0,4708–0,566 |
-| 10 do 25 | 15092 | 0,3232 | 0,2867–0,362 |
-| 25 do 50 | 38903 | 0,1199 | 0,1006–0,141 |
-| powyżej 50 | 491618 | 0,0036 | 0,0028–0,0046 |
-
-Przedziały pochodzą z bootstrapu po gminach, nie po symbolach.
-
-**Czego nie zmierzyliśmy:** retencji (trafienia punktu wypływu w rów, niecki w zbiornik), czasu raportu w sali, zgodności upraw z mapą JRC
-i zgodności na działkach; wiersze w ostatniej części tabeli.
-
-| Stan | Co | Liczba | Jednostka | Co z tego wynika |
-|---|---|---|---|---|
-| zmierzone | CSI wobec siatki NASA POWER | 0,3699 wobec 0,147 | gmino-lata, symbole | Wskazujemy susze ponad 2 razy celniej niż najmocniejsza prosta linia, ale to nie jest dokładność na działce. |
-| zmierzone | trafność i trafność zrównoważona | 0,9683 wobec 0,955; 0,7039 wobec 0,5377 | symbole | Sama trafność jest wysoka, bo suszy jest 4,5%; o umiejętności mówi trafność zrównoważona (klimatologia 0,5377). |
-| zmierzone | klasa −25 mm i niżej | 0,9229 | symbole (3799) | Gdy bilans jest wyraźnie pod progiem, SMSR zwykle się zgadza. |
-| zmierzone | BSS prognozy | 0,2081 | przypadki (8000) | Prognoza przekroczenia progu jest lepsza od częstości historycznej o ok. jedną piątą błędu Briera. |
-| zmierzone, słabe | czułość (POD) | 0,4133 | symbole | Nie wskazujemy większości susz z SMSR; precyzja alarmów to 0,7789. |
-| zmierzone, słabe | kategoria gleby z SoilGrids | 0,375 (w granicach jednej kategorii 0,8958) | punkty (96) | Dotyczy zapasu SoilGrids, nie warstwy IUNG, którą bierzemy najpierw. |
-| zmierzone, słabe | przesunięcie progu o 53 mm | 0,7727 → 0,9094 (trafność zrównoważona) | gmino-rok, jeden rok (2026) | Sprawdzone na jednym roku i dopasowane do ocen IUNG, więc w werdykcie go nie stosujemy. |
-| nie zmierzone | retencja: punkt wypływu wobec rowów, niecka wobec zbiorników | brak `retention.*` | działki | Aplikacja bierze podstawę (najniższy punkt granicy). |
-| nie zmierzone | czas i odporność raportu na 20 działkach | brak `robustness.*` | działki | Nie podajemy czasu raportu w sali. |
-| nie zmierzone | zgodność upraw z mapą JRC | brak `crop.rotation_agreement_jrc` | działki | Mapa nie rozróżnia zbóż ozimych i jarych. |
-| nie zmierzone | zgodność z SMSR na działkach | brak | działki | Mierzymy na gminach. |
-
-**Zgodność po latach** (CSI, przedział 95% z bootstrapu po gminach; 2025 to rok z 262 symbolami „+”):
-
-| Rok | CSI | Przedział 95% | Symboli „+” |
-|---|---|---|---|
-| 2020 | 0,2294 | 0,1575–0,3066 | 1731 |
-| 2021 | 0,1819 | 0,123–0,2463 | 1325 |
-| 2022 | 0,4758 | 0,4077–0,5362 | 4555 |
-| 2023 | 0,413 | 0,3704–0,4555 | 11330 |
-| 2024 | 0,3159 | 0,2636–0,367 | 4258 |
-| 2025 | 0,1103 | 0,0632–0,1632 | 262 |
-| 2026 | 0,3483 | 0,3042–0,3914 | 2017 |
-
-Wynik waha się od 0,1103 do 0,4758 zależnie od roku: w roku z mało suszami (2025) CSI jest niski.
-
-**Pełne miary zgodności z SMSR** (wariant ET0 FAO-56):
-
-| Miara | Wynik | Linia odniesienia |
+| Krok | Co się dzieje | Gdzie |
 |---|---|---|
-| CSI | 0,3699 (przedział 95%: 0,3387–0,3988) | klimatologia 0,0694; siatka NASA POWER 0,147; „zawsze susza” 0,045 |
-| POD (czułość) | 0,4133 | |
-| FAR | 0,2211 | |
-| Peirce | 0,4077 | |
-| trafność | 0,9683 | zawsze częstsza odpowiedź: 0,955 |
-| trafność zrównoważona | 0,7039 | klimatologia 0,5377 |
-| precyzja | 0,7789 | |
+| Dane | obrys działki (ULDK), pogoda (IMGW, zapas NASA POWER), gleba (mapa IUNG, zapas SoilGrids), teren (NMT GUGiK), rowy (BDOT10k), zdjęcia Sentinel-2 | `app/geodata/` |
+| Bilans | opad minus parowanie (FAO-56; drugi wariant: Doroszewski–Górski) w oknie 6 dekad kończącym się na ostatniej pełnej dekadzie | `app/drought/` |
+| Próg | próg z Dz.U. 2019 poz. 739: 14 grup upraw, kategorie gleby I–IV, 14 okresów | `app/drought/progi_dz_u_2019_739.csv` |
+| Trzy odpowiedzi | werdykt (bilans wobec progu), stan roślin (NDVI działki wobec jej własnych sezonów), podatność (ile z 10 sezonów byłoby pod progiem); bez jednej sklejonej liczby | `app/drought/`, `app/crop_condition/`, `app/vulnerability/` |
+| Przyczyny | przyczyna z osią i dowodem liczbowym (pogoda z rankingiem w mm; miejsce i uprawa bez rankingu) | `app/advice/diagnosis.py` |
+| Działania | 26 działań z katalogu CSV (źródło, strona, cytat), 9 mechanizmów, formalność z Prawa wodnego; miejsce z modelu terenu: płaszczyzna metodą najmniejszych kwadratów, najniższy punkt granicy, zagłębienia, rów z BDOT10k | `app/advice/` |
+| Prognoza | szansa, że do końca okresu krytycznego bilans spadnie pod próg: dopełnianie okna przebiegami z wcześniejszych lat, bez wag | `app/forecast/` |
+| Zgodność z SMSR | porównanie z oceną IUNG dla gminy i miary zgodności w zakładce Wiarygodność | `app/validation/` |
 
-**Dwa warianty parowania** na tych samych gminach testowych:
+Raport ma zakładki Podsumowanie, Przyczyny, Rekomendacje, Wiarygodność i „Jak liczymy”, plan z przełącznikiem „W planie” oraz PDF.
+Ocenę bieżącą liczy rachunek i reguły, bez uczenia maszynowego. Raport nie podaje milimetrów wody odpływającej z działki.
 
-| Miara | ET0 FAO-56 (w aplikacji) | Doroszewski–Górski |
+## Dowody
+
+Liczba główna: **krzywa kalibracji**. Gdy bilans działki leży co najmniej 25 mm poniżej progu, SMSR potwierdza suszę w 92,3% przypadków
+(przedział 95%: 88,5–95,1%; 3799 symboli). Przy marginesie do 10 mm od progu zgodność to 55,2%, czyli rzut monetą, i raport mówi to wprost.
+Próba: 149 gmin, 1017 gmino-lat (2020–2026), 566130 symboli „+” lub „-”; susza to 4,5% symboli.
+
+**Czego nie zmierzono:** retencji, czasu raportu na 20 działkach, zgodności upraw z mapą JRC i zgodności na działkach (wiersze „nie zmierzone”).
+
+| Stan | Co | Wartość | Gdzie w repo |
+|---|---|---|---|
+| zmierzone | krzywa kalibracji: bilans ≥ 25 mm pod progiem | 92,3% potwierdzeń SMSR (88,5–95,1%) | `smsr.confirm_share_margin_le_minus25`, `smsr.calibration` |
+| zmierzone | zgodność przy marginesie 0–10 mm | 55,2% | `smsr.agreement_by_distance` |
+| zmierzone | CSI wobec linii bazowych | 0,3699 (FAO-56) i 0,4599 (D–G) wobec klimatologii 0,0694 i NASA POWER 0,147 | `smsr.csi_*`, `smsr.baseline_csi_*` |
+| zmierzone | trafność zrównoważona | 0,7039 (FAO-56), 0,7555 (D–G), klimatologia 0,5377 | `smsr.balanced_accuracy_*` |
+| zmierzone | BSS prognozy przekroczenia progu | 0,2081 wobec częstości historycznej (0,1826–0,2329; 8000 przypadków) | `forecast.brier_skill` |
+| zmierzone, słabe | czułość (POD): ile susz SMSR wskazano | 0,4133 (FAO-56), 0,5166 (D–G); precyzja alarmów 0,7789 | `smsr.pod`, `smsr.precision` |
+| zmierzone, słabe | kategoria gleby z SoilGrids wobec mapy IUNG | 0,375; w granicach jednej kategorii 0,8958 (96 punktów) | `soil.category_agreement` |
+| zmierzone, słabe | zgodność zależy od roku | CSI od 0,1103 (2025) do 0,4758 (2022) | `smsr.by_year` |
+| zmierzone, słabe | przesunięcie progu o 53 mm | trafność zrównoważona 2026: 0,7727 → 0,9094; dopasowane do ocen IUNG, w werdykcie nieużyte | `smsr.balanced_accuracy_2026_shifted` |
+| nie zmierzone | czas raportu na 20 działkach | pomiar w toku | brak `robustness.*` |
+| nie zmierzone | retencja: punkt wypływu wobec rowów, niecka wobec zbiorników | brak; miejsca działań to kandydatury do weryfikacji w terenie, nie projekt | brak `retention.*` |
+| nie zmierzone | zgodność upraw z mapą JRC | brak; mapa nie rozróżnia zbóż ozimych i jarych | brak `crop.rotation_agreement_jrc` |
+| nie zmierzone | zgodność z SMSR na działkach | brak; pomiar jest na gminach | n/d |
+
+Sama trafność nie jest miarą: susza to 4,5% przypadków, więc odpowiedź „zawsze bez suszy” trafia w 0,955. Dlatego liczą się krzywa
+kalibracji, CSI i trafność zrównoważona, każda obok linii bazowej.
+
+**Dwa warianty parowania** (te same gminy testowe; w werdykcie stoi FAO-56, bo wzór D–G pochodzi z postaci miesięcznej w publikacji IUNG 2023):
+
+| Miara | FAO-56 | Doroszewski–Górski |
 |---|---|---|
 | CSI | 0,3699 | 0,4599 |
-| POD | 0,4133 | 0,5166 |
+| POD (czułość) | 0,4133 | 0,5166 |
 | FAR | 0,2211 | 0,1929 |
 | Peirce | 0,4077 | 0,511 |
 | trafność zrównoważona | 0,7039 | 0,7555 |
 
-Wzór Doroszewskiego–Górskiego wypada lepiej, także na gminach wyboru wariantu (0,7369 wobec 0,7002). Mimo to werdykt dalej liczymy
-z FAO-56: wzór D–G mamy z postaci miesięcznej w publikacji IUNG 2023, nie z oryginalnego tekstu, i nie zdecydowaliśmy o zmianie.
-Przesunięcie progu o 53 mm podnosi trafność zrównoważoną na 2026 z 0,7727 do 0,9094. Dopasowaliśmy go do ocen IUNG
-na latach 2020–2025; to nie jest niezależny pomiar i w werdykcie go nie stosujemy.
+**Miary jednym zdaniem**
 
-**Prognoza przekroczenia progu**, walidacja krocząca: 200 gmin, 8000 przypadków, lata testowe 2016–2025, rok Y liczony tylko z lat
-wcześniejszych. Podajemy porównanie trzech podejść.
+| Miara | Znaczenie |
+|---|---|
+| trafność zrównoważona | średnia z odsetka trafionych susz i trafionych „bez suszy”; nie wygrywa jej odpowiedź „zawsze nie” |
+| czułość (POD) | z ilu susz według SMSR wskazano suszę |
+| precyzja | ile alarmów SMSR potwierdził |
+| CSI | trafienia podzielone przez trafienia, chybienia i fałszywe alarmy; pomija zgodne „bez suszy” |
+| FAR | odsetek alarmów, których SMSR nie potwierdził |
+| Peirce | czułość minus odsetek fałszywych alarmów; 0 to brak umiejętności |
+| Brier, BSS | średni kwadrat błędu prognozowanego prawdopodobieństwa; BSS = 1 − Brier / Brier częstości historycznej |
 
-| Podejście | Brier | BSS wobec częstości historycznej |
-|---|---|---|
-| częstość historyczna | 0,0705 | 0 (punkt odniesienia) |
-| dopełnianie przebiegami (w aplikacji) | 0,0558 | 0,2081 (przedział 95%: 0,1826–0,2329) |
-| LightGBM | 0,0583 | 0,1724 |
+**Prognoza** (walidacja krocząca, 200 gmin, lata testowe 2016–2025): Brier 0,0558 dla dopełniania przebiegami (w aplikacji), 0,0705 dla
+częstości historycznej, 0,0583 dla LightGBM; LightGBM nie wygrał, więc go w aplikacji nie ma. Kalibracja: `forecast.calibration`.
 
-LightGBM nie pobił dopełniania, więc nie jest w aplikacji. Dla szansy od 50%: trafność 0,927 (częstość historyczna 0,9094, zawsze
-częstsza odpowiedź 0,9091), czułość 0,3232 (0,1045), precyzja 0,7187 (0,5067). Kalibracja w 10 przedziałach: `metrics.json`, `forecast.calibration`.
+## Źródła danych i licencje
 
-**Kategoria gleby z uziarnienia SoilGrids** wobec mapy IUNG, 96 punktów: dokładnie ta sama kategoria 0,375, w granicach jednej
-kategorii 0,8958.
+Pełna tabela z adresami, rozdzielczością i datami pobrania: [docs/DANE.md](docs/DANE.md).
 
-### Miary jednym zdaniem
+| Źródło | Licencja |
+|---|---|
+| IMGW-PIB, dane dobowe | dane publiczne, z podaniem źródła |
+| Open-Meteo (pogoda, prognoza) | CC BY 4.0, **tylko niekomercyjnie**; dzienny limit zapytań |
+| NASA POWER | dane otwarte |
+| GUGiK: ULDK, ortofotomapa, NMT, BDOT10k, EGiB WFS | dane publiczne |
+| IUNG-PIB: SMSR, mapa kategorii gleby | dane IUNG-PIB, z podaniem źródła; warunków licencji mapy gleby nie ustalono |
+| Sentinel-2 (Copernicus) | dane otwarte |
+| SoilGrids (ISRIC) | CC BY 4.0 |
+| JRC EUCROPMAP 2022 | CC BY 4.0 |
 
-Dla rolnika:
-- **trafność**: odsetek przypadków, w których odpowiedź „pod progiem / nad progiem” była taka jak w SMSR; obok stoi „zawsze częstsza odpowiedź”.
-- **trafność zrównoważona**: średnia z odsetka trafionych susz i odsetka trafionych „bez suszy”, więc nie wygrywa jej odpowiedź „zawsze nie”.
-- **czułość** (POD): z ilu susz według SMSR wskazaliśmy suszę.
-- **precyzja**: ile z naszych alarmów SMSR potwierdził.
-
-Dla jury:
-- **CSI**: trafienia podzielone przez trafienia, chybienia i fałszywe alarmy; pomija zgodne „bez suszy”.
-- **POD**: to samo co czułość.
-- **FAR**: odsetek naszych alarmów, których SMSR nie potwierdził.
-- **Peirce**: czułość minus odsetek fałszywych alarmów wśród przypadków bez suszy; 0 to brak umiejętności.
-- **Brier**: średni kwadrat błędu prognozowanego prawdopodobieństwa; mniej znaczy lepiej.
-- **BSS**: 1 − Brier / Brier częstości historycznej; powyżej 0 to lepiej niż częstość historyczna; kalibracja zestawia szansę z tym, co się stało.
-
-## Metoda
-
-Ocena bieżąca nie używa uczenia maszynowego: każdą liczbę daje rachunek albo reguła.
-
-- **Bilans i próg.** Opad minus parowanie w oknie 6 dekad kończącym się na ostatniej pełnej dekadzie, próg z Dz.U. 2019 poz. 739.
-- **Kategoria gleby.** Mapa IUNG, gdy odpowiada dla punktu. Inaczej reguła z uziarnienia 0–30 cm (SoilGrids) do kategorii I–IV.
-- **Roślinność.** Odchylenie NDVI od własnej historii działki w tej samej fazie rozwoju, nie średnia regionu; maska chmur SCL.
-- **Prognoza.** Dopełnianie bieżącego okna przebiegami pogody z tych samych dni kalendarza we wcześniejszych latach, pierwsze 16 dni
-  prognozą Open-Meteo. Bez zapisanych wag, więc bez wycieku danych. Dla daty z przeszłości rok analizy nie wchodzi do danych prognozy.
-- **Podpowiedź uprawy.** Mapa upraw JRC EUCROPMAP 2022 w obrysie, tylko jako podpowiedź nad listą; mapa nie dzieli zbóż na ozime i jare.
-- **Rozmieszczanie działań.** Płaszczyzna z = ax + by + c dopasowana metodą najmniejszych kwadratów do wysokości w obrysie daje spadek
-  w % i kierunek. Dalej: dolny odcinek granicy, najniższy punkt granicy, zagłębienia (oczko niższe od 8 sąsiadów) i najbliższy rów
-  z BDOT10k. Zlewnię działki liczymy z siatki z marginesem ok. 300 m.
-- **Rozszerzenia do porównania.** Akumulacja spływu D8: O'Callaghan J.F., Mark D.M. 1984, „The extraction of drainage networks from
-  digital elevation data”, Computer Vision, Graphics, and Image Processing 28(3), 323–344. Oraz mediana NDMI z suchych okresów Sentinel-2
-  (definicja suchego okresu to propozycja zespołu). Metody pochodzą z klasycznej literatury; patentu na nie nie znaleźliśmy
-  (wyszukiwanie 21.11.2026). Aplikacja bierze wariant z najwyższym wynikiem w pomiarze, a przy braku pomiaru podstawę (najniższy punkt granicy).
-
-### Od bazy 26 działań do zdania
-
-1. Baza 26 działań w CSV (`app/advice/catalog.csv`, `catalog_retencja.csv`): źródło, strona, cytat, poziom pewności. Efekt tylko jako zakres
-   z literatury. Próg z poradnika CDR 2025 ma stronę; bez strony jest oznaczony „propozycja zespołu”.
-2. Przyczyna z osią i dowodem (`app/advice/diagnosis.py`).
-3. 9 mechanizmów (`app/advice/mechanisms.csv`): w sezonie trzeba potrzeby ORAZ możliwości z terenu, poza sezonem wystarcza możliwość.
-4. Miejsce na działce z modelu terenu (`app/advice/placement.py`, `terrain_model.py`) albo powód braku miejsca.
-5. Kolejność po liczbie przyczyn, wykonalności i tym, czy rolnik zrobi to sam; najwyżej 3 działania na grupę.
-6. Zdanie z liczbami działki, terminem i formalnością z Prawa wodnego (`app/advice/prawo_wodne.csv`).
-
-## Uruchomienie
-
-Windows, bez `make` (potrzebny [uv](https://docs.astral.sh/uv/)):
-
-```
-uv sync
-uv run python -m app
-```
-
-Potem w przeglądarce: http://127.0.0.1:8000 (port zmienia zmienna `HN_PORT`). Formularz startowy ma wpisaną przykładową działkę, datę i uprawę; można je zmienić. W Linuksie i macOS: `make setup`, `make serve`, `make test`.
-Demo na kopii danych dwóch działek (bez sieci): `make demo`. Na żywo aplikacja pobiera dane dla dowolnej działki; kopia stoi w `demo/data/`.
-
-## Źródła i licencje
-
-Pełna tabela z adresami, licencjami i datami pobrania: [docs/DANE.md](docs/DANE.md). Licencje danych: ULDK i ortofotomapa GUGiK, BDOT10k
-i NMT (dane publiczne GUGiK), IMGW-PIB (dane publiczne, podajemy źródło), Open-Meteo i SoilGrids i JRC EUCROPMAP (CC BY 4.0, Open-Meteo
-tylko niekomercyjnie), NASA POWER i Sentinel-2 (dane otwarte), SMSR (dane IUNG-PIB, podajemy źródło). Licencja kodu: MIT, plik `LICENSE`.
-Zakres przepisów i danych: rozporządzenie Dz.U. 2019 poz. 739, Prawo wodne (Dz.U. 2026 poz. 1335), poradnik CDR 2025, FAO-56.
+Przepisy i tabele: rozporządzenie Dz.U. 2019 poz. 739, Prawo wodne (Dz.U. 2026 poz. 1335), poradnik CDR 2025, FAO-56.
 
 ## Uczciwe ograniczenia
 
-- Demo jedzie na kopii danych dwóch działek (stan 21.11.2026), nie na żywych odpowiedziach. Działanie na żywo pokazuje pomiar
-  odporności (`robustness.*` w `metrics.json`), a tego pomiaru jeszcze nie ma: nie wpisujemy z niego liczb.
-- Sprawdzenia miejsc retencji (punkt wypływu wobec rowów: `retention.outlet_hit_*`; niecka wobec zbiorników: `retention.pond_auc_*`)
-  nie zmierzyliśmy: usługa ULDK zwracała błędne odpowiedzi i nie zebraliśmy 50 działek z rowem. Dlatego aplikacja bierze podstawę
-  (najniższy punkt granicy), a warianty D8 i NDMI nie są w aplikacji. Gdy je zmierzymy, wynik będzie optymistyczny: rów jest w modelu
-  terenu zagłębieniem.
-- Zgodność roślin z mapą JRC (`crop.rotation_agreement_jrc`) nie jest w `metrics.json`; mapa nie rozróżnia zbóż ozimych i jarych.
-- Zgodność reguły gleby z mapą IUNG to 0,375 na 96 punktach (w granicach jednej kategorii 0,8958); to słabo, więc kategorię z mapy IUNG
-  bierzemy, gdy odpowiada, a regułę tylko jako zapas.
-- Zapas EGiB WFS (gdy ULDK nie odpowiada) nie był sprawdzony z sieci sali: jego testy idą na atrapach HTTP, nie na żywej usłudze.
-- Zgodność z SMSR liczymy na gminach, nie na działkach; przedziały z bootstrapu po gminach. Wynik zależy od roku (tabela po latach).
-- Czas raportu mierzymy na 20 działkach z naszej sieci, nie z sali; pomiaru jeszcze nie ma w `metrics.json`. Kopia lokalna obrysów
-  obejmuje 50 działek, dla pozostałych obrys idzie z ULDK albo EGiB WFS.
-- Zgodność z SMSR mierzymy symbolami „+” i „-”, nie w mm: tabele IUNG nie podają wartości KBW. Nasz CSI 0,3699 jest
-  wyraźnie nad klimatologią (0,0694), ale czułość 0,4133 znaczy, że nie wskazujemy większości susz z SMSR.
-- Nie znamy wzoru, którym IUNG liczy parowanie w SMSR; wzór D–G pochodzi z publikacji IUNG 2023 w postaci miesięcznej.
-- Zlewnia bywa ucięta przez siatkę (margines ok. 300 m); o drenaż nie pytamy, zakładamy „nieznane”, więc regulator drenów to potencjał
-  o niskiej pewności. Progi oznaczone „propozycja zespołu” (odległość rowu, wysokość piętrzenia, spadki, głębokość zagłębienia) nie mają
-  źródła w poradniku CDR 2025.
-- Przepisy: regulator drenów to art. 395 pkt 16 i 395a (regulacja istniejącego urządzenia: pkt 12), przebudowa rowu pkt 15; granica
-  między pkt 11 i 15 nie jest zdefiniowana w ustawie. Nowelizacji poz. 1358 i 1156 nie otwieraliśmy.
-- Łańcuch przyczyna → mechanizm → miejsce ma luki: miejsce na działce liczy `app/advice/placement.py` (z `terrain_model.py`), ale
-  osobnych detektorów kandydatów (pas trawy, miedza, uprawa w poprzek stoku, niecka) ani modułu walidacji (zlewnia zewnętrzna,
-  miejsce blisko granicy) jeszcze nie ma. Mechanizmy bez miejsca (zastawka w rowie, regulator drenów, parowanie, pojemność gleby,
-  brakujący opad) idą do raportu jako zdanie bez geometrii.
-- Milimetrów wody odpływającej z działki raport nie podaje.
-- Open-Meteo działa bezpłatnie tylko niekomercyjnie i ma dzienny limit zapytań; IMGW publikuje archiwum z 1–2 miesięcznym opóźnieniem.
+- **Gleba:** zgodność reguły SoilGrids z mapą IUNG to 37,5% (89,6% w granicach jednej kategorii); kategorię bierze się z mapy IUNG, a regułę tylko jako zapas.
+- **Czułość:** 41–52% susz z SMSR zostaje wskazanych (FAO-56 i D–G); większość susz jest pominięta, a alarmy potwierdzają się w 78–81%.
+- **Zgodność** liczona na gminach, nie na działkach; wynik zależy od roku (CSI 0,1103–0,4758).
+- **Czas raportu:** pomiar na 20 działkach w toku; do czasu wyniku nie podaje się czasu z sali.
+- **Retencja:** miejsca działań to kandydatury do weryfikacji w terenie, nie projekt techniczny. Sprawdzenia trafności (punkt wypływu wobec rowów,
+  niecka wobec zbiorników) brak: usługa ULDK zwracała błędne odpowiedzi i nie zebrano 50 działek z rowem. W aplikacji stoi podstawa
+  (najniższy punkt granicy), a warianty D8 i NDMI do porównania (O'Callaghan i Mark 1984; patentu na te metody nie znaleziono,
+  wyszukiwanie 21.11.2026) nie są w niej użyte. Przyszły wynik będzie optymistyczny: rów jest w modelu terenu zagłębieniem.
+- **Lokalizacja i zgody** (Prawo wodne) trzeba zweryfikować na miejscu; nowelizacje poz. 1358 i 1156 nie były otwierane.
+- **Obrys działki:** zapas EGiB WFS (gdy ULDK nie odpowiada) nie był sprawdzony z sieci sali; jego testy idą na atrapach HTTP. Kopia lokalna obejmuje 50 działek.
+- **Parowanie:** wzór, którym IUNG liczy parowanie w SMSR, jest nieznany; zgodność mierzy się symbolami „+” i „-”, nie w mm.
+- **Zlewnia** bywa ucięta przez siatkę (margines ok. 300 m); drenaż jest „nieznany”, więc regulator drenów to potencjał o niskiej pewności.
+  Progi oznaczone „propozycja zespołu” nie mają źródła w poradniku CDR 2025.
+- **Dane:** mapa upraw JRC jest tylko podpowiedzią; Open-Meteo działa bezpłatnie tylko niekomercyjnie; archiwum IMGW ma 1–2 miesiące opóźnienia.
+
+## Struktura repozytorium i testy
+
+| Ścieżka | Zawartość |
+|---|---|
+| `app/` | aplikacja FastAPI: `drought/` (bilans, próg), `advice/` (przyczyny, działania, teren), `forecast/`, `validation/`, `geodata/`, `templates/`, `static/` |
+| `scripts/` | pobieranie danych i pomiar (`eval_*.py`, `evaluate.py` zapisuje `metrics.json`) |
+| `tests/` | testy pytest (`tests/acceptance/` to testy kryteriów) |
+| `demo/` | scenariusz demo (Playwright) i kopia danych dwóch działek |
+| `deploy/` | wdrożenie na VPS i start na Windows |
+| `docs/` | `DANE.md`, `DEMO.md`, `DEPLOY.md`, `PYTANIA_JURY.md` |
+
+| Komenda | Co robi |
+|---|---|
+| `make test` | pytest |
+| `make lint` | ruff |
+| `make eval` | pomiar na danych z `data/raw/`, zapis `metrics.json` |
+| `make demo` | scenariusz demo w przeglądarce bez interfejsu |
+| `make gate-fast` | lint, testy, sprawdzenie tekstów i liczb w README, reguły interfejsu, demo |
+
+Kod, o który jury może zapytać: [docs/PYTANIA_JURY.md](docs/PYTANIA_JURY.md).
+
+## Licencja
+
+MIT, plik `LICENSE`.

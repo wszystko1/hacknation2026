@@ -120,7 +120,7 @@ def build(ctx: ReportContext) -> Section:
         )
     section.sentences = sentences
     section.how = (
-        f"Dla każdego sezonu bierzemy okres 60 dni z najmniejszym zapasem do progu (bilans − próg), do {cutoff} w danym roku, "
+        f"Dla każdego sezonu brany jest okres 60 dni z najmniejszym zapasem do progu (bilans − próg), do {cutoff} w danym roku, "
         "z tych samych danych o pogodzie i tą samą funkcją co werdykt. Słupek to niedobór w tym okresie (opad − parowanie), "
         "kreska to próg z Dz.U. 2019 poz. 739; kolor mówi, czy słupek sięga progu, a liczba nad słupkiem jest jego wartością. Pod rokiem: ocena SMSR dla gminy (susza albo brak suszy)."
     )

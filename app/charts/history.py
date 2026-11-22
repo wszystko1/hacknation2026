@@ -34,7 +34,6 @@ def history_svg(seasons: Sequence[SeasonWorst], smsr: Mapping[int, str], label: 
     slot = (RIGHT - LEFT) / len(seasons)
     bar_w = min(slot * 0.62, 44.0)
     body = [
-        svg.text(0, 22, "Niedobór wody w najgorszym okresie sezonu, mm", "lbl"),
         svg.line(LEFT, BASE, RIGHT, BASE, "ax-zero"),
     ]
     for i, s in enumerate(seasons):
@@ -66,4 +65,4 @@ def history_svg(seasons: Sequence[SeasonWorst], smsr: Mapping[int, str], label: 
         body.append(svg.text(x + 22, y, words, ""))
     body.append(svg.line(LEFT, HEIGHT - 12, LEFT + 36, HEIGHT - 12, "s-thr"))
     body.append(svg.text(LEFT + 44, HEIGHT - 6, "próg suszy z rozporządzenia", ""))
-    return svg.svg(HEIGHT, label, body, desc=label)
+    return svg.svg(HEIGHT, label, body, desc=label, title="Niedobór wody w najgorszym okresie sezonu, mm")

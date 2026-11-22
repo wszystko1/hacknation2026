@@ -1,17 +1,11 @@
-"""Scene "Widok doradcy i raport PDF": the same report with advisor blocks, then the print view."""
+"""Scene "Raport PDF": the print view of the same report, with the photo, the verdict and the sources table."""
 
 from demo.steps.common import PAUSE
+from demo.steps.tabs import show_tab
 
 
 def scene(page, base_url: str) -> None:
-    if "view-doradca" not in (page.locator("body").get_attribute("class") or ""):
-        page.locator("#pokaz-doradcy").click()
-        page.wait_for_selector("body.view-doradca")
-    block = page.locator("#zrodla .advisor")
-    block.scroll_into_view_if_needed()
-    assert block.is_visible()
-    assert "Rozdzielczość" in block.inner_text() or "rozdzielczość" in block.inner_text()
-    page.wait_for_timeout(PAUSE)
+    show_tab(page, "podsumowanie")
     page.locator("#pdf").click()
     page.wait_for_selector("#druk-info")
     assert page.locator("#werdykt").is_visible()

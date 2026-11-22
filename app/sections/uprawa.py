@@ -97,8 +97,8 @@ def build(ctx: ReportContext) -> Section:
         )
     section.sentences = sentences
     section.how = (
-        "Dla każdej z 14 dekad, w których kończy się okres z rozporządzenia (Dz.U. 2019 poz. 739), liczymy bilans okna 60 dni "
-        f"(opad − parowanie FAO-56) w ostatnich {max((c.judged for c in counts), default=0)} sezonach i porównujemy z progiem dla uprawy i gleby. "
+        "Dla każdej z 14 dekad, w których kończy się okres z rozporządzenia (Dz.U. 2019 poz. 739), liczony jest bilans okna 60 dni "
+        f"(opad − parowanie FAO-56) w ostatnich {max((c.judged for c in counts), default=0)} sezonach i porównywany z progiem dla uprawy i gleby. "
         "Działanie wchodzi, gdy odpowiada na rozpoznaną przyczynę i spełnia warunki wiersza katalogu; wyżej stoi to, które odpowiada na więcej przyczyn."
     )
     section.advisor = _advisor(ctx)

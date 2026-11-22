@@ -18,7 +18,7 @@
   --map-bg: #2b3440; --chrome: rgba(28, 38, 51, .93); --chrome-line: rgba(255, 255, 255, .16);
   --on-dark: #ffffff; --on-dark-muted: #c9d2de; --scrim: rgba(10, 16, 24, .48);
   --outline: #ffffff; --casing: rgba(0, 0, 0, .55); --flow: #d6ecfb; --flow-casing: rgba(8, 30, 60, .55);
-  --strip: #9fe0a8; --strip-casing: rgba(10, 40, 20, .55); --basin: rgba(42, 98, 201, .38);
+  --strip: #9fe0a8; --strip-casing: rgba(10, 40, 20, .55); --basin: rgba(42, 98, 201, .38); --outline-fill: rgba(42, 98, 201, .16);
   --card-on-map: rgba(255, 255, 255, .97);
   --shadow-sm: 0 1px 3px rgba(20, 30, 45, .12); --shadow-map: 0 6px 24px rgba(0, 0, 0, .28);
   --focus: #2a62c9;
@@ -29,7 +29,7 @@
   /* spacing scale and radius */
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
   --space: 16px; --radius-ui: 2px; --radius: var(--radius-ui); --radius-sm: var(--radius-ui); --pill: var(--radius-ui);
-  --top-h: 56px;
+  --top-h: 56px; --chart-max-h: 220px;
   /* report screen: icon rail, map column, the report takes the rest */
   --rail-w: 168px; --map-w: 560px; --map-w-narrow: 44%; --report-max: none;
   --rail-bg: var(--chrome); --rail-hover: rgba(255, 255, 255, .12);
@@ -186,7 +186,7 @@ tr.is-key td { background: var(--accent-hover); font-weight: 600; }
 /* SVG overlay on the photo (same pixel space as the image) */
 .mo-scrim { fill: var(--scrim); fill-rule: evenodd; }
 .mo-casing { fill: none; stroke: var(--casing); stroke-width: 7; stroke-linejoin: round; }
-.mo-outline { fill: none; stroke: var(--outline); stroke-width: 3; stroke-linejoin: round; }
+.mo-outline { fill: var(--outline-fill); stroke: var(--outline); stroke-width: 3; stroke-linejoin: round; }
 .mo-flow-casing { stroke: var(--flow-casing); stroke-width: 8; stroke-linecap: round; fill: none; }
 .mo-flow { stroke: var(--flow); stroke-width: 4; stroke-linecap: round; fill: none; }
 .mo-arrowhead { fill: var(--flow); }
@@ -216,7 +216,7 @@ tr.is-key td { background: var(--accent-hover); font-weight: 600; }
   white-space: nowrap; }
 .pick b { font-size: var(--fs-base); font-weight: 600; white-space: nowrap; }
 .pick input, .pick select { width: 100%; min-width: 0; background: transparent; color: var(--on-dark); border: 0; border-radius: var(--radius-ui);
-  padding: 2px 0; min-height: 36px; font-weight: 600; font-size: var(--fs-base); text-overflow: ellipsis; }
+  padding: 2px 0; min-height: 44px; font-weight: 600; font-size: var(--fs-base); text-overflow: ellipsis; }
 .pick input::placeholder { color: var(--on-dark-muted); font-weight: 400; }
 .pick select option { color: var(--text); background: var(--surface); }
 .pick button { flex: none; margin: var(--s2); align-self: center; }
@@ -353,8 +353,8 @@ tr.is-key td { background: var(--accent-hover); font-weight: 600; }
 .toc .is-loading { color: var(--muted); }
 
 /* charts: server-side SVG, viewBox about as wide as the column so 16 user units = 16 px */
-.ch { display: block; width: 100%; height: auto; font-family: var(--font); margin-top: var(--s2); }
-.ch text { font-size: 16px; fill: var(--muted); }
+.ch { display: block; width: 100%; max-width: 560px; max-height: var(--chart-max-h); height: auto; font-family: var(--font); margin-top: var(--s2); }
+.ch text { font-size: 18px; fill: var(--muted); }
 .ch .ax-line, .ch .grid { stroke: var(--line); stroke-width: 1; fill: none; }
 .ch .ax-zero { stroke: var(--line-2); stroke-width: 1.5; }
 .ch .s-rain { fill: var(--rain); }
@@ -583,3 +583,28 @@ details.calc pre, details.calc code { font-family: var(--font-mono); font-size: 
 /* map pin symbol beside an action: a square flag with the marker's number */
 .pin { display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; color: var(--accent-ink); }
 .pin svg { width: 16px; height: 16px; fill: var(--accent); stroke: var(--accent-ink); stroke-width: 1.5; stroke-linejoin: miter; }
+.b-sub { margin-top: var(--s4); }
+.b-sub:first-child { margin-top: 0; }
+.b-sub > h4 { font-size: var(--fs-base); font-weight: 700; color: var(--muted); margin: 0 0 var(--s1); }
+
+/* focus ring on the dark panels: white, at least 3:1 against the chrome */
+.pick :focus-visible, .map-ui :focus-visible, .rail :focus-visible { outline-color: var(--on-dark); }
+@media (max-width: 899px) { .tabs { flex-wrap: wrap; overflow-x: visible; white-space: normal; } .tabs [role="tab"] { flex: 1 1 auto; } }
+
+/* tab content is plain sections: heading, chart or lines, one or two sentences; only technical details fold */
+.b-group { padding: var(--s4) 0; border-top: 1px solid var(--line); }
+.b-group:first-of-type { border-top: 0; }
+.b-group > h3 { font-size: var(--fs-lg); font-weight: 700; color: var(--accent-ink); margin: 0 0 var(--s2); }
+.b-group > .b-body p { margin: 0 0 var(--s2); }
+
+.chart-title { font-size: var(--fs-base); font-weight: 650; color: var(--text); margin: var(--s2) 0 0; }
+
+@media (max-width: 899px) { .ledger-line { white-space: normal; overflow: visible; } }
+/* the "Jak liczymy" tab: one text column, same edges for every rule and table line */
+.b-body section, .b-body .rsec { padding: 0; border-top: 0; }
+.b-body .scroll { margin: 0; }
+.b-body table td.mono, .b-body table td.num { white-space: nowrap; font-family: var(--font); }
+.sec-h[hidden] { display: none; }
+.nb--off { width: 16px; height: 16px; border-radius: var(--radius-ui); border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--accent-ink);
+  font-size: 12px; line-height: 1; position: relative; }
+.nb--off::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; }

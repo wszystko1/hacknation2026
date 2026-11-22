@@ -9,7 +9,7 @@ HEADINGS = [line for line in README.splitlines() if line.startswith("#")]
 
 def test_three_state_table_and_not_measured_line_above_it() -> None:
     table_at = README.index("| Stan | Co |")
-    line_at = README.index("Czego nie zmierzyliśmy")
+    line_at = README.index("Czego nie zmierzono")
     assert line_at < table_at
     table = README[table_at : README.index("\n\n", table_at)]
     for state in ("| zmierzone |", "| zmierzone, słabe |", "| nie zmierzone |"):

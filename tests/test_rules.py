@@ -118,7 +118,7 @@ def test_out_of_season_residues_are_due_before_the_next_season() -> None:
 
 def test_section_seven_names_the_formula_it_stays_on() -> None:
     how = report().section("nawadnianie").how
-    assert "FAO-56" in how and "strefie korzeni nie liczymy" in how
+    assert "FAO-56" in how and "strefie korzeni nie jest liczony" in how
 
 
 @pytest.mark.parametrize("params", PARCELS, ids=IDS)

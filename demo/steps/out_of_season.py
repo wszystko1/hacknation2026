@@ -3,7 +3,7 @@
 from urllib.parse import urlencode
 
 from demo.steps.common import PARCEL_2, PAUSE, evaluate
-from demo.steps.tabs import show_tab
+from demo.steps.tabs import open_row, show_tab
 
 
 def scene(page, base_url: str) -> None:
@@ -23,7 +23,7 @@ def scene(page, base_url: str) -> None:
     assert page.locator("#poziom-a [data-a-item]").count() <= 7
     # The balance of the season just ended opens in its row.
     show_tab(page, "przyczyny")
-    page.locator("#wiersz-bilans summary").click()
+    open_row(page, "bilans")
     shown = page.locator("#wiersz-bilans .big-number b").inner_text()
     assert str(expected) in shown.replace("−", "-").lstrip("-"), (shown, expected)
     assert "2026" in page.locator("#wiersz-bilans .big-number .cap").inner_text()

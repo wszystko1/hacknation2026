@@ -16,7 +16,7 @@ from urllib.parse import quote
 
 from app.drought.kbw import CROP_GENITIVE
 from app.fmt import dec
-from app.models import Action, Cause, Report
+from app.models import BADGE_ABOVE, BADGE_BELOW, Action, Cause, Report
 
 MONTHS_GENITIVE = (
     "stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca",
@@ -24,8 +24,8 @@ MONTHS_GENITIVE = (
 )  # fmt: skip
 ROMAN = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII")
 WEATHER_CAUSES = ("malo_opadu", "duze_parowanie")
-NOT_YET = "jeszcze nie liczymy"
-NO_DEADLINE = "termin podamy po wyliczeniu"
+NOT_YET = "nie ujęto w raporcie"
+NO_DEADLINE = "termin do ustalenia"
 
 Tone = Literal["dry", "ok", "neutral"]
 
@@ -141,14 +141,14 @@ def verdict_item(report: Report) -> VerdictItem:
         gap = dec(abs(v.margin_mm))
         return VerdictItem(
             "dry",
-            "Susza: tak",
+            BADGE_BELOW,
             f"Bilans wody jest o {gap} mm gorszy niż próg suszy dla {genitive} na tej glebie.",
         )
     if v.state == "above" and v.margin_mm is not None:
         gap = dec(abs(v.margin_mm))
         return VerdictItem(
             "ok",
-            "Susza: nie",
+            BADGE_ABOVE,
             f"Bilans wody jest lepszy niż próg suszy (o {gap} mm) dla {genitive} na tej glebie.",
         )
     if v.state == "out_of_season":
@@ -161,7 +161,7 @@ def verdict_item(report: Report) -> VerdictItem:
         return VerdictItem(
             "neutral",
             "Poza sezonem",
-            f"Susza rolnicza jest oceniana od 21 marca do 30 września, więc na dziś jej nie oceniamy.{last}",
+            f"Susza rolnicza jest oceniana od 21 marca do 30 września, więc na dziś nie jest oceniana.{last}",
         )
     return VerdictItem(
         "neutral", "Szacunek dla działki", plain(v.sentence) or "Nie udało się policzyć bilansu wody."
@@ -221,7 +221,7 @@ def confidence(report: Report) -> list[str]:
         first = f"IUNG dla gminy {s.commune}: {plain(s.words).split(',')[0]}."
     else:
         first = f"Oceny IUNG dla gminy {s.commune} w tym okresie nie mamy: {plain(s.reason)}"
-    return [first, "Przy wniosku liczy się ocena IUNG."]
+    return [first]
 
 
 # ---------------------------------------------------------------- level B
@@ -237,6 +237,7 @@ class Line:
     due: str = ""
     plan_switch: bool = False
     planned: bool = False
+    pin: bool = False
 
 
 @dataclass
@@ -258,11 +259,11 @@ def _action_line(a: Action, report: Report, *, plan_switch: bool = False) -> Lin
     effect = plain(a.effect) if a.effect else ""
     if plan_switch:
         due = f"do {date_words(a.due)}" if a.due else when_words(a)
-        return Line(a.title, n=a.n, due=due, plan_switch=True, planned=a.in_plan)
+        return Line(a.title, n=a.n, due=due, plan_switch=True, planned=a.in_plan, pin=a.place is not None)
     note = f"efekt: {effect}" if effect else ""
     if text and "Termin:" not in text and a.when and not a.when.startswith("Brak"):
         text = f"{text} Termin: {plain(a.when)}."
-    return Line(f"{a.title}. {text}".strip(), n=a.n, note=note)
+    return Line(f"{a.title}. {text}".strip(), n=a.n, note=note, pin=a.place is not None)
 
 
 def _balance_row(report: Report) -> Row:
@@ -290,9 +291,29 @@ def _causes_row(report: Report) -> Row:
     return Row("dlaczego", "Dlaczego tak wyszło", lines=lines)
 
 
+MONTHS_LOCATIVE = {
+    3: "marcu",
+    4: "kwietniu",
+    5: "maju",
+    6: "czerwcu",
+    7: "lipcu",
+    8: "sierpniu",
+    9: "wrześniu",
+}
+
+
 def _frequency_row(report: Report) -> Row:
     v = report.vulnerability
-    return Row("czesto", "Jak często ta działka cierpi", paragraphs=[plain(v.sentence)] if v.sentence else [])
+    paragraphs = [plain(v.sentence)] if v.sentence else []
+    worst = sorted((m for m in v.months if m.below), key=lambda m: (-m.below, m.month))[:2]
+    if worst and all(m.month in MONTHS_LOCATIVE for m in worst):
+        names = " i ".join(
+            MONTHS_LOCATIVE[m.month]
+            for m in sorted(worst, key=lambda m: m.month)
+            if m.month in MONTHS_LOCATIVE
+        )
+        paragraphs.append(f"Najczęściej brakuje wody w {names}: to wtedy najlepiej zaplanować zabieg.")
+    return Row("czesto", "Jak często ta działka cierpi", paragraphs=paragraphs)
 
 
 def _evaporation_row(report: Report) -> Row:
@@ -330,8 +351,13 @@ def _plan_row(report: Report) -> Row:
 
 
 def _crop_actions_row(report: Report) -> Row:
-    acts = [a for a in report.actions if a.group in ("uprawa", "nawadnianie")]
+    acts = [a for a in report.actions if a.group == "uprawa"]
     return Row("zabiegi", "Zabiegi w uprawie", lines=[_action_line(a, report) for a in acts])
+
+
+def _irrigation_row(report: Report) -> Row:
+    acts = [a for a in report.actions if a.group == "nawadnianie"]
+    return Row("nawadnianie", "Czy nawadniać", lines=[_action_line(a, report) for a in acts])
 
 
 def _formalities_row(report: Report) -> Row:
@@ -353,7 +379,7 @@ METHOD_SECTIONS = ("retencja", "uprawa", "plan", "nawadnianie")
 def _method_row(report: Report) -> Row:
     """How actions and the forecast are chosen; the balance itself is explained in its own row."""
     paragraphs = [
-        "Bilans to opad minus parowanie w 60 dniach; próg suszy bierzemy z rozporządzenia (Dz.U. 2019 poz. 739).",
+        "Bilans to opad minus parowanie w 60 dniach; próg suszy pochodzi z rozporządzenia (Dz.U. 2019 poz. 739).",
     ]
     texts = [s.how for s in report.sections if s.how and s.id in METHOD_SECTIONS]
     paragraphs += [t for t in (calm(x, report) for x in texts) if t and not CHART_WORDS.search(t)]
@@ -361,7 +387,7 @@ def _method_row(report: Report) -> Row:
     paragraphs.append(
         "Raport nie uwzględnia drenowania, wód gruntowych ani faktycznej daty siewu."
     )  # task 3.3.5
-    return Row("jak", "Jak policzyliśmy", paragraphs=paragraphs)
+    return Row("jak", "Jak powstał wynik", paragraphs=paragraphs)
 
 
 def _slope_row(report: Report) -> Row:
@@ -379,7 +405,7 @@ def _commune_row(report: Report) -> Row:
 
 ROW_BUILDERS = (
     _balance_row, _causes_row, _frequency_row, _evaporation_row, _plants_row, _plan_row,
-    _crop_actions_row, _formalities_row, _method_row, _slope_row, _commune_row,
+    _crop_actions_row, _irrigation_row, _formalities_row, _method_row, _slope_row, _commune_row,
 )  # fmt: skip
 
 
@@ -388,9 +414,9 @@ def rows(report: Report) -> list[Row]:
 
 
 def not_counted(all_rows: list[Row]) -> str:
-    """ "Jeszcze nie liczymy: …" with the names of the rows that have nothing to show; "" when none is empty."""
+    """ "Nie ujęto w raporcie: …" with the names of the rows that have nothing to show; "" when none is empty."""
     names = [row.title.lower() for row in all_rows if not row.present]
-    return f"Jeszcze nie liczymy: {', '.join(names)}." if names else ""
+    return f"Nie ujęto w raporcie: {', '.join(names)}." if names else ""
 
 
 @dataclass
@@ -443,7 +469,7 @@ def build(report: Report) -> FarmerView:
         missing = (
             (missing[:-1] + ", termin działania nr 1.")
             if missing
-            else "Jeszcze nie liczymy: termin działania nr 1."
+            else "Nie ujęto w raporcie: termin działania nr 1."
         )
     return FarmerView(
         header=header(report),
