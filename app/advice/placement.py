@@ -828,6 +828,157 @@ def _interior_cell_near_centre(inp: PlacementInput) -> tuple[float, float] | Non
     return float(x), float(y)
 
 
+@dataclass
+class _Context:
+    """What every place function of `find_places` reads: the input, the fitted plane and the winning variants."""
+
+    inp: PlacementInput
+    plane: Plane
+    flat: bool
+    slope_text: str
+    edge: LowerEdge | None
+    outlet_variant: Variant
+    basin_variant: Variant
+    crossing: _Crossing | None
+    wet_boundary: list[float] | None
+    wet_interior: list[float] | None
+
+    @property
+    def grid(self) -> ElevationGrid:
+        assert self.inp.grid is not None
+        return self.inp.grid
+
+    @property
+    def ring(self) -> list[list[float]]:
+        return self.inp.outline_2180
+
+
+def _outlet_place(c: _Context) -> PlaceCandidate:
+    """The lowest boundary point, or the point of the winning variant."""
+    outlet_ha: float | None = None
+    text = "najniższy punkt granicy"
+    if c.outlet_variant == "d8" and c.crossing is not None:
+        outlet_xy: list[float] | None = [c.crossing.point.x_2180, c.crossing.point.y_2180]
+        outlet_ha = c.crossing.point.catchment_ha
+        text = "punkt, którędy z działki wypływa najwięcej wody"
+    elif c.outlet_variant == "ndmi" and c.wet_boundary is not None:
+        outlet_xy, text = c.wet_boundary, "najwilgotniejszy punkt granicy"
+    else:
+        outlet_xy = lowest_boundary_point(c.inp)
+    if outlet_xy is None:
+        why = (
+            f"spadek {c.slope_text}% jest za mały, by wskazać punkt wypływu"
+            if c.flat
+            else "brak wysokości wzdłuż granicy działki"
+        )
+        return PlaceCandidate(kind="punkt wypływu", place=None, reason=why)
+    x, y = outlet_xy
+    return PlaceCandidate(
+        kind="punkt wypływu",
+        place=_place("punkt wypływu", x, y, f"{text}, w {_where(x, y, c.ring)}", outlet_ha),
+        catchment_ha=outlet_ha,
+    )
+
+
+def _strip_place(c: _Context, outlet_ha: float | None) -> PlaceCandidate:
+    """The grass strip on the lower edge, along the ditch when one runs by it."""
+    if c.flat:
+        return PlaceCandidate(
+            kind="pas trawy",
+            place=None,
+            reason=f"spadek {c.slope_text}% jest za mały, by wskazać dolny odcinek granicy",
+            slope_pct=round(c.plane.slope_pct, 2),
+        )
+    if c.edge is None:
+        return PlaceCandidate(kind="pas trawy", place=None, reason="brak wysokości wzdłuż granicy działki")
+    ditch_max = _cond("pas-trawy-przy-wyplywie", "ditch_max_m")
+    mx, my = c.edge.middle_2180
+    along = ditch_max is not None and _ditch_by_edge(c.inp, c.edge, ditch_max) is not None
+    side = f"na {_side(mx, my, c.ring)} granicy"
+    return PlaceCandidate(
+        kind="pas trawy",
+        place=_place(
+            "pas trawy",
+            mx,
+            my,
+            f"wzdłuż rowu {side}" if along else side,
+            outlet_ha,
+            length_m=c.edge.length_m,
+        ),
+        catchment_ha=outlet_ha,
+        length_m=c.edge.length_m,
+        slope_pct=round(c.plane.slope_pct, 2),
+    )
+
+
+def _basin_place(c: _Context) -> PlaceCandidate:
+    """In a depression when there is one, else at the lowest interior point."""
+    depth_min = _cond("niecka-przy-wyplywie", "depression_min_m")
+    pits = [p for p in _depression_cells(c.grid) if depth_min is not None and p[2] >= depth_min - 1e-9]
+    basin_xy: list[float] | None
+    basin_ha: float | None = None
+    if pits:
+        x, y, _ = max(pits, key=lambda p: p[2])
+        basin_xy, basin_text = [x, y], "zagłębieniu terenu"
+    elif c.basin_variant == "ndmi" and c.wet_interior is not None:
+        basin_xy, basin_text = c.wet_interior, "najwilgotniejszym miejscu wnętrza"
+    elif c.basin_variant == "d8" and c.crossing is not None:
+        basin_xy = list(_build_surface(c.grid).xy(c.crossing.inside_cell))
+        basin_text, basin_ha = "miejscu, do którego spływa najwięcej wody", c.crossing.point.catchment_ha
+    else:
+        basin_xy, basin_text = lowest_interior_point(c.inp), "najniższym punkcie wnętrza"
+    if basin_xy is None:
+        why = (
+            f"spadek {c.slope_text}% jest za mały, by wskazać nieckę, a w siatce nie ma zagłębienia"
+            if c.flat
+            else "brak wysokości wewnątrz działki"
+        )
+        return PlaceCandidate(kind="niecka", place=None, reason=why)
+    x, y = basin_xy
+    return PlaceCandidate(
+        kind="niecka",
+        place=_place("niecka", x, y, f"{basin_text}, w {_where(x, y, c.ring)}", basin_ha),
+        catchment_ha=basin_ha,
+    )
+
+
+def _tillage_place(c: _Context) -> PlaceCandidate | None:
+    """Tillage across the slope, only inside the slope band of the catalogue."""
+    lo, hi = (
+        _cond("uprawa-w-poprzek-stoku", "slope_min_pct"),
+        _cond("uprawa-w-poprzek-stoku", "slope_max_pct"),
+    )
+    centre = _interior_cell_near_centre(c.inp)
+    if lo is None or c.plane.slope_pct < lo or (hi is not None and c.plane.slope_pct > hi) or not centre:
+        return None
+    direction = round((c.plane.downhill_deg + 90.0) % 180.0, 1) % 180.0  # rounding must not reach 180
+    return PlaceCandidate(
+        kind="uprawa w poprzek stoku",
+        place=_place(
+            "uprawa w poprzek stoku", centre[0], centre[1], "całej działce", direction_deg=direction
+        ),
+        direction_deg=round(direction, 1),
+        slope_pct=round(c.plane.slope_pct, 2),
+    )
+
+
+def _weir_place(c: _Context, outlet_ha: float | None) -> PlaceCandidate | None:
+    """A weir only on a ditch by the lower edge."""
+    weir_max = _cond("zastawka-nowa", "ditch_max_m")
+    if c.edge is None or weir_max is None:
+        return None
+    hit = _ditch_by_edge(c.inp, c.edge, weir_max)
+    if hit is None:
+        return None
+    (hx, hy), dist = hit
+    return PlaceCandidate(
+        kind="zastawka",
+        place=_place("zastawka", hx, hy, f"rowie przy {_where(hx, hy, c.ring)}", outlet_ha),
+        catchment_ha=outlet_ha,
+        distance_m=dist,
+    )
+
+
 def find_places(inp: PlacementInput) -> list[PlaceCandidate]:
     """Candidate places for retention actions: with a place, or with the reason there is none.
 
@@ -841,159 +992,33 @@ def find_places(inp: PlacementInput) -> list[PlaceCandidate]:
     except ValueError:
         return _without_grid(inp, "brak wysokości w siatce dla działki")
 
-    ring = inp.outline_2180
     flat = _too_flat(plane)
-    slope_text = _slope_text(plane.slope_pct)
-    edge = None if flat else _lower_edge(inp, plane)
     outlet_variant, basin_variant = outlet_method(), basin_method()
     crossing: _Crossing | None = None
     if "d8" in (outlet_variant, basin_variant) and not flat:
         try:
-            crossing = next(iter(_crossings(_build_surface(inp.grid), ring, leaving=True)), None)
+            crossing = next(iter(_crossings(_build_surface(inp.grid), inp.outline_2180, leaving=True)), None)
         except ValueError:
             crossing = None
     wet_boundary, wet_interior = (
         _wet_points(inp) if "ndmi" in (outlet_variant, basin_variant) else (None, None)
     )
-
-    candidates: list[PlaceCandidate] = []
-
-    # outlet: the lowest boundary point, or the point of the winning variant
-    outlet_xy: list[float] | None = None
-    outlet_ha: float | None = None
-    text = "najniższy punkt granicy"
-    if outlet_variant == "d8" and crossing is not None:
-        outlet_xy = [crossing.point.x_2180, crossing.point.y_2180]
-        outlet_ha = crossing.point.catchment_ha
-        text = "punkt, którędy z działki wypływa najwięcej wody"
-    elif outlet_variant == "ndmi" and wet_boundary is not None:
-        outlet_xy, text = wet_boundary, "najwilgotniejszy punkt granicy"
-    else:
-        outlet_xy = lowest_boundary_point(inp)
-    if outlet_xy is None:
-        why = (
-            f"spadek {slope_text}% jest za mały, by wskazać punkt wypływu"
-            if flat
-            else "brak wysokości wzdłuż granicy działki"
-        )
-        candidates.append(PlaceCandidate(kind="punkt wypływu", place=None, reason=why))
-    else:
-        x, y = outlet_xy
-        candidates.append(
-            PlaceCandidate(
-                kind="punkt wypływu",
-                place=_place("punkt wypływu", x, y, f"{text}, w {_where(x, y, ring)}", outlet_ha),
-                catchment_ha=outlet_ha,
-            )
-        )
-
-    # grass strip on the lower edge, along the ditch when one runs by it
-    ditch_max = _cond("pas-trawy-przy-wyplywie", "ditch_max_m")
-    weir_max = _cond("zastawka-nowa", "ditch_max_m")
-    if flat:
-        candidates.append(
-            PlaceCandidate(
-                kind="pas trawy",
-                place=None,
-                reason=f"spadek {slope_text}% jest za mały, by wskazać dolny odcinek granicy",
-                slope_pct=round(plane.slope_pct, 2),
-            )
-        )
-    elif edge is None:
-        candidates.append(
-            PlaceCandidate(kind="pas trawy", place=None, reason="brak wysokości wzdłuż granicy działki")
-        )
-    else:
-        mx, my = edge.middle_2180
-        along = ditch_max is not None and _ditch_by_edge(inp, edge, ditch_max) is not None
-        side = f"na {_side(mx, my, ring)} granicy"
-        candidates.append(
-            PlaceCandidate(
-                kind="pas trawy",
-                place=_place(
-                    "pas trawy",
-                    mx,
-                    my,
-                    f"wzdłuż rowu {side}" if along else side,
-                    outlet_ha,
-                    length_m=edge.length_m,
-                ),
-                catchment_ha=outlet_ha,
-                length_m=edge.length_m,
-                slope_pct=round(plane.slope_pct, 2),
-            )
-        )
-
-    # basin: in a depression when there is one, else at the lowest interior point
-    depth_min = _cond("niecka-przy-wyplywie", "depression_min_m")
-    pits = [p for p in _depression_cells(inp.grid) if depth_min is not None and p[2] >= depth_min - 1e-9]
-    basin_xy: list[float] | None = None
-    basin_text = ""
-    basin_ha: float | None = None
-    if pits:
-        x, y, _ = max(pits, key=lambda p: p[2])
-        basin_xy, basin_text = [x, y], "zagłębieniu terenu"
-    elif basin_variant == "ndmi" and wet_interior is not None:
-        basin_xy, basin_text = wet_interior, "najwilgotniejszym miejscu wnętrza"
-    elif basin_variant == "d8" and crossing is not None:
-        s = _build_surface(inp.grid)
-        basin_xy = list(s.xy(crossing.inside_cell))
-        basin_text, basin_ha = "miejscu, do którego spływa najwięcej wody", crossing.point.catchment_ha
-    else:
-        basin_xy, basin_text = lowest_interior_point(inp), "najniższym punkcie wnętrza"
-    if basin_xy is None:
-        why = (
-            f"spadek {slope_text}% jest za mały, by wskazać nieckę, a w siatce nie ma zagłębienia"
-            if flat
-            else "brak wysokości wewnątrz działki"
-        )
-        candidates.append(PlaceCandidate(kind="niecka", place=None, reason=why))
-    else:
-        x, y = basin_xy
-        candidates.append(
-            PlaceCandidate(
-                kind="niecka",
-                place=_place("niecka", x, y, f"{basin_text}, w {_where(x, y, ring)}", basin_ha),
-                catchment_ha=basin_ha,
-            )
-        )
-
-    # tillage across the slope
-    lo, hi = (
-        _cond("uprawa-w-poprzek-stoku", "slope_min_pct"),
-        _cond("uprawa-w-poprzek-stoku", "slope_max_pct"),
+    ctx = _Context(
+        inp,
+        plane,
+        flat,
+        _slope_text(plane.slope_pct),
+        None if flat else _lower_edge(inp, plane),
+        outlet_variant,
+        basin_variant,
+        crossing,
+        wet_boundary,
+        wet_interior,
     )
-    centre = _interior_cell_near_centre(inp)
-    if lo is not None and plane.slope_pct >= lo and (hi is None or plane.slope_pct <= hi) and centre:
-        direction = round((plane.downhill_deg + 90.0) % 180.0, 1) % 180.0  # rounding must not reach 180
-        candidates.append(
-            PlaceCandidate(
-                kind="uprawa w poprzek stoku",
-                place=_place(
-                    "uprawa w poprzek stoku",
-                    centre[0],
-                    centre[1],
-                    "całej działce",
-                    direction_deg=direction,
-                ),
-                direction_deg=round(direction, 1),
-                slope_pct=round(plane.slope_pct, 2),
-            )
-        )
-
-    # a weir only on a ditch by the lower edge
-    if edge is not None and weir_max is not None:
-        hit = _ditch_by_edge(inp, edge, weir_max)
-        if hit is not None:
-            (hx, hy), dist = hit
-            candidates.append(
-                PlaceCandidate(
-                    kind="zastawka",
-                    place=_place("zastawka", hx, hy, f"rowie przy {_where(hx, hy, ring)}", outlet_ha),
-                    catchment_ha=outlet_ha,
-                    distance_m=dist,
-                )
-            )
-
-    candidates += _water_candidates(inp, edge)
-    return candidates
+    outlet = _outlet_place(ctx)
+    outlet_ha = outlet.catchment_ha
+    candidates = [outlet, _strip_place(ctx, outlet_ha), _basin_place(ctx)]
+    for extra in (_tillage_place(ctx), _weir_place(ctx, outlet_ha)):
+        if extra is not None:
+            candidates.append(extra)
+    return candidates + _water_candidates(inp, ctx.edge)
